@@ -1,0 +1,3 @@
+[submodule "elassandra"]
+	path = elassandra
+	url = ../elassandra

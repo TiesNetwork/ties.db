@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.ties.db.service;
-
-import org.apache.cassandra.service.ElassandraDaemon;
+package network.tiesdb.exception;
 
 /**
-* TiedDB Daemon Main Class.
-* 
-* <P>Entry point to run TiesDB with underlying services.
-*  
-* @author Anton Filatov (filatov@ties.network)
-*/
-public class TiesDBDaemon extends ElassandraDaemon {
-    public static void main(String[] args) {
-    	ElassandraDaemon.main(args);
-    }
+ * Exception class for TiesDB system.
+ * 
+ * <P>Parent class for any checked exceptions regarding TiesDB logic.
+ * 
+ * @author Anton Filatov (filatov@ties.network)
+ */
+public class TiesException extends Exception {
+
+	private static final long serialVersionUID = -8643212298857531130L;
+
+	public TiesException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public TiesException(String message) {
+		super(message);
+	}
+
 }

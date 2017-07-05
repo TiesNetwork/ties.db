@@ -29,7 +29,14 @@
     	<dependency>
     		<groupId>com.strapdata.elasticsearch</groupId>
     		<artifactId>elasticsearch</artifactId>
-    		<version>${elassandra.version}</version>
+    	</dependency>
+    	<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+    	</dependency>
+    	<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
     	</dependency>
     </dependencies>
 

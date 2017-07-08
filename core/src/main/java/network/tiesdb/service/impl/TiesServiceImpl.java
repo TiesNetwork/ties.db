@@ -15,21 +15,29 @@
  */
 package network.tiesdb.service.impl;
 
+import network.tiesdb.api.TiesService;
 import network.tiesdb.context.api.TiesServiceConfig;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.service.api.TiesServiceDaemon;
-import network.tiesdb.service.api.TiesServiceFactory;
+import network.tiesdb.service.util.TiesConfigHandler;
 
 /**
- * TiesDB basic service factory implementation.
+ * TiesDB service implementation.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class TiesServiceFactoryImpl implements TiesServiceFactory {
+public class TiesServiceImpl implements TiesService {
+
+	protected final TiesConfigHandler config;
+
+	public TiesServiceImpl(TiesConfigHandler config) {
+		if (config == null) {
+			throw new NullPointerException("The config should not be null");
+		}
+		this.config = config;
+	}
 
 	@Override
-	public TiesServiceDaemon createServiceDaemon(String name, TiesServiceConfig config) throws TiesConfigurationException {
-		return new TiesServiceDaemonImpl(name, config);
+	public TiesServiceConfig getTiesConfig() {
+		return config.getDelegate();
 	}
 
 }

@@ -15,20 +15,16 @@
  */
 package network.tiesdb.service.util;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import network.tiesdb.context.api.TiesServiceConfig;
 import network.tiesdb.context.api.TiesContext;
-import network.tiesdb.context.api.TiesContext.TiesConfig;
 import network.tiesdb.context.api.TiesContextFactory;
 import network.tiesdb.exception.TiesConfigurationException;
 
@@ -67,18 +63,21 @@ public class TiesContextHandler {
 		factory = newFactory;
 	}
 
-	private final TiesContextFactory contextService;
-	private final URL contextUrl;
 	private final TiesContext context;
 
 	protected TiesContextHandler(TiesContextFactory contextService, URL contextUrl) throws TiesConfigurationException {
-		this.context = initContext(contextService, contextUrl);
-		this.contextService = contextService;
-		this.contextUrl = contextUrl;
+		this(initContext(contextService, contextUrl));
 	}
 
-	public Map<String, TiesConfig> getConfig() {
-		return context.getConfig();
+	public TiesContextHandler(TiesContext context) {
+		if (context == null) {
+			throw new NullPointerException("The context should not be null");
+		}
+		this.context = context;
+	}
+
+	public TiesServiceConfig getConfig(String name) {
+		return context.getConfig().get(name);
 	}
 
 	protected static TiesContext initContext(TiesContextFactory contextService, URL contextUrl)
@@ -89,26 +88,27 @@ public class TiesContextHandler {
 		if (contextUrl == null) {
 			throw new NullPointerException("The contextUrl should not be null");
 		}
+		TiesContext context = null;
 		try (InputStream is = contextUrl.openStream()) {
-			TiesContext context = contextService.readContext(is);
-			if (context == null) {
-				logger.warn("TiesDB Service settings culd not be read from {}, default settings will be used",
-						contextUrl);
-				context = new TiesContext();
-			} else {
-				logger.debug("TiesDB Service settings read from {}", contextUrl);
-			}
-			return context;
+			context = contextService.readContext(is);
 		} catch (IOException e) {
 			throw new TiesConfigurationException("Context initialization failed", e);
 		}
+		if (context == null) {
+			throw new TiesConfigurationException("TiesDB Service settings could not be read from " + contextUrl);
+		}
+		logger.debug("TiesDB Service settings read from {}", contextUrl);
+		if (context.getConfig() == null || context.getConfig().isEmpty()) {
+			throw new TiesConfigurationException("TiesDB Service settings configuration is missing");
+		}
+		return context;
 	}
 
-	public void save() throws TiesConfigurationException {
-		try (OutputStream fos = new FileOutputStream(new File(contextUrl.toURI()))) {
-			contextService.writeContext(fos, context);
-		} catch (IOException | URISyntaxException | TiesConfigurationException e) {
-			throw new TiesConfigurationException("Context was not saved", e);
-		}
+	public Set<String> getConfigsNames() {
+		return context.getConfig().keySet();
+	}
+
+	public TiesContext getDelegate() {
+		return context;
 	}
 }

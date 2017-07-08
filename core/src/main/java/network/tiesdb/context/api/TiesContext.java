@@ -15,9 +15,9 @@
  */
 package network.tiesdb.context.api;
 
-import java.net.InetAddress;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * Context of TiesDB service.
@@ -26,46 +26,34 @@ import java.util.Map;
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
+//TODO change to map and allow usage of multiple contexts mappings
 public class TiesContext {
 
-	public static class TiesConfig {
+	private Map<String, TiesServiceConfig> config;
 
-		private String serviceAddress = InetAddress.getLoopbackAddress().getHostAddress();
-		private boolean serviceStopCritical = true;
-		private String serviceVersion;
-
-		public String getServiceAddress() {
-			return serviceAddress;
-		}
-
-		public void setServiceAddress(String serviceAddress) {
-			this.serviceAddress = serviceAddress;
-		}
-
-		public boolean isServiceStopCritical() {
-			return serviceStopCritical;
-		}
-
-		public void setServiceStopCritical(boolean serviceStopCritical) {
-			this.serviceStopCritical = serviceStopCritical;
-		}
-
-		public String getServiceVersion() {
-			return serviceVersion;
-		}
-
-		public void setServiceVersion(String serviceVersion) {
-			this.serviceVersion = serviceVersion;
-		}
-	}
-
-	private Map<String, TiesConfig> config = Collections.singletonMap("default", new TiesConfig());
-
-	public Map<String, TiesConfig> getConfig() {
+	public Map<String, TiesServiceConfig> getConfig() {
 		return config;
 	}
 
-	public void setConfig(Map<String, TiesConfig> configs) {
+	public void setConfig(Map<String, TiesServiceConfig> configs) {
 		this.config = configs;
+	}
+
+	/**
+	 * Searches a suitable {@link TiesContextFactory}
+	 * 
+	 * @param contextTypeName
+	 *            - name of the context class
+	 * @return {@link TiesContextFactory} instance or null
+	 */
+	public static TiesContextFactory getTiesContextFactory(String contextTypeName) {
+		Iterator<TiesContextFactory> services = ServiceLoader.load(TiesContextFactory.class).iterator();
+		while (services.hasNext()) {
+			TiesContextFactory tiesContextService = services.next();
+			if (tiesContextService.matchesContextType(contextTypeName)) {
+				return tiesContextService;
+			}
+		}
+		return null;
 	}
 }

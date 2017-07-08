@@ -20,11 +20,11 @@ import org.apache.cassandra.service.MigrationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import network.tiesdb.context.api.TiesContext;
+import network.tiesdb.api.TiesService;
+import network.tiesdb.context.api.TiesServiceConfig;
 import network.tiesdb.exception.TiesConfigurationException;
 import network.tiesdb.exception.TiesException;
 import network.tiesdb.service.api.TiesServiceDaemon;
-import network.tiesdb.service.netty.WebSocketServer;
 import network.tiesdb.service.util.TiesConfigHandler;
 
 /**
@@ -32,38 +32,34 @@ import network.tiesdb.service.util.TiesConfigHandler;
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class TiesServiceDaemonImpl implements Runnable, TiesServiceDaemon {
-
-	public static final String VERSION = "ties-0.1.0-alpha";
+public class TiesServiceDaemonImpl extends TiesServiceImpl implements Runnable, TiesServiceDaemon {
 
 	private static final Logger logger = LoggerFactory.getLogger(TiesServiceDaemonImpl.class);
 
 	private final Thread tiesServiceThread;
 
-	private final TiesConfigHandler config;
+	private String name;
 
-	private WebSocketServer webSocketServer;
+	// private WebSocketServer webSocketServer;
 
-	public TiesServiceDaemonImpl(String name, TiesContext.TiesConfig config) throws TiesConfigurationException {
-		if (config == null) {
-			throw new NullPointerException("The config should not be null");
-		}
+	public TiesServiceDaemonImpl(String name, TiesServiceConfig config) throws TiesConfigurationException {
+		super(TiesConfigHandler.getFactory().createHandler(config));
+		this.name = name;
 		if (name == null) {
 			throw new NullPointerException("The name should not be null");
 		}
 		logger.trace("Creating TiesDB Service Daemon...");
-		this.config = TiesConfigHandler.getFactory().createHandler(config);
 		ThreadGroup tiesThreadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), name);
-		tiesServiceThread = new Thread(tiesThreadGroup, this, "TiesServiceDaemon");
+		tiesServiceThread = new Thread(tiesThreadGroup, this, "TiesServiceDaemon:" + name);
 		tiesServiceThread.setDaemon(false);
 		logger.trace("TiesDB Service Daemon created successfully");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see network.tiesdb.service.impl.TiesService#start()
-	 */
+	@Override
+	public String getName() {
+		return name;
+	}
+
 	@Override
 	public void start() throws TiesException {
 		logger.trace("Starting TiesDB Service Daemon...");
@@ -75,11 +71,6 @@ public class TiesServiceDaemonImpl implements Runnable, TiesServiceDaemon {
 		logger.trace("TiesDB Service Daemon started successfully");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see network.tiesdb.service.impl.TiesService#stop()
-	 */
 	@Override
 	public void stop() throws TiesException {
 		logger.trace("Stopping TiesDB Service Daemon...");
@@ -93,23 +84,23 @@ public class TiesServiceDaemonImpl implements Runnable, TiesServiceDaemon {
 	}
 
 	private void stopInternal() {
-		stopWebSocketServer();
+		// stopWebSocketServer();
 	}
 
-	private void stopWebSocketServer() {
-		if (webSocketServer != null) {
-			webSocketServer.stop();
-		}
-	}
-
-	private void startWebSocketServer() {
-		webSocketServer = new WebSocketServer();
-		try {
-			webSocketServer.start();
-		} catch (Exception e) {
-			logger.error("WebSocketServer {} failure", webSocketServer, e);
-		}
-	}
+	// private void stopWebSocketServer() {
+	// if (webSocketServer != null) {
+	// webSocketServer.stop();
+	// }
+	// }
+	//
+	// private void startWebSocketServer() {
+	// webSocketServer = new WebSocketServer();
+	// try {
+	// webSocketServer.start();
+	// } catch (Exception e) {
+	// logger.error("WebSocketServer {} failure", webSocketServer, e);
+	// }
+	// }
 
 	@Override
 	public void run() {
@@ -127,15 +118,11 @@ public class TiesServiceDaemonImpl implements Runnable, TiesServiceDaemon {
 		logger.debug("TiesDB Service Daemon finished successfully");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see network.tiesdb.service.impl.TiesService#init()
-	 */
 	@Override
 	public void init() {
 		logger.trace("Initializing TiesDB Service Daemon...");
-		registerMigrationListener(); //TODO move to run() and do the unregister after main();
+		// TODO move to run() and do the unregister after main();
+		registerMigrationListener();
 		logger.trace("TiesDB Service Daemon initialized successfully");
 	}
 
@@ -149,7 +136,7 @@ public class TiesServiceDaemonImpl implements Runnable, TiesServiceDaemon {
 	}
 
 	private void main() {
-		startWebSocketServer();
+		// startWebSocketServer();
 	}
 
 	private final class TiesMigrationListener extends MigrationListener {
@@ -165,5 +152,10 @@ public class TiesServiceDaemonImpl implements Runnable, TiesServiceDaemon {
 			super.onDropKeyspace(ksName);
 		}
 
+	}
+
+	@Override
+	public TiesService getService() throws TiesException {
+		return this;
 	}
 }

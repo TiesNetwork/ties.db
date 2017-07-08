@@ -15,10 +15,7 @@
  */
 package network.tiesdb.service.api;
 
-import java.util.Iterator;
-import java.util.ServiceLoader;
-
-import network.tiesdb.context.api.TiesContext.TiesConfig;
+import network.tiesdb.context.api.TiesServiceConfig;
 import network.tiesdb.exception.TiesConfigurationException;
 
 /**
@@ -30,19 +27,6 @@ import network.tiesdb.exception.TiesConfigurationException;
  */
 public interface TiesServiceFactory {
 
-	static TiesServiceFactory getTiesServiceFactory(String serviceVersion) {
-		Iterator<TiesServiceFactory> factories = ServiceLoader.load(TiesServiceFactory.class).iterator();
-		while (factories.hasNext()) {
-			TiesServiceFactory factory = factories.next();
-			if (factory.matchesServiceVersion(serviceVersion)) {
-				return factory;
-			}
-		}
-		return null;
-	}
-
-	TiesServiceDaemon createServiceDaemon(String name, TiesConfig config) throws TiesConfigurationException;
-
-	boolean matchesServiceVersion(String version);
+	TiesServiceDaemon createServiceDaemon(String name, TiesServiceConfig config) throws TiesConfigurationException;
 
 }

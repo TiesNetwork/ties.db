@@ -15,7 +15,11 @@
  */
 package network.tiesdb.service.util;
 
-import network.tiesdb.context.api.TiesContext.TiesConfig;
+import java.util.List;
+
+import network.tiesdb.context.api.TiesServiceConfig;
+import network.tiesdb.context.api.TiesTransportConfig;
+import network.tiesdb.service.api.TiesServiceFactory;
 
 /**
  * TiesDB configuration wrapper.
@@ -24,17 +28,17 @@ import network.tiesdb.context.api.TiesContext.TiesConfig;
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class TiesConfigHandler {
+public class TiesConfigHandler implements TiesServiceConfig {
 
-	protected final TiesConfig config;
+	protected final TiesServiceConfig config;
 
 	public static interface TiesConfigHandlerFactory {
-		TiesConfigHandler createHandler(TiesConfig config);
+		TiesConfigHandler createHandler(TiesServiceConfig config);
 	}
 
 	private static TiesConfigHandlerFactory factory = new TiesConfigHandlerFactory() {
 		@Override
-		public TiesConfigHandler createHandler(TiesConfig config) {
+		public TiesConfigHandler createHandler(TiesServiceConfig config) {
 			return new TiesConfigHandler(config);
 		}
 	};
@@ -50,19 +54,11 @@ public class TiesConfigHandler {
 		factory = newFactory;
 	}
 
-	protected TiesConfigHandler(TiesConfig config) {
+	protected TiesConfigHandler(TiesServiceConfig config) {
 		if (config == null) {
 			throw new NullPointerException("The config should not be null");
 		}
 		this.config = config;
-	}
-
-	public String getServiceAddress() {
-		return config.getServiceAddress();
-	}
-
-	public void setServiceAddress(String serviceAddress) {
-		config.setServiceAddress(serviceAddress);
 	}
 
 	public boolean isServiceStopCritical() {
@@ -71,6 +67,26 @@ public class TiesConfigHandler {
 
 	public void setServiceStopCritical(boolean serviceStopCritical) {
 		config.setServiceStopCritical(serviceStopCritical);
+	}
+
+	public List<TiesTransportConfig> getTransports() {
+		return config.getTransports();
+	}
+
+	public void setTransport(List<TiesTransportConfig> transports) {
+		config.setTransports(transports);
+	}
+
+	public TiesServiceFactory getTiesServiceFactory() {
+		return config.getTiesServiceFactory();
+	}
+
+	public void setTransports(List<TiesTransportConfig> transports) {
+		config.setTransports(transports);
+	}
+
+	public TiesServiceConfig getDelegate() {
+		return config;
 	}
 
 }

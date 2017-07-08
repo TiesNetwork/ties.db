@@ -16,15 +16,20 @@
 package network.tiesdb.context.impl.yaml;
 
 import java.beans.IntrospectionException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.introspector.MissingProperty;
 import org.yaml.snakeyaml.introspector.Property;
@@ -36,6 +41,8 @@ import com.google.common.collect.Sets;
 
 import network.tiesdb.context.api.TiesContext;
 import network.tiesdb.context.api.TiesContextFactory;
+import network.tiesdb.context.api.annotation.TiesConfigElement;
+import network.tiesdb.context.api.annotation.util.AnnotationHelper;
 import network.tiesdb.exception.TiesConfigurationException;
 
 /**
@@ -53,6 +60,11 @@ public class YAMLContextFactory implements TiesContextFactory {
 	public TiesContext readContext(InputStream is) throws TiesConfigurationException {
 		PropertiesChecker propertiesChecker = new PropertiesChecker();
 		Constructor constructor = new CustomConstructor(TiesContext.class);
+		try {
+			prepareBindings(constructor);
+		} catch (IOException e) {
+			throw new TiesConfigurationException(e.getMessage(), e);
+		}
 		constructor.setPropertyUtils(propertiesChecker);
 		Yaml yaml = new Yaml(constructor);
 		TiesContext context = yaml.loadAs(is, TiesContext.class);
@@ -60,9 +72,41 @@ public class YAMLContextFactory implements TiesContextFactory {
 		return context;
 	}
 
+	private void prepareBindings(Constructor constructor) throws IOException, TiesConfigurationException {
+		AnnotationHelper helper = new AnnotationHelper();
+		Iterator<Class<? extends Object>> iter = helper.getBindings(TiesConfigElement.class).iterator();
+		Map<String, Class<?>> uniquenessCheck = new HashMap<>();
+		while (iter.hasNext()) {
+			Class<? extends java.lang.Object> c = iter.next();
+			String name = getConfigElementName(c);
+			Class<?> collision = uniquenessCheck.put(name, c);
+			if (collision != null) {
+				throw new TiesConfigurationException("Duplicate TiesConfigElement bindings for " + name + ": "
+						+ collision.getName() + " and " + c.getName());
+			}
+			if (name == null) {
+				throw new NullPointerException("The configElement value should not be null");
+			}
+			constructor.addTypeDescription(new TypeDescription(c, Tag.PREFIX + name));
+		}
+	}
+
+	private static String getConfigElementName(Class<? extends Object> c) {
+		if (null == c) {
+			return null;
+		}
+		TiesConfigElement configElement = c.getAnnotation(TiesConfigElement.class);
+		if (null == configElement) {
+			return null;
+		}
+		String name = configElement.value();
+		return null != name ? name : c.getName();
+	}
+
 	static class CustomConstructor extends Constructor {
 		CustomConstructor(Class<?> theRoot) {
-			super(theRoot);
+			super();
+			addTypeDescription(new TypeDescription(theRoot, Tag.PREFIX + theRoot.getName()));
 		}
 
 		@Override
@@ -83,6 +127,17 @@ public class YAMLContextFactory implements TiesContextFactory {
 		@Override
 		protected Set<Object> createDefaultSet() {
 			return Sets.newConcurrentHashSet();
+		}
+
+		@Override
+		protected Class<?> getClassForName(String name) throws ClassNotFoundException {
+			Class<?> c = super.getClassForName(name);
+			if (null == getConfigElementName(c)) {
+				throw new IllegalArgumentException(
+						"Only binded classes are allowed in tiesdb configuration. Add TiesConfigElement annotation and add class names to "
+								+ AnnotationHelper.DEFAULT_BINDINGS_PATH + TiesConfigElement.class.getName());
+			}
+			return c;
 		}
 	}
 

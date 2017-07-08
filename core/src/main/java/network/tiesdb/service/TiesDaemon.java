@@ -15,12 +15,15 @@
  */
 package network.tiesdb.service;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.logging.logback.LogbackESLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import network.tiesdb.bootstrap.TiesBootstrap;
+import network.tiesdb.context.api.TiesContext;
 import network.tiesdb.exception.TiesStartupException;
 
 /**
@@ -44,6 +47,8 @@ public class TiesDaemon extends TiesBootstrap {
 	}
 
 	public static TiesDaemon instance = new TiesDaemon();
+
+	public final AtomicReference<TiesContext> context = new AtomicReference<>();
 
 	public static void main(String[] args) {
 		try {

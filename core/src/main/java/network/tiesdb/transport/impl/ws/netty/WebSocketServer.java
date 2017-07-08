@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package network.tiesdb.service.netty;
+package network.tiesdb.transport.impl.ws.netty;
+
+import java.net.SocketAddress;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -47,40 +49,44 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
  */
 public final class WebSocketServer {
 
-    static final boolean SSL = true;//System.getProperty("ssl") != null;
-    static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "8443" : "8080"));
+    private static final boolean SSL = false;
+	private final Integer PORT;
+	//static final boolean SSL = System.getProperty("ssl") != null;
+    //static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "8443" : "8080"));
 	private Channel ch;
 
-    public void start() throws Exception {
-        // Configure SSL.
-        final SslContext sslCtx;
-        if (SSL) {
-            SelfSignedCertificate ssc = new SelfSignedCertificate();
-            sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
-        } else {
-            sslCtx = null;
-        }
+	public WebSocketServer(Integer port) {
+		PORT = port;
+	}
 
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
-             .channel(NioServerSocketChannel.class)
-             .handler(new LoggingHandler(LogLevel.INFO))
-             .childHandler(new WebSocketServerInitializer(sslCtx));
+	public void start() throws Exception {
+		// Configure SSL.
+		final SslContext sslCtx;
+		if (SSL) {
+			SelfSignedCertificate ssc = new SelfSignedCertificate();
+			sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+		} else {
+			sslCtx = null;
+		}
 
-            ch = b.bind(PORT).sync().channel();
+		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+		EventLoopGroup workerGroup = new NioEventLoopGroup();
+		try {
+			ServerBootstrap b = new ServerBootstrap();
+			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
+					.handler(new LoggingHandler(LogLevel.INFO)).childHandler(new WebSocketServerInitializer(sslCtx));
 
-            System.out.println("Open your web browser and navigate to " +
-                    (SSL? "https" : "http") + "://127.0.0.1:" + PORT + '/');
+			ch = b.bind(PORT).sync().channel();
 
-            ch.closeFuture().sync();
-        } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-        }
-    }
+			System.out.println(
+					"Open your web browser and navigate to " + (SSL ? "https" : "http") + "://127.0.0.1:" + PORT + '/');
+
+			ch.closeFuture().sync();
+		} finally {
+			bossGroup.shutdownGracefully();
+			workerGroup.shutdownGracefully();
+		}
+	}
 
 	public void stop() {
 		if (ch != null) {

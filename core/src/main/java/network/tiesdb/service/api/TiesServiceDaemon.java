@@ -15,6 +15,7 @@
  */
 package network.tiesdb.service.api;
 
+import network.tiesdb.api.TiesService;
 import network.tiesdb.exception.TiesException;
 
 /**
@@ -26,10 +27,13 @@ import network.tiesdb.exception.TiesException;
  */
 public interface TiesServiceDaemon {
 
+	String getName();
+
 	void start() throws TiesException;
 
 	void stop() throws TiesException;
 
 	void init() throws TiesException;
 
+	TiesService getService() throws TiesException;
 }

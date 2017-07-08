@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.impl;
+package network.tiesdb.transport.api;
 
-import network.tiesdb.context.api.TiesServiceConfig;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.service.api.TiesServiceDaemon;
-import network.tiesdb.service.api.TiesServiceFactory;
+import network.tiesdb.api.TiesTransport;
+import network.tiesdb.exception.TiesException;
 
 /**
- * TiesDB basic service factory implementation.
+ * TiesDB transport daemon API.
+ * 
+ * <P>Defines common daemon controls of TiesDB transport.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class TiesServiceFactoryImpl implements TiesServiceFactory {
+public interface TiesTransportDaemon {
 
-	@Override
-	public TiesServiceDaemon createServiceDaemon(String name, TiesServiceConfig config) throws TiesConfigurationException {
-		return new TiesServiceDaemonImpl(name, config);
-	}
+	void start() throws TiesException;
 
+	void stop() throws TiesException;
+
+	void init() throws TiesException;
+	
+	TiesTransport getTiesTransport() throws TiesException;
 }

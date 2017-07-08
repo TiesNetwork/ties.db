@@ -17,8 +17,6 @@ package network.tiesdb.context.api;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Iterator;
-import java.util.ServiceLoader;
 
 import network.tiesdb.exception.TiesConfigurationException;
 
@@ -30,24 +28,6 @@ import network.tiesdb.exception.TiesConfigurationException;
  * @author Anton Filatov (filatov@ties.network)
  */
 public interface TiesContextFactory {
-
-	/**
-	 * Searches a suitable {@link TiesContextFactory}
-	 * 
-	 * @param contextTypeName
-	 *            - name of the context class
-	 * @return {@link TiesContextFactory} instance or null
-	 */
-	static TiesContextFactory getTiesContextFactory(String contextTypeName) {
-		Iterator<TiesContextFactory> services = ServiceLoader.load(TiesContextFactory.class).iterator();
-		while (services.hasNext()) {
-			TiesContextFactory tiesContextService = services.next();
-			if (tiesContextService.matchesContextType(contextTypeName)) {
-				return tiesContextService;
-			}
-		}
-		return null;
-	}
 
 	boolean matchesContextType(String contextTypeName);
 

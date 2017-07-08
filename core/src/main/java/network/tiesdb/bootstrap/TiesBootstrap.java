@@ -65,21 +65,11 @@ public class TiesBootstrap {
 		}
 	}
 
-	private void initTiesDb() throws TiesStartupException {
-		logger.trace("Starting TiesDB boot sequence...");
-		TiesInitDaemon initDaemon = new TiesInitDaemon();
+	// TODO add a parameter or make another function for synchronous initialization
+	private void initTiesDb() {
 		ThreadGroup tiesThreadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), "TiesDB");
-		Thread tiesInitThread = new Thread(tiesThreadGroup, initDaemon, "TiesInitDaemon");
-		tiesInitThread.setDaemon(true);
+		Thread tiesInitThread = new Thread(tiesThreadGroup, new TiesInitialization(), "TiesInitialization");
+		tiesInitThread.setDaemon(false);
 		tiesInitThread.start();
-		try {
-			tiesInitThread.join();
-		} catch (InterruptedException e) {
-			throw new TiesStartupException(2, "TiesDB boot sequence failed", e);
-		}
-		if (initDaemon.getInitializationException() != null) {
-			throw new TiesStartupException(2, "TiesDB initialization failed", initDaemon.getInitializationException());
-		}
-		logger.trace("Boot sequence of TiesDB finished successfully");
 	}
 }

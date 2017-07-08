@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.impl;
+package network.tiesdb.context.api.annotation;
 
-import network.tiesdb.context.api.TiesServiceConfig;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.service.api.TiesServiceDaemon;
-import network.tiesdb.service.api.TiesServiceFactory;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
 /**
- * TiesDB basic service factory implementation.
+ * TiesDB configuration element annotation.
  * 
+ * <P>Marks class as a part of TiesDB configuration with given name.
+ *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public class TiesServiceFactoryImpl implements TiesServiceFactory {
-
-	@Override
-	public TiesServiceDaemon createServiceDaemon(String name, TiesServiceConfig config) throws TiesConfigurationException {
-		return new TiesServiceDaemonImpl(name, config);
-	}
+@Retention(RUNTIME)
+@Target(TYPE)
+public @interface TiesConfigElement {
+	
+	String value();
 
 }

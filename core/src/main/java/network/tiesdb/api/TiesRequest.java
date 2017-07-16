@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.api;
+package network.tiesdb.api;
 
-import network.tiesdb.api.TiesService;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.exception.TiesException;
+import java.io.InputStream;
 
 /**
- * TiesDB service daemon API.
+ * TiesDB request API.
  * 
- * <P>Defines common daemon controls of TiesDB service.
- * 
+ * <P>Defines common request functions.
+ *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesServiceDaemon {
+public interface TiesRequest {
 
-	String getName();
+	InputStream getInputStream();
 
-	void start() throws TiesException;
-
-	void stop() throws TiesException;
-
-	void init() throws TiesException;
-
-	TiesService getService() throws TiesConfigurationException;
 }

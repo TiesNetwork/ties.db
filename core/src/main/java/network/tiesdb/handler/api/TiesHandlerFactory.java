@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.api;
+package network.tiesdb.handler.api;
 
+import network.tiesdb.api.TiesHandler;
 import network.tiesdb.api.TiesService;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.exception.TiesException;
 
 /**
- * TiesDB service daemon API.
+ * TiesDB handler factory.
  * 
- * <P>Defines common daemon controls of TiesDB service.
+ * <P>Factory of TiesDB handlers.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesServiceDaemon {
+public interface TiesHandlerFactory {
 
-	String getName();
+	TiesHandler createHandler(TiesService service);
 
-	void start() throws TiesException;
-
-	void stop() throws TiesException;
-
-	void init() throws TiesException;
-
-	TiesService getService() throws TiesConfigurationException;
 }

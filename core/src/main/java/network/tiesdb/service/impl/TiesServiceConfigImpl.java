@@ -21,20 +21,33 @@ import network.tiesdb.context.api.TiesServiceConfig;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.context.api.annotation.TiesConfigElement;
 import network.tiesdb.service.api.TiesServiceFactory;
+import network.tiesdb.service.impl.handler.TiesHandlerConfigImpl;
 
 /**
  * TiesDB service configuration implementation.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-@TiesConfigElement(TiesServiceConfigImpl.BINDING)
+@TiesConfigElement({ TiesServiceConfigImpl.BINDING, TiesServiceConfigImpl.SHORT_BINDING })
 public class TiesServiceConfigImpl implements TiesServiceConfig {
 
-	public static final String BINDING = "network.tiesdb.Service";
+	static final String BINDING = "network.tiesdb.Service";
+	static final String SHORT_BINDING = "TiesService";
 
 	private boolean serviceStopCritical = true;
 
 	private List<TiesTransportConfig> transports;
+
+	private TiesHandlerConfigImpl handler = new TiesHandlerConfigImpl();
+
+	public TiesServiceConfigImpl() {
+		// NOP Is not empty config values
+	}
+
+	public TiesServiceConfigImpl(String value) {
+		// NOP If this constructor is called then config values is empty and we
+		// should use default
+	}
 
 	@Override
 	public TiesServiceFactory getTiesServiceFactory() {
@@ -46,7 +59,6 @@ public class TiesServiceConfigImpl implements TiesServiceConfig {
 		return serviceStopCritical;
 	}
 
-	@Override
 	public void setServiceStopCritical(boolean serviceStopCritical) {
 		this.serviceStopCritical = serviceStopCritical;
 	}
@@ -56,8 +68,15 @@ public class TiesServiceConfigImpl implements TiesServiceConfig {
 		return transports;
 	}
 
-	@Override
 	public void setTransports(List<TiesTransportConfig> transports) {
 		this.transports = transports;
+	}
+
+	public TiesHandlerConfigImpl getHandler() {
+		return handler;
+	}
+
+	public void setHandler(TiesHandlerConfigImpl handler) {
+		this.handler = handler;
 	}
 }

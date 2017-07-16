@@ -16,6 +16,7 @@
 package network.tiesdb.api;
 
 import network.tiesdb.context.api.TiesServiceConfig;
+import network.tiesdb.service.api.TiesServiceDaemon;
 
 /**
  * TiesDB service API.
@@ -25,5 +26,15 @@ import network.tiesdb.context.api.TiesServiceConfig;
  * @author Anton Filatov (filatov@ties.network)
  */
 public interface TiesService {
-	TiesServiceConfig getTiesConfig();
+
+	TiesServiceDaemon getDaemon();
+
+	TiesServiceConfig getTiesServiceConfig();
+
+	TiesHandler getHandler();
+	
+	TiesVersion getApiVersion();
+	
+	TiesVersion getImplVersion();
+
 }

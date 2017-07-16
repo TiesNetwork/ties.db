@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class AnnotationHelper {
+public final class AnnotationHelper {
 
 	private static final Logger logger = LoggerFactory.getLogger(AnnotationHelper.class);
 
@@ -74,10 +74,10 @@ public class AnnotationHelper {
 
 	private <A extends Annotation> Collection<Class<? extends Object>> getBindings(Class<A> annotation,
 			Enumeration<URL> resources) throws IOException {
-		if (annotation == null) {
+		if (null == annotation) {
 			throw new NullPointerException("The annotation should not be null");
 		}
-		if (resources == null) {
+		if (null == resources) {
 			throw new NullPointerException("The resources should not be null");
 		}
 		Set<Class<? extends Object>> classes = new HashSet<>();
@@ -86,7 +86,7 @@ public class AnnotationHelper {
 			try (BufferedReader reader = new BufferedReader(
 					new InputStreamReader(resources.nextElement().openStream()))) {
 				String line;
-				while ((line = reader.readLine()) != null) {
+				while (null != (line = reader.readLine())) {
 					if (line.startsWith(COMMENT_FLAG)) {
 						continue;
 					}

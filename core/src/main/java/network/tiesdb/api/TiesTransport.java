@@ -28,4 +28,6 @@ public interface TiesTransport {
 
 	TiesTransportConfig getTiesTransportConfig();
 
+	void handle(TiesRequest request, TiesResponse response);
+
 }

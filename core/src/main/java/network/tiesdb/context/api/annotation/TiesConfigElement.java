@@ -32,6 +32,6 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 public @interface TiesConfigElement {
 	
-	String value();
+	String[] value();
 
 }

@@ -21,13 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import network.tiesdb.context.api.TiesServiceConfig;
+import network.tiesdb.bootstrap.util.TiesContextHandler;
 import network.tiesdb.context.api.TiesContext;
 import network.tiesdb.context.impl.yaml.YAMLContextFactory;
 import network.tiesdb.exception.TiesStartupException;
 import network.tiesdb.service.TiesDaemon;
 import network.tiesdb.service.api.TiesServiceDaemon;
 import network.tiesdb.service.api.TiesServiceFactory;
-import network.tiesdb.service.util.TiesContextHandler;
 
 /**
  * TiesDB initialization.
@@ -73,7 +73,7 @@ public class TiesInitialization implements Runnable {
 			logger.trace("Found TiesDB service \"{}\" configuration", name);
 			TiesServiceConfig config = contextHandler.getConfig(name);
 			TiesServiceFactory tiesServiceFactory = config.getTiesServiceFactory();
-			if (tiesServiceFactory == null) {
+			if (null == tiesServiceFactory) {
 				logger.error("Can't find TiesServiceFactory for service \"{}\"", name);
 			} else {
 				logger.trace("Launching TiesDB service \"{}\"", name);
@@ -93,7 +93,7 @@ public class TiesInitialization implements Runnable {
 
 	private static String getConfigDir() {
 		String cassandra_conf = System.getenv("CASSANDRA_CONF");
-		if (cassandra_conf == null) {
+		if (null == cassandra_conf) {
 			cassandra_conf = System.getProperty("cassandra.conf",
 					System.getProperty("path.conf", getHomeDir() + File.separator + "conf"));
 		}
@@ -102,9 +102,9 @@ public class TiesInitialization implements Runnable {
 
 	private static String getHomeDir() {
 		String cassandra_home = System.getenv("CASSANDRA_HOME");
-		if (cassandra_home == null) {
+		if (null == cassandra_home) {
 			cassandra_home = System.getProperty("cassandra.home", System.getProperty("path.home"));
-			if (cassandra_home == null)
+			if (null == cassandra_home)
 				throw new IllegalStateException(
 						"Cannot start, environnement variable CASSANDRA_HOME and system properties cassandra.home"
 								+ " or path.home are null. Please set one of these to start properly");

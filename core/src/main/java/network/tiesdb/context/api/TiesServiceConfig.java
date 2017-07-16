@@ -32,10 +32,6 @@ public interface TiesServiceConfig {
 
 	boolean isServiceStopCritical();
 
-	void setServiceStopCritical(boolean serviceStopCritical);
-
 	List<TiesTransportConfig> getTransports();
-
-	void setTransports(List<TiesTransportConfig> transports);
 
 }

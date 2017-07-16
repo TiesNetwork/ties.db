@@ -43,6 +43,7 @@ import network.tiesdb.context.api.TiesContext;
 import network.tiesdb.context.api.TiesContextFactory;
 import network.tiesdb.context.api.annotation.TiesConfigElement;
 import network.tiesdb.context.api.annotation.util.AnnotationHelper;
+import network.tiesdb.context.api.annotation.util.TiesConfigElementHelper;
 import network.tiesdb.exception.TiesConfigurationException;
 
 /**
@@ -78,29 +79,24 @@ public class YAMLContextFactory implements TiesContextFactory {
 		Map<String, Class<?>> uniquenessCheck = new HashMap<>();
 		while (iter.hasNext()) {
 			Class<? extends java.lang.Object> c = iter.next();
-			String name = getConfigElementName(c);
-			Class<?> collision = uniquenessCheck.put(name, c);
-			if (collision != null) {
-				throw new TiesConfigurationException("Duplicate TiesConfigElement bindings for " + name + ": "
-						+ collision.getName() + " and " + c.getName());
+			String[] names = getConfigElementNames(c);
+			for (int i = 0; i < names.length; i++) {
+				String name = names[i];
+				Class<?> collision = uniquenessCheck.put(name, c);
+				if (null != collision) {
+					throw new TiesConfigurationException("Duplicate TiesConfigElement bindings for " + name + ": "
+							+ collision.getName() + " and " + c.getName());
+				}
+				if (null == name) {
+					throw new NullPointerException("The configElement value should not be null");
+				}
+				constructor.addTypeDescription(new TypeDescription(c, Tag.PREFIX + name));
 			}
-			if (name == null) {
-				throw new NullPointerException("The configElement value should not be null");
-			}
-			constructor.addTypeDescription(new TypeDescription(c, Tag.PREFIX + name));
 		}
 	}
 
-	private static String getConfigElementName(Class<? extends Object> c) {
-		if (null == c) {
-			return null;
-		}
-		TiesConfigElement configElement = c.getAnnotation(TiesConfigElement.class);
-		if (null == configElement) {
-			return null;
-		}
-		String name = configElement.value();
-		return null != name ? name : c.getName();
+	private static String[] getConfigElementNames(Class<? extends Object> c) {
+		return TiesConfigElementHelper.getAllFor(c);
 	}
 
 	static class CustomConstructor extends Constructor {
@@ -132,7 +128,7 @@ public class YAMLContextFactory implements TiesContextFactory {
 		@Override
 		protected Class<?> getClassForName(String name) throws ClassNotFoundException {
 			Class<?> c = super.getClassForName(name);
-			if (null == getConfigElementName(c)) {
+			if (0 >= getConfigElementNames(c).length) {
 				throw new IllegalArgumentException(
 						"Only binded classes are allowed in tiesdb configuration. Add TiesConfigElement annotation and add class names to "
 								+ AnnotationHelper.DEFAULT_BINDINGS_PATH + TiesConfigElement.class.getName());
@@ -161,7 +157,7 @@ public class YAMLContextFactory implements TiesContextFactory {
 			return new Property(result.getName(), result.getType()) {
 				@Override
 				public void set(Object object, Object value) throws Exception {
-					if (value == null && get(object) != null) {
+					if (null == value && null != get(object)) {
 						invalidProperties.add(getName());
 					}
 					result.set(object, value);

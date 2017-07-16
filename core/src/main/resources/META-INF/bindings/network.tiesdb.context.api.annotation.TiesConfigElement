@@ -1,4 +1,5 @@
 # To prevent some classes from binding you can mark them with exclamation mark like this:
 # !network.tiesdb.service.impl.TiesServiceConfigImpl
 network.tiesdb.service.impl.TiesServiceConfigImpl
+network.tiesdb.service.impl.handler.TiesHandlerConfigImpl
 network.tiesdb.transport.impl.ws.TiesTransportConfigImpl

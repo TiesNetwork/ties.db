@@ -38,11 +38,11 @@ public class TiesShutdown implements Runnable {
 
 	public static void addShutdownHook(TiesServiceDaemon daemon) {
 		logger.trace("Adding TiesDB Service Daemon shutdown hook..");
-		if (daemon == null) {
+		if (null == daemon) {
 			throw new NullPointerException("The daemon should not be null");
 		}
 		String name = daemon.getName();
-		name = name == null ? "?" : name;
+		name = null == name ? "?" : name;
 		logger.trace("TiesDB Service Daemon shutdown hook for daemon \"{}\"", name);
 		ThreadGroup tiesThreadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(), name);
 		Thread shutdownHook = new Thread(tiesThreadGroup, new TiesShutdown(daemon), "TiesServiceShutdown:" + name);
@@ -59,7 +59,7 @@ public class TiesShutdown implements Runnable {
 		logger.trace("Starting the TiesDB Service Daemon shutdown procedure");
 		if (!daemonRef.isEnqueued()) {
 			TiesServiceDaemon daemon = daemonRef.get();
-			if (daemon != null) {
+			if (null != daemon) {
 				logger.trace("Shutting down TiesDB Service Daemon...");
 				try {
 					daemon.stop();

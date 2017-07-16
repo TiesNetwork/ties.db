@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.api;
-
-import network.tiesdb.api.TiesService;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.exception.TiesException;
+package network.tiesdb.api;
 
 /**
- * TiesDB service daemon API.
+ * TiesDB version API.
  * 
- * <P>Defines common daemon controls of TiesDB service.
- * 
+ * <P>Defines common version functions.
+ *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesServiceDaemon {
+public interface TiesVersion {
 
-	String getName();
+	static TiesVersion current = TiesApiVersion.v_0_1_0_alpha;
 
-	void start() throws TiesException;
+	Integer getMajorVersion();
 
-	void stop() throws TiesException;
+	Integer getMinorVersion();
 
-	void init() throws TiesException;
+	Integer getIncrementalVersion();
 
-	TiesService getService() throws TiesConfigurationException;
+	String getQualifer();
+
 }

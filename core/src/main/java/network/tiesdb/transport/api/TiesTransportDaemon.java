@@ -16,6 +16,7 @@
 package network.tiesdb.transport.api;
 
 import network.tiesdb.api.TiesTransport;
+import network.tiesdb.exception.TiesConfigurationException;
 import network.tiesdb.exception.TiesException;
 
 /**
@@ -33,5 +34,5 @@ public interface TiesTransportDaemon {
 
 	void init() throws TiesException;
 	
-	TiesTransport getTiesTransport() throws TiesException;
+	TiesTransport getTiesTransport() throws TiesConfigurationException;
 }

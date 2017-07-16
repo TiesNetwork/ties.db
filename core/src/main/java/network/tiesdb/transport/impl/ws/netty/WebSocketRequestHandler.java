@@ -13,28 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.api;
+package network.tiesdb.transport.impl.ws.netty;
 
-import network.tiesdb.api.TiesService;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.exception.TiesException;
+import java.io.InputStream;
+
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import network.tiesdb.api.TiesRequest;
 
 /**
- * TiesDB service daemon API.
- * 
- * <P>Defines common daemon controls of TiesDB service.
+ * TiesDB request handler for WebSock.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesServiceDaemon {
+public class WebSocketRequestHandler implements TiesRequest {
 
-	String getName();
+	private WebSocketFrame frame;
 
-	void start() throws TiesException;
+	public WebSocketRequestHandler(WebSocketFrame frame) {
+		if (null == frame) {
+			throw new NullPointerException("The frame should not be null");
+		}
+		this.frame = frame;
+	}
 
-	void stop() throws TiesException;
+	@Override
+	public InputStream getInputStream() {
+		return new ByteBufInputStream(frame.content());
+	}
 
-	void init() throws TiesException;
-
-	TiesService getService() throws TiesConfigurationException;
 }

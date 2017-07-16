@@ -15,23 +15,42 @@
  */
 package network.tiesdb.transport.impl.ws;
 
+import network.tiesdb.api.TiesService;
+import network.tiesdb.api.TiesTransport;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.api.TiesService;
+import network.tiesdb.exception.TiesException;
 import network.tiesdb.transport.api.TiesTransportDaemon;
-import network.tiesdb.transport.api.TiesTransportFactory;
 
 /**
- * TiesDB transport factory implementation.
+ * TiesDB WebSock transport daemon implementation.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class TiesTransportFactoryImpl implements TiesTransportFactory {
+public class TiesTransportDaemonImpl extends TiesTransportImpl implements TiesTransportDaemon {
+
+	public TiesTransportDaemonImpl(TiesService service, TiesTransportConfig config) throws TiesConfigurationException {
+		super(service, config);
+	}
 
 	@Override
-	public TiesTransportDaemon createTransportDaemon(TiesService service, TiesTransportConfig config)
-			throws TiesConfigurationException {
-		return new TiesTransportDaemonImpl(service, config);
+	public TiesTransport getTiesTransport() throws TiesConfigurationException {
+		return this;
+	}
+
+	@Override
+	public void init() throws TiesException {
+		super.initInternal();
+	}
+
+	@Override
+	public void start() throws TiesException {
+		super.startInternal();
+	}
+
+	@Override
+	public void stop() throws TiesException {
+		super.stopInternal();
 	}
 
 }

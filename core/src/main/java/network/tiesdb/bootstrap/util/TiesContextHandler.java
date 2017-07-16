@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.util;
+package network.tiesdb.bootstrap.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,7 +57,7 @@ public class TiesContextHandler {
 	}
 
 	public static void setFactory(TiesContextHandlerFactory newFactory) {
-		if (newFactory == null) {
+		if (null == newFactory) {
 			throw new NullPointerException("The newFactory should not be null");
 		}
 		factory = newFactory;
@@ -70,7 +70,7 @@ public class TiesContextHandler {
 	}
 
 	public TiesContextHandler(TiesContext context) {
-		if (context == null) {
+		if (null == context) {
 			throw new NullPointerException("The context should not be null");
 		}
 		this.context = context;
@@ -82,10 +82,10 @@ public class TiesContextHandler {
 
 	protected static TiesContext initContext(TiesContextFactory contextService, URL contextUrl)
 			throws TiesConfigurationException {
-		if (contextService == null) {
+		if (null == contextService) {
 			throw new NullPointerException("The contextService should not be null");
 		}
-		if (contextUrl == null) {
+		if (null == contextUrl) {
 			throw new NullPointerException("The contextUrl should not be null");
 		}
 		TiesContext context = null;
@@ -94,11 +94,11 @@ public class TiesContextHandler {
 		} catch (IOException e) {
 			throw new TiesConfigurationException("Context initialization failed", e);
 		}
-		if (context == null) {
+		if (null == context) {
 			throw new TiesConfigurationException("TiesDB Service settings could not be read from " + contextUrl);
 		}
 		logger.debug("TiesDB Service settings read from {}", contextUrl);
-		if (context.getConfig() == null || context.getConfig().isEmpty()) {
+		if (null == context.getConfig() || context.getConfig().isEmpty()) {
 			throw new TiesConfigurationException("TiesDB Service settings configuration is missing");
 		}
 		return context;

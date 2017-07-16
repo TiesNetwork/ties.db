@@ -28,4 +28,8 @@ public interface TiesTransportConfig {
 
 	TiesTransportFactory getTiesTransportFactory();
 
+	Integer getServicePort();
+
+	String getServiceAddress();
+
 }

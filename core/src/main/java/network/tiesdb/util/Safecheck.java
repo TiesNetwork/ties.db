@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.api;
-
-import network.tiesdb.api.TiesService;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.exception.TiesException;
+package network.tiesdb.util;
 
 /**
- * TiesDB service daemon API.
+ * TiesDB utility checks.
  * 
- * <P>Defines common daemon controls of TiesDB service.
+ * <P>Defines utilisy functions for basic sanity checks.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesServiceDaemon {
+public final class Safecheck {
 
-	String getName();
+	public static <T> T nullsafe(T input) {
+		return nullsafe(input, "The input should not be null");
+	}
 
-	void start() throws TiesException;
+	public static <T> T nullsafe(T input, String message) {
+		if (null == input) {
+			throw new NullPointerException(message);
+		}
+		return input;
+	}
 
-	void stop() throws TiesException;
-
-	void init() throws TiesException;
-
-	TiesService getService() throws TiesConfigurationException;
+	public static <T, R extends T> T nullreplace(T input, R replace) {
+		return null != input ? input : replace;
+	}
 }

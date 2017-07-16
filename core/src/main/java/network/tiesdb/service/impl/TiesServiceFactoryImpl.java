@@ -17,7 +17,6 @@ package network.tiesdb.service.impl;
 
 import network.tiesdb.context.api.TiesServiceConfig;
 import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.service.api.TiesServiceDaemon;
 import network.tiesdb.service.api.TiesServiceFactory;
 
 /**
@@ -28,7 +27,7 @@ import network.tiesdb.service.api.TiesServiceFactory;
 public class TiesServiceFactoryImpl implements TiesServiceFactory {
 
 	@Override
-	public TiesServiceDaemon createServiceDaemon(String name, TiesServiceConfig config) throws TiesConfigurationException {
+	public TiesServiceDaemonImpl createServiceDaemon(String name, TiesServiceConfig config) throws TiesConfigurationException {
 		return new TiesServiceDaemonImpl(name, config);
 	}
 

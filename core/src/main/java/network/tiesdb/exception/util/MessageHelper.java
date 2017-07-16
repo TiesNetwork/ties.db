@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.api;
+package network.tiesdb.exception.util;
 
-import network.tiesdb.api.TiesService;
-import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.exception.TiesException;
+import network.tiesdb.context.api.annotation.util.TiesConfigElementHelper;
 
 /**
- * TiesDB service daemon API.
+ * Helper class to manage TiesDB messages.
  * 
- * <P>Defines common daemon controls of TiesDB service.
+ * <P>Contains utility methods for TiesDB message generation.
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesServiceDaemon {
+public final class MessageHelper {
 
-	String getName();
+	public static String notFullyCompatible(Class<?> c1, Class<?> c2) {
+		String binding1 = TiesConfigElementHelper.getFor(c1);
+		String binding2 = TiesConfigElementHelper.getFor(c2);
+		return new StringBuilder()//
+				.append(null != binding1 ? binding1 : c1.getName())//
+				.append(" is not fully compatible with ")//
+				.append(null != binding2 ? binding2 : c2.getName())//
+				.toString();
+	}
 
-	void start() throws TiesException;
-
-	void stop() throws TiesException;
-
-	void init() throws TiesException;
-
-	TiesService getService() throws TiesConfigurationException;
 }

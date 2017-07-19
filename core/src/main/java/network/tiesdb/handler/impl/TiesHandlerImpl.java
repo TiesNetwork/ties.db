@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.impl.handler;
+package network.tiesdb.handler.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,14 +22,19 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParser.Feature;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import network.tiesdb.api.TiesHandler;
-import network.tiesdb.api.TiesRequest;
-import network.tiesdb.api.TiesResponse;
+import network.tiesdb.api.TiesVersion;
+import network.tiesdb.api.TiesVersions;
+import network.tiesdb.context.api.TiesHandlerConfig;
+import network.tiesdb.handler.api.TiesHandler;
 import network.tiesdb.service.impl.TiesServiceImpl;
+import network.tiesdb.transport.api.TiesRequest;
+import network.tiesdb.transport.api.TiesResponse;
 
 /**
  * TiesDB handler implementation.
@@ -37,12 +42,14 @@ import network.tiesdb.service.impl.TiesServiceImpl;
  * @author Anton Filatov (filatov@ties.network)
  */
 public class TiesHandlerImpl implements TiesHandler {
+	
+	private static final TiesHandlerImplVersion IMPLEMENTATION_VERSION = TiesHandlerImplVersion.v_0_0_1_prealpha;
 
 	private static final Logger logger = LoggerFactory.getLogger(TiesHandlerImpl.class);
 
 	private final TiesServiceImpl service;
 
-	private TiesHandlerConfigImpl config;
+	private final TiesHandlerConfigImpl config;
 
 	public TiesHandlerImpl(TiesServiceImpl service, TiesHandlerConfigImpl config) {
 		if (null == config) {
@@ -57,12 +64,16 @@ public class TiesHandlerImpl implements TiesHandler {
 
 	@Override
 	public void handle(final TiesRequest request, final TiesResponse response) {
-		logger.trace("Call to network.tiesdb.service.impl.handler.TiesHandlerImpl.handle(request, response)");
+		logger.trace("Call to network.tiesdb.handler.impl.TiesHandlerImpl.handle(request, response)");
 		handleInternal(request, response);
 	}
 
 	protected void handleInternal(TiesRequest request, TiesResponse response) {
 		ObjectMapper mapper = new ObjectMapper();
+		
+		JsonFactory factory = mapper.getJsonFactory();
+		factory.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+		
 		try (InputStream is = request.getInputStream()) {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> jsonMap = mapper.readValue(is, Map.class);
@@ -72,8 +83,9 @@ public class TiesHandlerImpl implements TiesHandler {
 				iter.remove();
 				jsonMap.put(entry.getKey().toLowerCase(), entry.getValue().toString().toUpperCase());
 			}
-			jsonMap.put("apiVersion", service.getApiVersion());
-			jsonMap.put("implVersion", service.getImplVersion());
+			TiesVersions versions = service.getVersions();
+			jsonMap.put("apiVersion", versions.tiesVersion());
+			jsonMap.put("implVersion", versions.serviceVersion());
 			try (OutputStream os = response.getOutputStream()) {
 				os.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonMap).getBytes(config.getCharset()));
 			}
@@ -81,6 +93,16 @@ public class TiesHandlerImpl implements TiesHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public TiesVersion getVersion() {
+		return IMPLEMENTATION_VERSION;
+	}
+
+	@Override
+	public TiesHandlerConfig getTiesHandlerConfig() {
+		return config;
 	}
 
 }

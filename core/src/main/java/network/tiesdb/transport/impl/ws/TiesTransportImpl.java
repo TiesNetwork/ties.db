@@ -21,13 +21,14 @@ import java.security.cert.CertificateException;
 
 import javax.net.ssl.SSLException;
 
-import network.tiesdb.api.TiesHandler;
-import network.tiesdb.api.TiesRequest;
-import network.tiesdb.api.TiesResponse;
-import network.tiesdb.api.TiesService;
-import network.tiesdb.api.TiesTransport;
+import network.tiesdb.api.TiesVersion;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.TiesException;
+import network.tiesdb.handler.api.TiesHandler;
+import network.tiesdb.service.api.TiesService;
+import network.tiesdb.transport.api.TiesRequest;
+import network.tiesdb.transport.api.TiesResponse;
+import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.impl.ws.netty.WebSocketServer;
 
 /**
@@ -35,20 +36,28 @@ import network.tiesdb.transport.impl.ws.netty.WebSocketServer;
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class TiesTransportImpl implements TiesTransport {
+public abstract class TiesTransportImpl implements TiesTransport {
 
-	private final TiesTransportConfigImpl config;
+	private static final TiesTransportImplVersion IMPLEMENTATION_VERSION = TiesTransportImplVersion.v_0_0_1_prealpha;
+
+	private final TiesTransportConfig config;
 	private final WebSocketServer server;
 	private final TiesHandler handler;
 
 	public TiesTransportImpl(TiesService tiesService, TiesTransportConfig config) {
-		this.handler = nullsafe(nullsafe(tiesService, "The tiesService should not be null").getHandler(),"The tiesService returned null on getRawHandler");
-		this.config = (TiesTransportConfigImpl) nullsafe(config, "The config should not be null");
+		if (null == tiesService) {
+			throw new NullPointerException("The tiesService should not be null");
+		}
+		if (null == config) {
+			throw new NullPointerException("The config should not be null");
+		}
+		this.handler = nullsafe(nullsafe(config.getHandlerConfig()).getTiesHandlerFactory()).createHandler(tiesService);
+		this.config = config;
 		this.server = new WebSocketServer(this);
 	}
 
 	@Override
-	public TiesTransportConfigImpl getTiesTransportConfig() {
+	public TiesTransportConfig getTiesTransportConfig() {
 		return config;
 	}
 
@@ -71,6 +80,11 @@ public class TiesTransportImpl implements TiesTransport {
 	@Override
 	public void handle(TiesRequest request, TiesResponse response) {
 		this.handler.handle(request, response);
+	}
+
+	@Override
+	public TiesVersion getVersion() {
+		return IMPLEMENTATION_VERSION;
 	}
 
 }

@@ -21,7 +21,6 @@ import network.tiesdb.context.api.TiesServiceConfig;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.context.api.annotation.TiesConfigElement;
 import network.tiesdb.service.api.TiesServiceFactory;
-import network.tiesdb.service.impl.handler.TiesHandlerConfigImpl;
 
 /**
  * TiesDB service configuration implementation.
@@ -38,8 +37,6 @@ public class TiesServiceConfigImpl implements TiesServiceConfig {
 
 	private List<TiesTransportConfig> transports;
 
-	private TiesHandlerConfigImpl handler = new TiesHandlerConfigImpl();
-
 	public TiesServiceConfigImpl() {
 		// NOP Is not empty config values
 	}
@@ -55,7 +52,7 @@ public class TiesServiceConfigImpl implements TiesServiceConfig {
 	}
 
 	@Override
-	public boolean isServiceStopCritical() {
+	public Boolean isServiceStopCritical() {
 		return serviceStopCritical;
 	}
 
@@ -64,19 +61,11 @@ public class TiesServiceConfigImpl implements TiesServiceConfig {
 	}
 
 	@Override
-	public List<TiesTransportConfig> getTransports() {
+	public List<TiesTransportConfig> getTransportConfigs() {
 		return transports;
 	}
 
 	public void setTransports(List<TiesTransportConfig> transports) {
 		this.transports = transports;
-	}
-
-	public TiesHandlerConfigImpl getHandler() {
-		return handler;
-	}
-
-	public void setHandler(TiesHandlerConfigImpl handler) {
-		this.handler = handler;
 	}
 }

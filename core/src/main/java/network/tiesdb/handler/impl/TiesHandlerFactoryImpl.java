@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.impl.handler;
+package network.tiesdb.handler.impl;
 
-import network.tiesdb.api.TiesHandler;
-import network.tiesdb.api.TiesService;
+import network.tiesdb.handler.api.TiesHandler;
 import network.tiesdb.handler.api.TiesHandlerFactory;
+import network.tiesdb.service.api.TiesService;
 import network.tiesdb.service.impl.TiesServiceImpl;
 
 /**

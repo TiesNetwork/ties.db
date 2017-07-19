@@ -13,33 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.transport.impl.ws.netty;
+package network.tiesdb.transport.api;
 
-import java.io.InputStream;
-
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import network.tiesdb.transport.api.TiesRequest;
+import network.tiesdb.api.TiesVersion;
+import network.tiesdb.context.api.TiesTransportConfig;
 
 /**
- * TiesDB request handler for WebSock.
+ * TiesDB transport API.
  * 
+ * <P>Defines common transport functions.
+ *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public class WebSocketRequestHandler implements TiesRequest {
+public interface TiesTransport {
 
-	private WebSocketFrame frame;
+	TiesTransportDaemon getDaemon();
 
-	public WebSocketRequestHandler(WebSocketFrame frame) {
-		if (null == frame) {
-			throw new NullPointerException("The frame should not be null");
-		}
-		this.frame = frame;
-	}
+	TiesTransportConfig getTiesTransportConfig();
 
-	@Override
-	public InputStream getInputStream() {
-		return new ByteBufInputStream(frame.content());
-	}
+	TiesVersion getVersion();
+
+	void handle(TiesRequest request, TiesResponse response);
 
 }

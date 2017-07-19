@@ -20,7 +20,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import network.tiesdb.api.TiesTransport;
+import network.tiesdb.transport.api.TiesTransport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -15,11 +15,11 @@
  */
 package network.tiesdb.transport.impl.ws;
 
-import network.tiesdb.api.TiesService;
-import network.tiesdb.api.TiesTransport;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.TiesConfigurationException;
 import network.tiesdb.exception.TiesException;
+import network.tiesdb.service.api.TiesService;
+import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.api.TiesTransportDaemon;
 
 /**
@@ -51,6 +51,11 @@ public class TiesTransportDaemonImpl extends TiesTransportImpl implements TiesTr
 	@Override
 	public void stop() throws TiesException {
 		super.stopInternal();
+	}
+
+	@Override
+	public TiesTransportDaemon getDaemon() {
+		return this;
 	}
 
 }

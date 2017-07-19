@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.api;
+package network.tiesdb.transport.api;
+
+import java.io.OutputStream;
 
 /**
- * TiesDB handler API.
+ * TiesDB response API.
  * 
- * <P>Defines common handler functions.
- * 
+ * <P>Defines common response functions.
+ *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesHandler {
+public interface TiesResponse {
 
-	void handle(TiesRequest request, TiesResponse response);
+	OutputStream getOutputStream();
 
 }

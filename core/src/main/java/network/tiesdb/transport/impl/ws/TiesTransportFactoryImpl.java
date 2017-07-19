@@ -17,7 +17,7 @@ package network.tiesdb.transport.impl.ws;
 
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.TiesConfigurationException;
-import network.tiesdb.api.TiesService;
+import network.tiesdb.service.api.TiesService;
 import network.tiesdb.transport.api.TiesTransportDaemon;
 import network.tiesdb.transport.api.TiesTransportFactory;
 

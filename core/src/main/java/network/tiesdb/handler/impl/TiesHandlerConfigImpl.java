@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.service.impl.handler;
+package network.tiesdb.handler.impl;
 
 import network.tiesdb.context.api.TiesHandlerConfig;
 import network.tiesdb.context.api.annotation.TiesConfigElement;

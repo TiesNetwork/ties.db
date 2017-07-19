@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.api;
+package network.tiesdb.handler.api;
 
-import java.io.InputStream;
+import network.tiesdb.api.TiesVersion;
+import network.tiesdb.context.api.TiesHandlerConfig;
+import network.tiesdb.transport.api.TiesRequest;
+import network.tiesdb.transport.api.TiesResponse;
 
 /**
- * TiesDB request API.
+ * TiesDB handler API.
  * 
- * <P>Defines common request functions.
- *  
+ * <P>Defines common handler functions.
+ * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesRequest {
+public interface TiesHandler {
 
-	InputStream getInputStream();
+	TiesHandlerConfig getTiesHandlerConfig();
+
+	void handle(TiesRequest request, TiesResponse response);
+
+	TiesVersion getVersion();
 
 }

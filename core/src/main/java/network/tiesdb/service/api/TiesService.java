@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.api;
+package network.tiesdb.service.api;
 
-import network.tiesdb.context.api.TiesTransportConfig;
+import network.tiesdb.api.TiesVersion;
+import network.tiesdb.api.TiesVersions;
+import network.tiesdb.context.api.TiesServiceConfig;
 
 /**
- * TiesDB transport API.
+ * TiesDB service API.
  * 
- * <P>Defines common transport functions.
- *  
+ * <P>Defines common service functions.
+ * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesTransport {
+public interface TiesService {
 
-	TiesTransportConfig getTiesTransportConfig();
+	TiesServiceDaemon getDaemon();
 
-	void handle(TiesRequest request, TiesResponse response);
+	TiesServiceConfig getTiesServiceConfig();
+
+	TiesVersions getVersions();
+
+	TiesVersion getVersion();
 
 }

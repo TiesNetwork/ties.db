@@ -34,10 +34,10 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
-import network.tiesdb.api.TiesTransport;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.util.MessageHelper;
 import network.tiesdb.service.impl.TiesServiceConfigImpl;
+import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.impl.ws.TiesTransportConfigImpl;
 
 public class WebSocketServerInitializer extends ChannelInitializer<SocketChannel> {

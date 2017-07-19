@@ -15,8 +15,7 @@
  */
 package network.tiesdb.handler.api;
 
-import network.tiesdb.api.TiesHandler;
-import network.tiesdb.api.TiesService;
+import network.tiesdb.service.api.TiesService;
 
 /**
  * TiesDB handler factory.

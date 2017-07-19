@@ -27,6 +27,8 @@ import network.tiesdb.transport.api.TiesTransportFactory;
 public interface TiesTransportConfig {
 
 	TiesTransportFactory getTiesTransportFactory();
+	
+	TiesHandlerConfig getHandlerConfig();
 
 	Integer getServicePort();
 

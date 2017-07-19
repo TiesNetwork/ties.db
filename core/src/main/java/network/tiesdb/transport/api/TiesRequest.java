@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.api;
+package network.tiesdb.transport.api;
 
-import java.io.OutputStream;
+import java.io.InputStream;
 
 /**
- * TiesDB response API.
+ * TiesDB request API.
  * 
- * <P>Defines common response functions.
+ * <P>Defines common request functions.
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesResponse {
+public interface TiesRequest {
 
-	OutputStream getOutputStream();
+	InputStream getInputStream();
 
 }

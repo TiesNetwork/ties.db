@@ -36,9 +36,9 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
-import network.tiesdb.api.TiesTransport;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.util.MessageHelper;
+import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.impl.ws.TiesTransportConfigImpl;
 
 /**

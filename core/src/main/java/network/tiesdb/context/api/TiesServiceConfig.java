@@ -30,8 +30,8 @@ public interface TiesServiceConfig {
 
 	TiesServiceFactory getTiesServiceFactory();
 
-	boolean isServiceStopCritical();
+	List<TiesTransportConfig> getTransportConfigs();
 
-	List<TiesTransportConfig> getTransports();
+	Boolean isServiceStopCritical();
 
 }

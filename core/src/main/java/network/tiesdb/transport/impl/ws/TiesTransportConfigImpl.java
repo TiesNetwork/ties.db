@@ -18,8 +18,10 @@ package network.tiesdb.transport.impl.ws;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
+import network.tiesdb.context.api.TiesHandlerConfig;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.context.api.annotation.TiesConfigElement;
+import network.tiesdb.handler.impl.TiesHandlerConfigImpl;
 import network.tiesdb.transport.api.TiesTransportFactory;
 import network.tiesdb.transport.impl.ws.TiesTransportFactoryImpl;
 
@@ -47,6 +49,8 @@ public class TiesTransportConfigImpl implements TiesTransportConfig {
 		}
 	}
 
+	private TiesHandlerConfig handler = new TiesHandlerConfigImpl();
+
 	private String serviceAddress = InetAddress.getLoopbackAddress().getHostAddress();
 	private Integer servicePort = 0;
 	private TransportSecurityConfig security = new TransportSecurityConfig();
@@ -65,6 +69,14 @@ public class TiesTransportConfigImpl implements TiesTransportConfig {
 	public TiesTransportConfigImpl(String value) {
 		// NOP If this constructor is called then config values is empty and we
 		// should use default
+	}
+
+	public TiesHandlerConfig getHandlerConfig() {
+		return handler;
+	}
+
+	public void setHandler(TiesHandlerConfig handler) {
+		this.handler = handler;
 	}
 
 	@Override

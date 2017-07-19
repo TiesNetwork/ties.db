@@ -21,7 +21,7 @@ import java.io.OutputStream;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import network.tiesdb.api.TiesResponse;
+import network.tiesdb.transport.api.TiesResponse;
 
 /**
  * TiesDB response handler for WebSock.

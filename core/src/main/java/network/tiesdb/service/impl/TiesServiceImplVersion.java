@@ -17,6 +17,7 @@ package network.tiesdb.service.impl;
 
 import network.tiesdb.api.TiesApiVersion;
 import network.tiesdb.api.TiesVersion;
+import network.tiesdb.api.TiesVersion.ToString;
 
 /**
  * TiesDB implementation version implementation.
@@ -30,14 +31,14 @@ public enum TiesServiceImplVersion implements TiesVersion {
 	private final Integer minorVersion;
 	private final Integer incrementalVersion;
 	private final String qualifer;
-	private final TiesVersion apiVersion;
+	private final TiesApiVersion apiVersion;
 
-	private TiesServiceImplVersion(TiesVersion apiVersion, Integer majorVersion, Integer minorVersion,
+	private TiesServiceImplVersion(TiesApiVersion apiVersion, Integer majorVersion, Integer minorVersion,
 			Integer incrementalVersion) {
 		this(apiVersion, majorVersion, minorVersion, incrementalVersion, null);
 	}
 
-	private TiesServiceImplVersion(TiesVersion apiVersion, Integer majorVersion, Integer minorVersion,
+	private TiesServiceImplVersion(TiesApiVersion apiVersion, Integer majorVersion, Integer minorVersion,
 			Integer incrementalVersion, String qualifer) {
 		if (null == apiVersion) {
 			throw new NullPointerException("The apiVersion should not be null");
@@ -61,7 +62,7 @@ public enum TiesServiceImplVersion implements TiesVersion {
 		this.qualifer = qualifer;
 	}
 
-	public TiesVersion getApiVersion() {
+	public TiesApiVersion getApiVersion() {
 		return apiVersion;
 	}
 
@@ -87,7 +88,6 @@ public enum TiesServiceImplVersion implements TiesVersion {
 
 	@Override
 	public String toString() {
-		return "TiesHandlerImplVersion [" + majorVersion + "." + minorVersion + "." + incrementalVersion
-				+ (null != qualifer ? "." + qualifer + "]" : "]");
+		return getClass().getSimpleName() + " [" + ToString.format(this) + "]";
 	}
 }

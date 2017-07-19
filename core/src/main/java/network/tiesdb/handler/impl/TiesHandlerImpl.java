@@ -18,7 +18,10 @@ package network.tiesdb.handler.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,12 +32,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import network.tiesdb.api.TiesVersion;
-import network.tiesdb.api.TiesVersions;
+import network.tiesdb.api.TiesVersion.ToString;
 import network.tiesdb.context.api.TiesHandlerConfig;
 import network.tiesdb.handler.api.TiesHandler;
 import network.tiesdb.service.impl.TiesServiceImpl;
 import network.tiesdb.transport.api.TiesRequest;
 import network.tiesdb.transport.api.TiesResponse;
+import network.tiesdb.transport.api.TiesTransport;
 
 /**
  * TiesDB handler implementation.
@@ -42,7 +46,7 @@ import network.tiesdb.transport.api.TiesResponse;
  * @author Anton Filatov (filatov@ties.network)
  */
 public class TiesHandlerImpl implements TiesHandler {
-	
+
 	private static final TiesHandlerImplVersion IMPLEMENTATION_VERSION = TiesHandlerImplVersion.v_0_0_1_prealpha;
 
 	private static final Logger logger = LoggerFactory.getLogger(TiesHandlerImpl.class);
@@ -70,10 +74,10 @@ public class TiesHandlerImpl implements TiesHandler {
 
 	protected void handleInternal(TiesRequest request, TiesResponse response) {
 		ObjectMapper mapper = new ObjectMapper();
-		
+
 		JsonFactory factory = mapper.getJsonFactory();
 		factory.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-		
+
 		try (InputStream is = request.getInputStream()) {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> jsonMap = mapper.readValue(is, Map.class);
@@ -83,11 +87,19 @@ public class TiesHandlerImpl implements TiesHandler {
 				iter.remove();
 				jsonMap.put(entry.getKey().toLowerCase(), entry.getValue().toString().toUpperCase());
 			}
-			TiesVersions versions = service.getVersions();
-			jsonMap.put("apiVersion", versions.tiesVersion());
-			jsonMap.put("implVersion", versions.serviceVersion());
+			jsonMap.put("serviceVersion", ToString.format(service.getVersion()));
+
+			List<Map<?, ?>> transportsVersions = new ArrayList<>();
+			for (TiesTransport t : service.getTransports()) {
+				HashMap<Object, Object> map = new HashMap<>();
+				map.put("transportVersion", ToString.format(t.getVersion()));
+				map.put("handlerVersion", ToString.format(t.getHandler().getVersion()));
+				transportsVersions.add(map);
+			}
+			jsonMap.put("transportsVersions", transportsVersions);
 			try (OutputStream os = response.getOutputStream()) {
-				os.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonMap).getBytes(config.getCharset()));
+				os.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonMap)
+						.getBytes(config.getCharset()));
 			}
 			System.out.println(jsonMap);
 		} catch (IOException e) {

@@ -15,9 +15,11 @@
  */
 package network.tiesdb.service.api;
 
+import java.util.List;
+
 import network.tiesdb.api.TiesVersion;
-import network.tiesdb.api.TiesVersions;
 import network.tiesdb.context.api.TiesServiceConfig;
+import network.tiesdb.transport.api.TiesTransport;
 
 /**
  * TiesDB service API.
@@ -29,10 +31,10 @@ import network.tiesdb.context.api.TiesServiceConfig;
 public interface TiesService {
 
 	TiesServiceDaemon getDaemon();
+	
+	List<TiesTransport> getTransports();
 
 	TiesServiceConfig getTiesServiceConfig();
-
-	TiesVersions getVersions();
 
 	TiesVersion getVersion();
 

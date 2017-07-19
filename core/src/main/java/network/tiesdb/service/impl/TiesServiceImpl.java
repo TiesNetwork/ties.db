@@ -19,7 +19,6 @@ import static network.tiesdb.util.Safecheck.nullsafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -27,12 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import network.tiesdb.api.TiesVersion;
-import network.tiesdb.api.TiesVersions;
 import network.tiesdb.context.api.TiesServiceConfig;
 import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.TiesConfigurationException;
 import network.tiesdb.exception.TiesException;
-import network.tiesdb.handler.api.TiesHandler;
 import network.tiesdb.service.api.TiesService;
 import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.api.TiesTransportDaemon;
@@ -54,41 +51,6 @@ public abstract class TiesServiceImpl implements TiesService, Runnable {
 
 	private final AtomicReference<List<TiesTransport>> transportsRef = new AtomicReference<>();
 	private final TiesMigrationListenerImpl migrationListener;
-	private final AtomicReference<TiesHandler> handlerRef = new AtomicReference<>();
-
-	private final TiesVersions versions = new TiesVersions() {
-
-		@Override
-		public TiesVersion tiesVersion() {
-			return IMPLEMENTATION_VERSION.getApiVersion();
-		}
-
-		@Override
-		public TiesVersion serviceVersion() {
-			return IMPLEMENTATION_VERSION;
-		}
-
-		@Override
-		public TiesVersion handlerVersion() {
-			TiesHandler handler = handlerRef.get();
-			return null == handler ? null : handler.getVersion();
-		}
-
-		@Override
-		public List<TiesVersion> transportVersion() {
-			List<TiesTransport> transports = transportsRef.get();
-			if (null == transports || transports.isEmpty()) {
-				return Collections.emptyList();
-			} else {
-				List<TiesVersion> result = new ArrayList<>(transports.size());
-				for (Iterator<TiesTransport> iterator = transports.iterator(); iterator.hasNext();) {
-					result.add(iterator.next().getVersion());
-				}
-				return result;
-			}
-		}
-
-	};
 
 	public TiesServiceImpl(String name, TiesServiceConfig config) {
 		if (null == config) {
@@ -182,12 +144,13 @@ public abstract class TiesServiceImpl implements TiesService, Runnable {
 
 	@Override
 	public TiesVersion getVersion() {
-		return versions.serviceVersion();
+		return IMPLEMENTATION_VERSION;
 	}
 
 	@Override
-	public TiesVersions getVersions() {
-		return versions;
+	public List<TiesTransport> getTransports() {
+		List<TiesTransport> transports = transportsRef.get();
+		return null == transports ? Collections.<TiesTransport>emptyList() : transports;
 	}
 
 }

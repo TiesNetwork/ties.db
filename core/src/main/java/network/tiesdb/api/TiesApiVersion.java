@@ -73,8 +73,12 @@ public enum TiesApiVersion implements TiesVersion {
 	}
 
 	@Override
+	public TiesApiVersion getApiVersion() {
+		return this;
+	}
+
+	@Override
 	public String toString() {
-		return "TiesApiVersion [" + majorVersion + "." + minorVersion + "." + incrementalVersion
-				+ (null != qualifer ? "." + qualifer + "]" : "]");
+		return getClass().getSimpleName() + " [" + ToString.format(this) + "]";
 	}
 }

@@ -87,4 +87,9 @@ public abstract class TiesTransportImpl implements TiesTransport {
 		return IMPLEMENTATION_VERSION;
 	}
 
+	@Override
+	public TiesHandler getHandler() {
+		return handler;
+	}
+
 }

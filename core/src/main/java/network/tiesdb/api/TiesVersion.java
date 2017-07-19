@@ -26,6 +26,18 @@ public interface TiesVersion {
 
 	static TiesVersion current = TiesApiVersion.v_0_1_0_alpha;
 
+	static final class ToString {
+		public static String format(TiesVersion version) {
+			return format(version, version.getApiVersion());
+		}
+
+		private static String format(TiesVersion version, TiesApiVersion apiVersion) {
+			return version.getMajorVersion() + "." + version.getMinorVersion() + "." + version.getIncrementalVersion()
+					+ (null != version.getQualifer() ? "." + version.getQualifer() : "")
+					+ (!version.equals(apiVersion) ? "(" + format(apiVersion, apiVersion) + ")" : "");
+		}
+	}
+
 	Integer getMajorVersion();
 
 	Integer getMinorVersion();
@@ -33,5 +45,7 @@ public interface TiesVersion {
 	Integer getIncrementalVersion();
 
 	String getQualifer();
+
+	TiesApiVersion getApiVersion();
 
 }

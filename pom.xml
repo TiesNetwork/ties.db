@@ -58,6 +58,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- dependencies from cassandra/lib -->
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
@@ -68,6 +69,11 @@
                 <artifactId>netty-all</artifactId>
                 <version>4.0.39.Final</version>
             </dependency>
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-mapper-asl</artifactId>
+				<version>1.9.13</version>
+			</dependency>
         </dependencies>
     </dependencyManagement>
 

@@ -49,7 +49,7 @@ echo    functionality on this platform.
 echo Starting with legacy startup options
 
 rem In the legacy mode always load Elassandra
-if NOT DEFINED CASSANDRA_MAIN set CASSANDRA_MAIN=network.ties.db.service.TiesDBDaemon
+if NOT DEFINED CASSANDRA_MAIN set CASSANDRA_MAIN=network.tiesdb.bootstrap.TiesDaemon
 if NOT DEFINED JAVA_HOME goto :err
 
 REM -----------------------------------------------------------------------------

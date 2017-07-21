@@ -19,7 +19,27 @@
     <dependencies>
         <dependency>
             <groupId>network.ties.db</groupId>
-            <artifactId>tiesdb</artifactId>
+            <artifactId>context-yaml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>network.ties.db</groupId>
+            <artifactId>transport-websocket</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>network.ties.db</groupId>
+            <artifactId>handler-json</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>network.ties.db</groupId>
+            <artifactId>service-elassandra</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>network.ties.db</groupId>
+            <artifactId>bootstrap-elassandra</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

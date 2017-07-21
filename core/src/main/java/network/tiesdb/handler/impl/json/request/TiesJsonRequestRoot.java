@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.handler.impl.json;
-
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.map.annotate.JsonTypeIdResolver;
+package network.tiesdb.handler.impl.json.request;
 
 /**
  * Root of TiesDB JSON request.
@@ -25,8 +22,38 @@ import org.codehaus.jackson.map.annotate.JsonTypeIdResolver;
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.CUSTOM)
-@JsonTypeIdResolver(TiesJsonRequestRootTypeIdResolver.class)
-public interface TiesJsonRequestRoot extends TiesJsonRequest {
+public class TiesJsonRequestRoot {
+
+	public enum RequestType {
+		INSERT, SELECT
+	}
+
+	private Object request;
+	private RequestType type;
+
+	private void setRequest(Object request, RequestType type) {
+		this.request = request;
+		this.type = type;
+	}
+
+	public void setInsert(TiesJsonRequestInsert request) {
+		setRequest(request, RequestType.INSERT);
+	}
+
+	public void setSelect(TiesJsonRequestSelect request) {
+		setRequest(request, RequestType.SELECT);
+	}
+
+	public Object getRequest() {
+		return request;
+	}
+
+	public RequestType getType() {
+		return type;
+	}
+
+	public String getInnerType() {
+		return request.getClass().getName();
+	}
 
 }

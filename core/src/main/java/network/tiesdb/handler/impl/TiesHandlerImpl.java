@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser.Feature;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,8 @@ import network.tiesdb.api.TiesVersion.ToString;
 import network.tiesdb.context.api.TiesHandlerConfig;
 import network.tiesdb.exception.TiesException;
 import network.tiesdb.handler.api.TiesHandler;
-import network.tiesdb.handler.impl.json.TiesJsonRequestRoot;
+import network.tiesdb.handler.impl.json.TiesJsonRequestError;
+import network.tiesdb.handler.impl.json.request.TiesJsonRequestRoot;
 import network.tiesdb.service.impl.TiesServiceImpl;
 import network.tiesdb.transport.api.TiesRequest;
 import network.tiesdb.transport.api.TiesResponse;
@@ -80,15 +81,26 @@ public class TiesHandlerImpl implements TiesHandler {
 	}
 
 	protected void handleInternal1(TiesRequest request, TiesResponse response)
-			throws JsonParseException, JsonMappingException, IOException {
+			throws IOException {
 		ObjectMapper mapper = createConfiguredMapper();
-		TiesJsonRequestRoot jsonRequest = mapper.readValue(request.getInputStream(), TiesJsonRequestRoot.class);
-		mapper.writerWithDefaultPrettyPrinter().writeValue(response.getOutputStream(), jsonRequest);
+		try {
+			TiesJsonRequestRoot jsonRequest = mapper.readValue(request.getInputStream(), TiesJsonRequestRoot.class);
+			try (OutputStream os = response.getOutputStream()) {
+				mapper.writerWithDefaultPrettyPrinter().writeValue(response.getOutputStream(), jsonRequest);
+			}
+		} catch (JsonMappingException e) {
+			logger.warn("Can't process", e);
+			try (OutputStream os = response.getOutputStream()) {
+				mapper.writerWithDefaultPrettyPrinter().writeValue(response.getOutputStream(), TiesJsonRequestError.create(e));
+			}
+		}
 	}
 
 	private ObjectMapper createConfiguredMapper() {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+		mapper.configure(Feature.ALLOW_COMMENTS, true);
+		mapper.setSerializationInclusion(Inclusion.NON_NULL);
 		return mapper;
 	}
 

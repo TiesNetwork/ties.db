@@ -15,15 +15,12 @@
  */
 package network.tiesdb.handler.impl.json.request;
 
-import network.tiesdb.handler.impl.json.TiesJsonRequestRoot;
-import network.tiesdb.handler.impl.json.TiesRequestRoot;
-
 /**
  * Root class for TiesDB JSON "insert" request.
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-@TiesRequestRoot("insert")
-public class TiesJsonRequestInsert implements TiesJsonRequestRoot {
+public class TiesJsonRequestInsert {
 	public String test;
+	public TiesJsonRequestSelect select;
 }

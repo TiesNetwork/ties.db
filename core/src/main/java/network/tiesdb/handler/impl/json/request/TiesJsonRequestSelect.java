@@ -15,15 +15,11 @@
  */
 package network.tiesdb.handler.impl.json.request;
 
-import network.tiesdb.handler.impl.json.TiesJsonRequestRoot;
-import network.tiesdb.handler.impl.json.TiesRequestRoot;
-
 /**
  * Root class for TiesDB JSON "select" request.
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-@TiesRequestRoot("select")
-public class TiesJsonRequestSelect implements TiesJsonRequestRoot {
+public class TiesJsonRequestSelect {
 	public String hello;
 }

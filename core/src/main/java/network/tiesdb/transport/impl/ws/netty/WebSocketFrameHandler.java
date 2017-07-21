@@ -25,9 +25,6 @@ import network.tiesdb.transport.api.TiesTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Echoes uppercase content of text frames.
- */
 public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketFrameHandler.class);
@@ -50,8 +47,12 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
             //String request = ((TextWebSocketFrame) frame).text();
             logger.info("{} received {} bytes", ctx.channel(), frame.content().readableBytes());
             
-            transport.handle(new WebSocketRequestHandler(frame), new WebSocketResponseHandler(ctx));
-            
+			try (WebSocketRequestHandler request = new WebSocketRequestHandler(frame)) {
+				try (WebSocketResponseHandler response = new WebSocketResponseHandler(ctx)) {
+					transport.getHandler().handle(request, response);
+				}
+			}
+
             //ctx.channel().writeAndFlush(new TextWebSocketFrame(request.toUpperCase(Locale.US)));
         } else {
             throw new UnsupportedOperationException("unsupported frame type: " + frame.getClass().getName());

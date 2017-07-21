@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.transport.api;
+package network.tiesdb.handler.impl.json;
 
-import network.tiesdb.api.TiesVersion;
-import network.tiesdb.context.api.TiesTransportConfig;
-import network.tiesdb.handler.api.TiesHandler;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 /**
- * TiesDB transport API.
+ * TiesDB JSON request.
  * 
- * <P>Defines common transport functions.
+ * <P>Any class implementing this interface can be a part of JSON request.
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesTransport {
-
-	TiesTransportDaemon getDaemon();
-	
-	TiesHandler getHandler();
-
-	TiesTransportConfig getTiesTransportConfig();
-
-	TiesVersion getVersion();
+@JsonIgnoreProperties(ignoreUnknown = true) // FIXME Think abount ignoring. It's
+											// rather dangerous. Maybe some
+											// handling should be implemented
+public interface TiesJsonRequest {
 
 }

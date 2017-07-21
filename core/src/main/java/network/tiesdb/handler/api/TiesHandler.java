@@ -17,6 +17,7 @@ package network.tiesdb.handler.api;
 
 import network.tiesdb.api.TiesVersion;
 import network.tiesdb.context.api.TiesHandlerConfig;
+import network.tiesdb.exception.TiesException;
 import network.tiesdb.transport.api.TiesRequest;
 import network.tiesdb.transport.api.TiesResponse;
 
@@ -31,7 +32,7 @@ public interface TiesHandler {
 
 	TiesHandlerConfig getTiesHandlerConfig();
 
-	void handle(TiesRequest request, TiesResponse response);
+	void handle(TiesRequest request, TiesResponse response) throws TiesException;
 
 	TiesVersion getVersion();
 

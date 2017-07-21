@@ -26,20 +26,25 @@ import network.tiesdb.transport.api.TiesRequest;
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class WebSocketRequestHandler implements TiesRequest {
+public class WebSocketRequestHandler implements TiesRequest, AutoCloseable {
 
-	private WebSocketFrame frame;
+	private final InputStream is;
 
 	public WebSocketRequestHandler(WebSocketFrame frame) {
 		if (null == frame) {
 			throw new NullPointerException("The frame should not be null");
 		}
-		this.frame = frame;
+		this.is = new ByteBufInputStream(frame.content());
 	}
 
 	@Override
 	public InputStream getInputStream() {
-		return new ByteBufInputStream(frame.content());
+		return is;
+	}
+
+	@Override
+	public void close() throws Exception {
+		is.close();
 	}
 
 }

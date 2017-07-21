@@ -102,7 +102,7 @@ public abstract class TiesServiceImpl implements TiesService, Runnable {
 			}
 		}
 		if (!transportsRef.compareAndSet(null, Collections.unmodifiableList(transports))) {
-			throw new TiesConfigurationException("TiesDB Transports were initialized already");
+			throw new TiesConfigurationException("TiesDB Transports have already been initialized");
 		}
 	}
 

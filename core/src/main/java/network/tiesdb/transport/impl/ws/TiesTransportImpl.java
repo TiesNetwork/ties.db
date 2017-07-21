@@ -26,8 +26,6 @@ import network.tiesdb.context.api.TiesTransportConfig;
 import network.tiesdb.exception.TiesException;
 import network.tiesdb.handler.api.TiesHandler;
 import network.tiesdb.service.api.TiesService;
-import network.tiesdb.transport.api.TiesRequest;
-import network.tiesdb.transport.api.TiesResponse;
 import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.impl.ws.netty.WebSocketServer;
 
@@ -75,11 +73,6 @@ public abstract class TiesTransportImpl implements TiesTransport {
 
 	protected void stopInternal() throws TiesException {
 		server.stop();
-	}
-
-	@Override
-	public void handle(TiesRequest request, TiesResponse response) {
-		this.handler.handle(request, response);
 	}
 
 	@Override

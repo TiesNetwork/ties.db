@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.transport.api;
+package network.tiesdb.handler.impl.json;
 
-import network.tiesdb.api.TiesVersion;
-import network.tiesdb.context.api.TiesTransportConfig;
-import network.tiesdb.handler.api.TiesHandler;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
+import org.codehaus.jackson.map.annotate.JsonTypeIdResolver;
 
 /**
- * TiesDB transport API.
+ * Root of TiesDB JSON request.
  * 
- * <P>Defines common transport functions.
+ * <P>Any class implementing this interface can be a JSON request root.
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesTransport {
-
-	TiesTransportDaemon getDaemon();
-	
-	TiesHandler getHandler();
-
-	TiesTransportConfig getTiesTransportConfig();
-
-	TiesVersion getVersion();
+@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.CUSTOM)
+@JsonTypeIdResolver(TiesJsonRequestRootTypeIdResolver.class)
+public interface TiesJsonRequestRoot extends TiesJsonRequest {
 
 }

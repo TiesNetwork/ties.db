@@ -25,8 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser.Feature;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,10 @@ import org.slf4j.LoggerFactory;
 import network.tiesdb.api.TiesVersion;
 import network.tiesdb.api.TiesVersion.ToString;
 import network.tiesdb.context.api.TiesHandlerConfig;
+import network.tiesdb.exception.TiesException;
 import network.tiesdb.handler.api.TiesHandler;
+import network.tiesdb.handler.impl.json.TiesJsonObjectMapperModule;
+import network.tiesdb.handler.impl.json.TiesJsonRequestRoot;
 import network.tiesdb.service.impl.TiesServiceImpl;
 import network.tiesdb.transport.api.TiesRequest;
 import network.tiesdb.transport.api.TiesResponse;
@@ -67,17 +71,31 @@ public class TiesHandlerImpl implements TiesHandler {
 	};
 
 	@Override
-	public void handle(final TiesRequest request, final TiesResponse response) {
+	public void handle(final TiesRequest request, final TiesResponse response) throws TiesException {
 		logger.trace("Call to network.tiesdb.handler.impl.TiesHandlerImpl.handle(request, response)");
-		handleInternal(request, response);
+		try {
+			handleInternal1(request, response);
+		} catch (IOException e) {
+			throw new TiesException("Can't process request", e);
+		}
+	}
+
+	protected void handleInternal1(TiesRequest request, TiesResponse response)
+			throws JsonParseException, JsonMappingException, IOException {
+		ObjectMapper mapper = createConfiguredMapper();
+		TiesJsonRequestRoot jsonRequest = mapper.readValue(request.getInputStream(), TiesJsonRequestRoot.class);
+		mapper.writerWithDefaultPrettyPrinter().writeValue(response.getOutputStream(), jsonRequest);
+	}
+
+	private ObjectMapper createConfiguredMapper() {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+		mapper.registerModule(new TiesJsonObjectMapperModule());
+		return mapper;
 	}
 
 	protected void handleInternal(TiesRequest request, TiesResponse response) {
-		ObjectMapper mapper = new ObjectMapper();
-
-		JsonFactory factory = mapper.getJsonFactory();
-		factory.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-
+		ObjectMapper mapper = createConfiguredMapper();
 		try (InputStream is = request.getInputStream()) {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> jsonMap = mapper.readValue(is, Map.class);
@@ -87,6 +105,7 @@ public class TiesHandlerImpl implements TiesHandler {
 				iter.remove();
 				jsonMap.put(entry.getKey().toLowerCase(), entry.getValue().toString().toUpperCase());
 			}
+
 			jsonMap.put("serviceVersion", ToString.format(service.getVersion()));
 
 			List<Map<?, ?>> transportsVersions = new ArrayList<>();

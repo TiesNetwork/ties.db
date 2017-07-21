@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.transport.api;
+package network.tiesdb.handler.impl.json;
 
-import network.tiesdb.api.TiesVersion;
-import network.tiesdb.context.api.TiesTransportConfig;
-import network.tiesdb.handler.api.TiesHandler;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
 /**
- * TiesDB transport API.
+ * TiesDB request root annotation.
  * 
- * <P>Defines common transport functions.
+ * <P>Marks class as a root of TiesDB request.
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesTransport {
+@Retention(RUNTIME)
+@Target(TYPE)
+public @interface TiesRequestRoot {
 
-	TiesTransportDaemon getDaemon();
-	
-	TiesHandler getHandler();
-
-	TiesTransportConfig getTiesTransportConfig();
-
-	TiesVersion getVersion();
+	String value();
 
 }

@@ -66,7 +66,7 @@ public class TiesInitialization implements Runnable {
 				new File(getConfigDir() + File.separator + DEFAULT_CONFIG_FILE_NAME).toURI().toURL());
 		logger.trace("TiesDB context loaded successfully...");
 		if (!TiesDaemon.instance.context.compareAndSet(null, contextHandler.getDelegate())) {
-			throw new IllegalStateException("TiesDaemon context was initialized already");
+			throw new IllegalStateException("TiesDaemon context has already been initialized");
 		}
 		logger.trace("TiesDB context contains {} services", contextHandler.getConfigsNames().size());
 		for (String name : contextHandler.getConfigsNames()) {

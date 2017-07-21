@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package network.tiesdb.transport.api;
+package network.tiesdb.handler.impl.json.request;
 
-import network.tiesdb.api.TiesVersion;
-import network.tiesdb.context.api.TiesTransportConfig;
-import network.tiesdb.handler.api.TiesHandler;
+import network.tiesdb.handler.impl.json.TiesJsonRequestRoot;
+import network.tiesdb.handler.impl.json.TiesRequestRoot;
 
 /**
- * TiesDB transport API.
- * 
- * <P>Defines common transport functions.
+ * Root class for TiesDB JSON "select" request.
  *  
  * @author Anton Filatov (filatov@ties.network)
  */
-public interface TiesTransport {
-
-	TiesTransportDaemon getDaemon();
-	
-	TiesHandler getHandler();
-
-	TiesTransportConfig getTiesTransportConfig();
-
-	TiesVersion getVersion();
-
+@TiesRequestRoot("select")
+public class TiesJsonRequestSelect implements TiesJsonRequestRoot {
+	public String hello;
 }

@@ -28,11 +28,19 @@ import network.tiesdb.transport.api.TiesResponse;
  * 
  * @author Anton Filatov (filatov@ties.network)
  */
-public class WebSocketResponseHandler implements TiesResponse {
+public class WebSocketResponseHandler implements TiesResponse, AutoCloseable {
 
-	private class WrappedOutputStream extends ByteArrayOutputStream {
+	private static class WrappedOutputStream extends ByteArrayOutputStream {
 
 		volatile boolean sentAndClosed = false;
+		private final ChannelHandlerContext ctx;
+
+		private WrappedOutputStream(ChannelHandlerContext ctx) {
+			if (null == ctx) {
+				throw new NullPointerException("The ctx should not be null");
+			}
+			this.ctx = ctx;
+		}
 
 		private void check() {
 			if (sentAndClosed) {
@@ -67,18 +75,20 @@ public class WebSocketResponseHandler implements TiesResponse {
 
 	}
 
-	private ChannelHandlerContext ctx;
+	private final WrappedOutputStream os;
 
 	public WebSocketResponseHandler(ChannelHandlerContext ctx) {
-		if (null == ctx) {
-			throw new NullPointerException("The ctx should not be null");
-		}
-		this.ctx = ctx;
+		this.os = new WrappedOutputStream(ctx);
 	}
 
 	@Override
 	public OutputStream getOutputStream() {
-		return new WrappedOutputStream();
+		return os;
+	}
+
+	@Override
+	public void close() throws Exception {
+		os.close();
 	}
 
 }

@@ -17,7 +17,6 @@ package network.tiesdb.handler.impl;
 
 import network.tiesdb.api.TiesApiVersion;
 import network.tiesdb.api.TiesVersion;
-import network.tiesdb.api.TiesVersion.ToString;
 
 /**
  * TiesDB handler version implementation.

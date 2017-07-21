@@ -87,8 +87,8 @@ public class TiesJsonRequestRootTypeIdResolver implements TypeIdResolver {
 	}
 
 	private JavaType getBinding(String id) {
-		Class<?> binding = CLASS_BINDINGS.get(id);
-		return null == binding ? baseType : baseType.narrowBy(binding);
+		Class<?> binding = null == id ? null : CLASS_BINDINGS.get(id);
+		return null == binding ? null : baseType.narrowBy(binding);
 	}
 
 	@Override

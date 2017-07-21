@@ -37,7 +37,6 @@ import network.tiesdb.api.TiesVersion.ToString;
 import network.tiesdb.context.api.TiesHandlerConfig;
 import network.tiesdb.exception.TiesException;
 import network.tiesdb.handler.api.TiesHandler;
-import network.tiesdb.handler.impl.json.TiesJsonObjectMapperModule;
 import network.tiesdb.handler.impl.json.TiesJsonRequestRoot;
 import network.tiesdb.service.impl.TiesServiceImpl;
 import network.tiesdb.transport.api.TiesRequest;
@@ -90,7 +89,6 @@ public class TiesHandlerImpl implements TiesHandler {
 	private ObjectMapper createConfiguredMapper() {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-		mapper.registerModule(new TiesJsonObjectMapperModule());
 		return mapper;
 	}
 

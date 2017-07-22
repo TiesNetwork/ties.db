@@ -17,6 +17,8 @@ package network.tiesdb.bootstrap;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.common.logging.logback.LogbackESLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,15 @@ import network.tiesdb.exception.TiesStartupException;
 public class TiesDaemon extends TiesBootstrap {
 
 	private static final Logger logger = LoggerFactory.getLogger(TiesDaemon.class);
+
+	static {
+		try {
+			ESLoggerFactory.setDefaultFactory(new LogbackESLoggerFactory());
+		} catch (Exception e) {
+			System.err.println("Failed to configure logging " + e.toString());
+			e.printStackTrace(System.err);
+		}
+	}
 
 	public static TiesDaemon instance = new TiesDaemon();
 

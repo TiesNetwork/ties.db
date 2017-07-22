@@ -26,6 +26,22 @@
         </license>
     </licenses>
 
+    <!--
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <configuration>
+                        <finalName>${tiesdb.build.prefix}${project.artifactId}-${project.version}</finalName>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+    -->
+
     <modules>
         <module>api</module>
         <module>util</module>

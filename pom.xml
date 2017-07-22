@@ -38,6 +38,7 @@
     </scm>
 
     <properties>
+        <tiesdb.build.prefix>tiesdb-</tiesdb.build.prefix>
         <!-- project basic configuration -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jvm.executable>${java.home}${file.separator}bin${file.separator}java</jvm.executable>

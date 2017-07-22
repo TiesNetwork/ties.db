@@ -33,6 +33,11 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.strapdata.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 </project>

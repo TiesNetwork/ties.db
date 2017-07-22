@@ -41,6 +41,7 @@
 		<dependency>
 			<groupId>com.strapdata.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 

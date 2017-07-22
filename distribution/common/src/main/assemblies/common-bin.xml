@@ -1,13 +1,32 @@
 <component>
     <dependencySets>
+        <!-- network.ties.db group dependencies with prefix tiesdb -->
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>false</useTransitiveFiltering>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputFileNameMapping>${tiesdb.build.prefix}${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+            <includes>
+                <!-- include network.ties.db group -->
+                <include>network.ties.db:*:*</include>
+            </includes>
+            <excludes>
+              <!-- don't include POMs they are useless in runtime -->
+              <exclude>*:pom</exclude>
+            </excludes>
+        </dependencySet>
+        <!-- all other dependencies except network.ties.db group -->
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>
             <useTransitiveFiltering>false</useTransitiveFiltering>
             <useProjectArtifact>false</useProjectArtifact>
             <excludes>
-              <!-- don't include POMs -->
+              <!-- don't include POMs they are useless in runtime -->
               <exclude>*:pom</exclude>
+              <!-- don't include network.ties.db group we have it already -->
+              <exclude>network.ties.db:*:*</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>

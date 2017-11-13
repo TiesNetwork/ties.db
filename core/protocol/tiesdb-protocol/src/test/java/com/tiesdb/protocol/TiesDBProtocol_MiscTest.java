@@ -1,5 +1,6 @@
 package com.tiesdb.protocol;
 
+import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
@@ -42,12 +43,9 @@ public class TiesDBProtocol_MiscTest {
 	}
 
 	TiesDBProtocol newProtocol(Version ver) {
-		return new TiesDBProtocol() {
-			@Override
-			public Version getVersion() {
-				return ver;
-			}
-		};
+		TiesDBProtocol protocol = mock(TiesDBProtocol.class);
+		when(protocol.getVersion()).thenReturn(ver);
+		return protocol;
 	}
 
 }

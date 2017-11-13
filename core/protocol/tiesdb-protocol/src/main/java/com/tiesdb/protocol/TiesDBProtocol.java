@@ -2,6 +2,8 @@ package com.tiesdb.protocol;
 
 import java.util.Comparator;
 
+import com.tiesdb.protocol.exception.TiesDBProtocolException;
+
 public interface TiesDBProtocol {
 
 	public static final Comparator<TiesDBProtocol> PROTOCOL_COMPARATOR = new Comparator<TiesDBProtocol>() {
@@ -13,5 +15,7 @@ public interface TiesDBProtocol {
 	};
 
 	Version getVersion();
+
+	void acceptPacket(TiesDBProtocolPacketStream packetStream, TiesDBProtocolHandler handler) throws TiesDBProtocolException;
 
 }

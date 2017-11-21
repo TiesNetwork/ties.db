@@ -6,16 +6,15 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.tiesdb</groupId>
-        <artifactId>core-parent</artifactId>
+        <groupId>com.tiesdb.lib</groupId>
+        <artifactId>lib-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.tiesdb.lib</groupId>
-    <artifactId>lib-parent</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>crypto</artifactId>
+    <packaging>jar</packaging>
 
-    <name>TiesDB Lib Parent</name>
+    <name>Ties crypto library</name>
     <inceptionYear>2017</inceptionYear>
 
     <licenses>
@@ -25,11 +24,5 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <modules>
-        <module>merkletree</module>
-        <module>tiescheque</module>
-        <module>crypto</module>
-    </modules>
 
 </project>

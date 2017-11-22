@@ -1,4 +1,4 @@
-package com.tiesdb.protocol.v0;
+package com.tiesdb.protocol.v0.test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import com.tiesdb.protocol.TiesDBProtocol;
 import com.tiesdb.protocol.TiesDBProtocolManager;
-import com.tiesdb.protocol.v0.impl.TiesDBProtocolV0Impl;
+import com.tiesdb.protocol.v0.impl.TiesDBProtocolImpl;
 
 @DisplayName("TiesDBProtocol version 0 Miscelaneous Test")
 public class TiesDBProtocolV0_MiscTest {
@@ -20,7 +20,7 @@ public class TiesDBProtocolV0_MiscTest {
 		List<TiesDBProtocol> protocols = TiesDBProtocolManager.loadProtocols();
 		assertFalse(protocols.isEmpty(), "No Protocols found");
 		assertEquals(1, protocols.size());
-		assertEquals(new TiesDBProtocolV0Impl().getVersion(), protocols.get(0).getVersion());
+		assertEquals(new TiesDBProtocolImpl().getVersion(), protocols.get(0).getVersion());
 	}
 
 }

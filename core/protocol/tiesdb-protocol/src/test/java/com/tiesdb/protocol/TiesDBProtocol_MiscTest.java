@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.tiesdb.protocol.TiesDBProtocol;
-import com.tiesdb.protocol.Version;
+import com.tiesdb.protocol.api.TiesDBProtocol;
+import com.tiesdb.protocol.api.data.Version;
 
 @DisplayName("TiesDBProtocol Miscelaneous Test")
 public class TiesDBProtocol_MiscTest {

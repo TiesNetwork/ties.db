@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import com.tiesdb.protocol.api.TiesDBProtocol;
+
 public final class TiesDBProtocolManager {
 
 	public static List<TiesDBProtocol> loadProtocols() {

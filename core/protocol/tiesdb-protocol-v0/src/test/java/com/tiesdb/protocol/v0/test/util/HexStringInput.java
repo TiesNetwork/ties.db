@@ -1,7 +1,7 @@
 package com.tiesdb.protocol.v0.test.util;
 
-import com.tiesdb.protocol.TiesDBProtocolPacketChannel.Input;
-import com.tiesdb.protocol.TiesDBProtocolPacketChannel.State;
+import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.Input;
+import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.State;
 
 public class HexStringInput implements Input {
 

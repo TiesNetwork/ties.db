@@ -1,4 +1,4 @@
-package com.tiesdb.protocol.v0.impl.util;
+package com.tiesdb.protocol.v0.util;
 
 @FunctionalInterface
 public interface CheckedSupplier<E extends Throwable, T> {

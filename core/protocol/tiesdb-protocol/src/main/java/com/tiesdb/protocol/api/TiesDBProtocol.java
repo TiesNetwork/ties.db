@@ -1,9 +1,10 @@
-package com.tiesdb.protocol;
+package com.tiesdb.protocol.api;
 
 import java.util.Comparator;
 
-import com.tiesdb.protocol.Version.VersionComparator;
-import com.tiesdb.protocol.Version.VersionCompratorThreshold;
+import com.tiesdb.protocol.api.data.Version;
+import com.tiesdb.protocol.api.data.Version.VersionComparator;
+import com.tiesdb.protocol.api.data.Version.VersionCompratorThreshold;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 
 public interface TiesDBProtocol {

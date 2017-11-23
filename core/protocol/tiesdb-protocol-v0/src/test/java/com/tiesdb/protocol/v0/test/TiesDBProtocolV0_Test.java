@@ -6,15 +6,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.tiesdb.protocol.TiesDBProtocol;
-import com.tiesdb.protocol.TiesDBProtocolPacketChannel;
-import com.tiesdb.protocol.TiesDBProtocolPacketChannel.Input;
-import com.tiesdb.protocol.TiesDBProtocolPacketChannel.State;
-import com.tiesdb.protocol.Version;
+import com.tiesdb.protocol.api.TiesDBProtocol;
+import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
+import com.tiesdb.protocol.api.data.Version;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0.api.ProtocolHandler;
+import com.tiesdb.protocol.v0.api.Conversation;
+import com.tiesdb.protocol.v0.api.Handler;
+import com.tiesdb.protocol.v0.api.context.PacketContext;
 import com.tiesdb.protocol.v0.exception.CRCMissmatchException;
-import com.tiesdb.protocol.v0.api.MessageContext;
 import com.tiesdb.protocol.v0.impl.TiesDBProtocolImpl;
 import com.tiesdb.protocol.v0.test.util.HexStringInput;
 
@@ -31,60 +30,48 @@ public class TiesDBProtocolV0_Test {
 	@Test
 	@DisplayName("Protocol MessageContext Handling")
 	void testProtocolMessageContextHandling() throws TiesDBProtocolException {
-		ProtocolHandler handler = mock(ProtocolHandler.class);
+		Handler handler = mock(Handler.class);
 		protocol.acceptPacket(channel, handler);
-		verify(handler, times(1)).handle(isA(MessageContext.class));
+		verify(handler, times(1)).handle(isA(Conversation.class));
 	}
 
 	@Test
 	@DisplayName("Protocol Version Parsing Success")
 	void testProtocolVersionParsingSuccess() throws TiesDBProtocolException {
 		fakeInput("C001 BA5E"//
+				+ "3F01 57D1"//
 				+ "0000 FFFF"//
-				+ "0002 0001"//
-				+ "9398 C813");
-		ProtocolHandler handler = spy(new ProtocolHandler() {
+				+ "0002 0001");
+		Handler handler = spy(new Handler() {
 			@Override
-			public void handle(MessageContext context) throws TiesDBProtocolException {
-				assertEquals(new Version(65535, 2, 1), context.getMessage().getHeader().getVersion());
+			public void handle(Conversation c) throws TiesDBProtocolException {
+				PacketContext pc = c.getPacketContext();
+				assertEquals(PacketContext.Part.HEADER, pc.next());
+				pc.parse();
+				assertEquals(new Version(65535, 2, 1), pc.getPacketHeader().getVersion());
 			}
 		});
 		protocol.acceptPacket(channel, handler);
-		verify(handler, times(1)).handle(isA(MessageContext.class));
-	}
-
-	@Test
-	@DisplayName("Protocol Version Parsing Success2")
-	void testProtocolVersionParsingSuccess2() throws TiesDBProtocolException {
-		fakeInput("C001 BA5E"//
-				+ "0000 0001"//
-				+ "0002 0003"//
-				+ "6E56 ECCF");
-		ProtocolHandler handler = spy(new ProtocolHandler() {
-			@Override
-			public void handle(MessageContext context) throws TiesDBProtocolException {
-				assertEquals(new Version(1, 2, 3), context.getMessage().getHeader().getVersion());
-			}
-		});
-		protocol.acceptPacket(channel, handler);
-		verify(handler, times(1)).handle(isA(MessageContext.class));
+		verify(handler, times(1)).handle(isA(Conversation.class));
 	}
 
 	@Test
 	@DisplayName("Protocol Version Parsing CRC Fail")
 	void testProtocolVersionFailParsingCRCFail() throws TiesDBProtocolException {
 		fakeInput("C001 BA5E"//
+				+ "9398 C813"//
 				+ "0000 FFFF"//
-				+ "0002 0002"//
-				+ "9398 C813");
-		ProtocolHandler handler = spy(new ProtocolHandler() {
+				+ "0002 0002");
+		Handler handler = spy(new Handler() {
 			@Override
-			public void handle(MessageContext context) throws TiesDBProtocolException {
-				assertThrows(CRCMissmatchException.class, context.getMessage()::getHeader);
+			public void handle(Conversation c) throws TiesDBProtocolException {
+				PacketContext pc = c.getPacketContext();
+				assertEquals(PacketContext.Part.HEADER, pc.next());
+				assertThrows(CRCMissmatchException.class, pc::parse);
 			}
 		});
 		protocol.acceptPacket(channel, handler);
-		verify(handler, times(1)).handle(isA(MessageContext.class));
+		verify(handler, times(1)).handle(isA(Conversation.class));
 	}
 
 	private void fakeInput(String hexString) {

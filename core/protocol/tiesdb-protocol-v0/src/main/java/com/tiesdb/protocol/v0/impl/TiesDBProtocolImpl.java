@@ -1,13 +1,15 @@
 package com.tiesdb.protocol.v0.impl;
 
-import com.tiesdb.protocol.TiesDBProtocol;
-import com.tiesdb.protocol.TiesDBProtocolHandler;
-import com.tiesdb.protocol.TiesDBProtocolPacketChannel;
-import com.tiesdb.protocol.Version;
+import java.util.Objects;
+
+import com.tiesdb.protocol.api.TiesDBProtocol;
+import com.tiesdb.protocol.api.TiesDBProtocolHandler;
+import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
+import com.tiesdb.protocol.api.data.Version;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0.api.MessageContext;
-import com.tiesdb.protocol.v0.api.ProtocolHandler;
-import static com.google.common.base.Preconditions.*;
+import com.tiesdb.protocol.v0.api.Conversation;
+import com.tiesdb.protocol.v0.api.Handler;
+import com.tiesdb.protocol.v0.impl.context.ConversationImpl;
 
 public class TiesDBProtocolImpl implements TiesDBProtocol {
 
@@ -21,14 +23,17 @@ public class TiesDBProtocolImpl implements TiesDBProtocol {
 	@Override
 	public void acceptPacket(TiesDBProtocolPacketChannel packetChannel, TiesDBProtocolHandler handler)
 			throws TiesDBProtocolException {
-		checkNotNull(handler);
-		checkArgument(handler instanceof ProtocolHandler);
-		MessageContext context = createContext(packetChannel);
-		((ProtocolHandler) handler).handle(context);
+		Objects.requireNonNull(packetChannel);
+		Objects.requireNonNull(handler);
+		if (!Handler.class.isInstance(handler)) {
+			throw new IllegalArgumentException(
+					"Handler of " + handler.getClass() + " should implement an " + Handler.class);
+		}
+		((Handler) handler).handle(createConversation(packetChannel));
 	}
 
-	protected MessageContext createContext(TiesDBProtocolPacketChannel packetChannel) throws TiesDBProtocolException {
-		return new MessageContextImpl(packetChannel);
+	private Conversation createConversation(TiesDBProtocolPacketChannel packetChannel) {
+		return new ConversationImpl(packetChannel);
 	}
 
 }

@@ -1,8 +1,8 @@
-package com.tiesdb.protocol;
+package com.tiesdb.protocol.api.data;
+
+import static com.tiesdb.protocol.api.data.Version.VersionCompratorThreshold.*;
 
 import java.util.Comparator;
-
-import static com.tiesdb.protocol.Version.VersionCompratorThreshold.*;
 
 public final class Version {
 

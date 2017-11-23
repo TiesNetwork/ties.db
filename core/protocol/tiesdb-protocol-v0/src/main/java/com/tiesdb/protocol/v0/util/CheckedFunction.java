@@ -1,4 +1,4 @@
-package com.tiesdb.protocol.v0.impl.util;
+package com.tiesdb.protocol.v0.util;
 
 import java.util.Objects;
 import java.util.function.Function;

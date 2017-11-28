@@ -1,24 +1,27 @@
 package com.tiesdb.lib.merkletree;
 
-public class BinaryTrieNodeBase {
+abstract public class BinaryTrieNodeBase {
 	long prefix0;
 	long prefix1;
 	byte offsetStart; //Offset to start from the start (0 - 127)
 	byte offsetEnd; //Offset to end from the end (negative 0 - -128)
 	
-	public BinaryTrieNodeBase(long prefix0, long prefix1, byte offsetStart, byte offsetEnd) {
-		this.offsetStart = offsetStart;
-		this.offsetEnd = offsetEnd;
-		long mask0 = makeMask(offsetStart, -64 < offsetEnd ? 0 : offsetEnd + 64);
-		long mask1 = makeMask(offsetStart < 64 ? 0 : offsetStart-64, offsetEnd);
-		this.prefix0 = prefix0 & mask0;
-		this.prefix1 = prefix1 & mask1;
+	boolean hashIsValid;
+	
+	TrieProperties properties;
+	byte[] hash;
+	
+	public BinaryTrieNodeBase(TrieProperties properties, long prefix0, long prefix1, byte offsetStart, byte offsetEnd) {
+		this.properties = properties;
+		this.prefix0 = prefix0;
+		this.prefix1 = prefix1;
+		setOffsets(offsetStart, offsetEnd);
 	}
 	
 	boolean compare(long id0, long id1) {
 		long mask0 = makeMask(offsetStart, -64 < offsetEnd ? 0 : offsetEnd + 64);
 		long mask1 = makeMask(offsetStart < 64 ? 0 : offsetStart-64, offsetEnd);
-		return (prefix0 == (id0 & mask0) && prefix1 == (id1 & mask1));
+		return ((prefix0 & mask0) == (id0 & mask0) && (prefix1 & mask1) == (id1 & mask1));
 	}
 	
 	public boolean isEnd() {
@@ -43,7 +46,7 @@ public class BinaryTrieNodeBase {
 		}
 	}
 	
-	private static long makeMask(int start, int end) {
+	protected static long makeMask(int start, int end) {
 		long mask = -1;
 		if(start >= 64 || -end >= 64)
 			return 0;
@@ -70,4 +73,24 @@ public class BinaryTrieNodeBase {
 		
 		return (byte)i;
 	}
+	
+	void setOffsets(byte offsetStart, byte offsetEnd) {
+		assert(offsetStart >= this.offsetStart); //Offsets can only shrink
+		assert(offsetEnd <= this.offsetEnd);
+		
+		this.offsetStart = offsetStart;
+		this.offsetEnd = offsetEnd;
+	}
+	
+	boolean isHashValid() {
+		return hash != null && hashIsValid;
+	}
+	
+	byte[] ensureHash() {
+		if(hash == null)
+			hash = new byte[properties.hash.getDigestSize()];
+		return hash;	
+	}
+	
+	abstract public void recomputeHash();
 }

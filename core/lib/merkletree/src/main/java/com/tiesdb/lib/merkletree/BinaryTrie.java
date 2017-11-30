@@ -4,8 +4,9 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import com.tiesdb.lib.crypto.digest.api.Digest;
+import com.tiesdb.lib.merkletree.api.Trie;
 
-public class BinaryTrie extends BinaryTrieNode {
+class BinaryTrie extends BinaryTrieNode implements Trie{
 	public BinaryTrie(Digest hash) {
 		//BinaryTrie is itself a root node
 		super(new TrieProperties(), 0, 0, (byte)0, (byte)-128);
@@ -21,51 +22,77 @@ public class BinaryTrie extends BinaryTrieNode {
 	 * @param data
 	 */
 	public void insert(long id0, long id1, byte[] data) {
+		BinaryTrieLeaf newleaf = new BinaryTrieLeaf(properties, id0, id1, data);
+		insert(newleaf);
+	}
+	
+	/**
+	 * Inserts the data into the tree (or updates existing element)
+	 * @param id0
+	 * @param id1
+	 * @param data
+	 */
+	void insert(BinaryTrieNodeBase leaf) {
 		BinaryTrieNode parent = null;
 		BinaryTrieNodeBase node = this;
+		
+		long id0 = leaf.prefix0;
+		long id1 = leaf.prefix1;
+		
 		while(true) {
-			BinaryTrieNode n = (BinaryTrieNode)node;
-			node.hashIsValid = false; //Since we go this path, this hash will be invalid after insertion/update
+			if(node == null) {
+				assert(parent != null); //Parent should have already been set
+				assert(parent == this || properties.isBuildingMode); //This is possible only for root node or for building mode!
+				//if this asserts on subtrie you probably have forgotten include this id in subtrie
+				
+				//We have found a node where new leaf should be placed
+				leaf.setOffsets((byte)(128 + parent.offsetEnd), leaf.offsetEnd);
+				parent.addChild(leaf);
+				return;
+			}
 			
-			if(n.compare(id0, id1)) {
-				boolean next1 = n.isNext1(id0, id1);
-				parent = n;
-				node = next1 ? n.child1 : n.child0;
-				if(node == null) {
-					//We have found a node where new leaf should be placed
-					BinaryTrieLeaf leaf = new BinaryTrieLeaf(properties, id0, id1, data, (byte)(128 + n.offsetEnd));
-					if(next1) {
-						n.child1 = leaf;
-					}else {
-						n.child0 = leaf;
-					}
-					return;
-				}else if(node instanceof BinaryTrieLeaf) {
-					BinaryTrieLeaf leaf = (BinaryTrieLeaf)node;
+			if(node.compare(leaf)) {
+				//If the leaf is should be added under (or should replace) this node
+				if(leaf.offsetEnd > node.offsetEnd) {
+					//the leaf should be added under this node
+					node.setFlags(0, FLAG_HASH_VALID); //Since we add below this node, this hash will be invalid after insertion/update
 					
-					BinaryTrieNode newn = addLeafToNode(leaf, id0, id1, data);
-					if(newn != null) {
-						if(next1) {
-							n.child1 = newn;
-						} else {
-							n.child0 = newn;
-						}
-					} else {
-						//The node is the same. Just update the payload
-						leaf.hashData(data);
+					boolean next1 = node.isNext1(id0, id1);
+					parent = (BinaryTrieNode)node;
+					node = next1 ? parent.child1 : parent.child0;
+					continue;
+				} else {
+					//We have a node here that equals the one we already have
+					//Just updating it
+					assert(parent != null); //Root node is comparable to anything so parent should be initialized before this line
+					
+					parent.addChild(leaf);
+					if(leaf instanceof BinaryTrieNode) {
+						assert(properties.isBuildingMode); //Adding intermediate nodes only in building mode!
+						BinaryTrieNode newn = (BinaryTrieNode)leaf;
+						BinaryTrieNode oldn = (BinaryTrieNode)node;
+						newn.child0 = oldn.child0;
+						newn.child1 = oldn.child1;
 					}
 					return;
 				}
-			} else {
-				BinaryTrieNode newn = addLeafToNode(n, id0, id1, data);
-				assert(newn != null); //Otherwise it would not be else clause
+			} else if(leaf.compare(node)) {
+				//Intermediate node with shorter id
+				assert(properties.isBuildingMode); //Only in building mode!
 				assert(parent != null); //Root node is comparable to anything so parent should be initialized before this line
 				
-				if(parent.isNext1(id0, id1)) {
-					parent.child1 = newn;
-				} else {
-					parent.child0 = newn;
-				}
+				BinaryTrieNode newn = (BinaryTrieNode)leaf;
+				
+				leaf.offsetStart = newn.offsetStart;
+				parent.addChild(newn);
+				newn.addChild(node);
+				return;
+			} else {
+				BinaryTrieNode newn = addNodeToNode(node, leaf);
+				assert(newn != null); //Otherwise there would not be else clause
+				assert(parent != null); //Root node is comparable to anything so parent should be initialized before this line
+				
+				parent.addChild(newn);
 				return;
 			}
 		}
@@ -75,24 +102,23 @@ public class BinaryTrie extends BinaryTrieNode {
 		insert(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), data);
 	}
 	
-	private BinaryTrieNode addLeafToNode(BinaryTrieNodeBase node, long id0, long id1, byte[] data) {
-		byte i = node.findCommon(id0, id1);
+	private BinaryTrieNode addNodeToNode(BinaryTrieNodeBase node, BinaryTrieNodeBase newleaf) {
+		long id0 = newleaf.prefix0;
+		long id1 = newleaf.prefix1;
+		
+		byte i = node.findCommon(newleaf);
+		assert(i >= -1); //The nodes should be siblings or the newleaf should be child of the node
+		//if i == -2 newleaf should be parent and this function does not do this
+		//if i == -3 the start offsets are messed up
+		
 		if(i < 0)
-			return null; //Leaf nodes are identical
+			return null; //Leaf nodes are identical or intermediate nodes are related
 		
 		assert i > node.offsetStart;
 		
 		BinaryTrieNode newnode = new BinaryTrieNode(properties, id0, id1, node.offsetStart, (byte)(i - 128));
-		BinaryTrieLeaf newleaf = new BinaryTrieLeaf(properties, id0, id1, data, (byte)i);
-		node.setOffsets(i, node.offsetEnd);
-		
-		if(newnode.isNext1(id0,  id1)) {
-			newnode.child1 = newleaf;
-			newnode.child0 = node;
-		}else {
-			newnode.child0 = newleaf;
-			newnode.child1 = node;
-		}
+		newnode.addChild(newleaf);
+		newnode.addChild(node);
 		
 		return newnode;
 	}
@@ -113,6 +139,9 @@ public class BinaryTrie extends BinaryTrieNode {
 				if(node instanceof BinaryTrieLeaf) {
 					return (BinaryTrieLeaf)node;
 				} else {
+					if(properties.isSubtrieMode && !node.testFlags(FLAG_SUBTRIE))
+						return null; //We are out of the subtrie. So no children traversing
+					
 					BinaryTrieNode n = (BinaryTrieNode)node;
 					boolean next1 = n.isNext1(id0, id1);
 					node = next1 ? n.child1 : n.child0;
@@ -148,4 +177,50 @@ public class BinaryTrie extends BinaryTrieNode {
 	public boolean check(UUID uuid, byte[] data) {
 		return check(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), data);
 	}
+	
+	public void addToSubtrie(long id0, long id1) {
+		BinaryTrieNodeBase node = this;
+		
+		while(true) {
+			if(node == null)
+				return;
+			
+			node.setFlag(FLAG_SUBTRIE);
+			
+			if(node.compare(id0, id1)) {
+				if(node instanceof BinaryTrieLeaf) {
+					return;
+				} else {
+					BinaryTrieNode n = (BinaryTrieNode)node;
+					boolean next1 = n.isNext1(id0, id1);
+					node = next1 ? n.child1 : n.child0;
+				}
+			} else {
+				return;
+			}
+		}
+	}
+
+	@Override
+	public void setSubtrieMode(boolean subtrieMode) {
+		properties.isSubtrieMode = subtrieMode;
+	}
+
+	@Override
+	public void addToSubtrie(UUID id) {
+		addToSubtrie(id.getMostSignificantBits(), id.getLeastSignificantBits());
+	}
+
+	@Override
+	public byte[] hash() {
+		recomputeHash();
+		return this.hash;
+	}
+	
+	@Override
+	public void clearSubtrie() {
+		super.clearSubtrie();
+	}
+	
+	
 }

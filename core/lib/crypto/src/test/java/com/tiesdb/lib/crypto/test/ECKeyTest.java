@@ -37,10 +37,10 @@ class ECKeyTest {
 		
 		ECKey.ECDSASignature sig = key.sign(hash);
 		
-		byte [] pub = key.signatureToKeyBytes(hash, sig);
+		byte [] pub = ECKey.signatureToKeyBytes(hash, sig);
 		assertTrue(Arrays.equals(pub, key.getPubKey()), "Signature should recover public key");
 		
-		pub = key.signatureToKeyBytes(hash, sig.toByteArray());
+		pub = ECKey.signatureToKeyBytes(hash, sig.toByteArray());
 		assertTrue(Arrays.equals(pub, key.getPubKey()), "Signature should recover from bytes to public key");
 	}
 
@@ -66,9 +66,13 @@ class ECKeyTest {
 		
 		ECKey.ECDSASignature sig = key.sign(hash);
 		
-		byte [] pub = key.signatureToKeyBytes(hash, sig);
+		byte [] pub = ECKey.signatureToKeyBytes(hash, sig);
 		assertEquals(pub.length, 65, "Public key should be encoded by 65 bytes");
 		assertTrue(Arrays.equals(pub, key.getPubKey()), "Signature should recover public key");
+		
+		//Testing checking signature with public key only
+		ECKey pubkey = ECKey.fromPublicOnly(key.getPubKey());
+		assertTrue(pubkey.checkSignature(hash, sig.toByteArray()));
 	}
 	
 	@Test
@@ -95,7 +99,7 @@ class ECKeyTest {
 	}
 	
     @Test
-    void testSignature() {
+    void testSignature() throws SignatureException {
     	byte[] pkey = Hex.decode("5f3c7581ee902c352bbe2d70fa665ad11f1c8ff197f28368e94dc1f314e61935");
     	ECKey key = ECKey.fromPrivate(pkey);
     	
@@ -121,6 +125,8 @@ class ECKeyTest {
     	String saddr = Hex.toHexString(addr);
     	assertTrue(Arrays.equals(addr, Hex.decode("A39370058B6e7c13F765BEa29EE0623195fC3C6d")), "Address should be the same");
     	
+    	addr = ECKey.signatureToAddressBytes(hash, sig);
+    	assertTrue(Arrays.equals(addr, Hex.decode("A39370058B6e7c13F765BEa29EE0623195fC3C6d")), "Address from signature should be the same");
 	}
 	
 	

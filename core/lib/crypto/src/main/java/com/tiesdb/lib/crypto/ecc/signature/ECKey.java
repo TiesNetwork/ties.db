@@ -383,6 +383,7 @@ public class ECKey {
 	 */
 	public byte[] getAddress() {
 		if (pubKeyHash == null) {
+			check(pub != null, "Public key should be initialized");
 			pubKeyHash = computeAddress(this.pub);
 		}
 		return pubKeyHash;
@@ -505,6 +506,15 @@ public class ECKey {
 			ECDSASignature signature = fromComponents(r, s);
 			signature.v = v;
 			return signature;
+		}
+
+		public static ECDSASignature fromBytes(byte[] signatureEncoded) throws SignatureException {
+			// Parse the signature bytes into r/s and the selector value.
+			if (signatureEncoded.length < 65)
+				throw new SignatureException("Signature truncated, expected 65 bytes and got " + signatureEncoded.length);
+			
+			return fromComponents(Arrays.copyOfRange(signatureEncoded, 0, 32),
+					Arrays.copyOfRange(signatureEncoded, 32, 64), signatureEncoded[64]);
 		}
 
 		public boolean validateComponents() {
@@ -701,13 +711,7 @@ public class ECKey {
 	 *             signature format error.
 	 */
 	public static byte[] signatureToKeyBytes(byte[] messageHash, byte[] signatureEncoded) throws SignatureException {
-		// Parse the signature bytes into r/s and the selector value.
-		if (signatureEncoded.length < 65)
-			throw new SignatureException("Signature truncated, expected 65 bytes and got " + signatureEncoded.length);
-
-		return signatureToKeyBytes(messageHash,
-				ECDSASignature.fromComponents(Arrays.copyOfRange(signatureEncoded, 0, 32),
-						Arrays.copyOfRange(signatureEncoded, 32, 64), signatureEncoded[64]));
+		return signatureToKeyBytes(messageHash,	ECDSASignature.fromBytes(signatureEncoded));
 	}
 
 	public static byte[] signatureToKeyBytes(byte[] messageHash, ECDSASignature sig) throws SignatureException {
@@ -724,7 +728,26 @@ public class ECKey {
 			throw new SignatureException("Could not recover public key from signature");
 		return key;
 	}
+	
+	public boolean checkSignature(byte[] messageHash, byte[] signatureEncoded) throws SignatureException {
+		return checkSignature(messageHash, ECDSASignature.fromBytes(signatureEncoded));
+	}
+	
+	public boolean checkSignature(byte[] messageHash, ECDSASignature sig) throws SignatureException {
+		byte []pubkey = signatureToKeyBytes(messageHash, sig);
+		return Arrays.equals(pubkey, getPubKey());
+	}
 
+	public static byte[] signatureToAddressBytes(byte[] messageHash, byte[] signatureEncoded) throws SignatureException {
+		return signatureToAddressBytes(messageHash,	ECDSASignature.fromBytes(signatureEncoded));
+	}
+
+	public static byte[] signatureToAddressBytes(byte[] messageHash, ECDSASignature sig) throws SignatureException {
+		byte[] pubkey = signatureToKeyBytes(messageHash, sig);
+		byte[] address = computeAddress(pubkey);
+		return address;
+	}
+	
 	/**
 	 * Decompress a compressed public key (x co-ord and low-bit of y-coord).
 	 *

@@ -1,80 +1,181 @@
 package com.tiesdb.protocol.v0.test;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static com.tiesdb.protocol.v0.test.util.TestHelper.*;
+
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.tiesdb.protocol.TiesDBProtocolManager;
 import com.tiesdb.protocol.api.TiesDBProtocol;
 import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
-import com.tiesdb.protocol.api.data.Version;
+import com.tiesdb.protocol.api.data.ElementReader;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0.api.Conversation;
-import com.tiesdb.protocol.v0.api.Handler;
-import com.tiesdb.protocol.v0.api.context.PacketContext;
+import com.tiesdb.protocol.v0.TiesDBProtocolV0;
+import com.tiesdb.protocol.v0.api.TiesConversation;
+import com.tiesdb.protocol.v0.api.TiesConversationHandler;
+import com.tiesdb.protocol.v0.element.TiesDBRequest;
+import com.tiesdb.protocol.v0.element.TiesDBRequestHeader;
+import com.tiesdb.protocol.v0.element.TiesDBRequestSignature;
+import com.tiesdb.protocol.v0.element.TiesElement;
 import com.tiesdb.protocol.v0.exception.CRCMissmatchException;
-import com.tiesdb.protocol.v0.impl.TiesDBProtocolImpl;
-import com.tiesdb.protocol.v0.test.util.HexStringInput;
+import com.tiesdb.protocol.v0.impl.ElementFactory;
+import com.tiesdb.protocol.v0.impl.ProtocolHelper;
 
 @DisplayName("TiesDBProtocol version 0 Test")
 public class TiesDBProtocolV0_Test {
 
-	private final TiesDBProtocol protocol = spy(new TiesDBProtocolImpl());
-	private final TiesDBProtocolPacketChannel channel;
-	{
-		channel = mock(TiesDBProtocolPacketChannel.class);
+	private static final List<TiesDBProtocol> PROTOCOLS = TiesDBProtocolManager.loadProtocols();
+
+	private static final TiesDBProtocolPacketChannel createChannel() {
+		TiesDBProtocolPacketChannel channel = mock(TiesDBProtocolPacketChannel.class);
 		when(channel.getInput()).thenReturn(mock(TiesDBProtocolPacketChannel.Input.class));
+		return channel;
 	}
 
 	@Test
 	@DisplayName("Protocol MessageContext Handling")
 	void testProtocolMessageContextHandling() throws TiesDBProtocolException {
-		Handler handler = mock(Handler.class);
-		protocol.acceptPacket(channel, handler);
-		verify(handler, times(1)).handle(isA(Conversation.class));
+		TiesDBProtocol protocol = createProtocol();
+		TiesDBProtocolPacketChannel channel = createChannel();
+		TiesConversationHandler tiesConversationHandler = mock(TiesConversationHandler.class);
+		protocol.createChannel(channel, tiesConversationHandler);
+		verify(tiesConversationHandler, times(1)).handle(isA(TiesConversation.class));
+	}
+
+	private TiesDBProtocol createProtocol() {
+		return spy(PROTOCOLS.get(0));
 	}
 
 	@Test
 	@DisplayName("Protocol Version Parsing Success")
-	void testProtocolVersionParsingSuccess() throws TiesDBProtocolException {
-		fakeInput("C001 BA5E"//
-				+ "3F01 57D1"//
-				+ "0000 FFFF"//
-				+ "0002 0001");
-		Handler handler = spy(new Handler() {
-			@Override
-			public void handle(Conversation c) throws TiesDBProtocolException {
-				PacketContext pc = c.getPacketContext();
-				assertEquals(PacketContext.Part.HEADER, pc.next());
-				pc.parse();
-				assertEquals(new Version(65535, 2, 1), pc.getPacketHeader().getVersion());
+	void testProtocolVersionParsingSuccess() throws TiesDBProtocolException, IOException {
+
+		ElementFactory ef = new ElementFactory();
+		ProtocolHelper ph = new ProtocolHelper();
+
+		TiesDBProtocolV0 protocol = spy(new TiesDBProtocolV0(ef, ph));
+
+		final TiesDBRequest request = new TiesDBRequest();
+		for (int c = 0; c < 5; c++) {
+			TiesDBRequestHeader header = new TiesDBRequestHeader();
+			for (int i = 0; i < 10; i++) {
+				TiesDBRequestSignature signature = new TiesDBRequestSignature();
+				signature.setValue(("sig" + i).getBytes());
+				header.add(signature);
 			}
-		});
-		protocol.acceptPacket(channel, handler);
-		verify(handler, times(1)).handle(isA(Conversation.class));
+			request.add(header);
+		}
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		{
+			TiesDBProtocolPacketChannel channel = createChannel();
+			fakeOutput(out, channel);
+			TiesConversationHandler writeHandler = spy(new TiesConversationHandler() {
+				@Override
+				public void handle(TiesConversation c) throws TiesDBProtocolException {
+					c.getWriter().write(request);
+				}
+			});
+
+			assertTrue(protocol.createChannel(channel, writeHandler));
+			verify(channel, times(0)).getInput();
+			verify(channel, times(1)).getOutput();
+			verify(writeHandler, times(1)).handle(isA(TiesConversation.class));
+		}
+
+		ByteArrayOutputStream outCheck = new ByteArrayOutputStream();
+		AtomicReference<TiesElement> requestCheckContainer = new AtomicReference<TiesElement>();
+		{
+			TiesDBProtocolPacketChannel channel = createChannel();
+			fakeInput(out.toString(), channel);
+			fakeOutput(outCheck, channel);
+			TiesConversationHandler echoHandler = spy(new TiesConversationHandler() {
+
+				@Override
+				public void handle(TiesConversation c) throws TiesDBProtocolException {
+					ElementReader<TiesElement> reader = c.getReader();
+					TiesElement requestCheck = null;
+					while (reader.hasNext()) {
+						if (requestCheck == null) {
+							requestCheckContainer.set(requestCheck = reader.readNext());
+						} else {
+							reader.readNext();
+						}
+					}
+					c.getWriter().write(requestCheck);
+				}
+
+			});
+
+			assertTrue(protocol.acceptChannel(channel, echoHandler));
+			verify(channel, times(2)).getInput();
+			verify(channel, times(1)).getOutput();
+			verify(echoHandler, times(1)).handle(isA(TiesConversation.class));
+		}
+
+		assertDeepEquals(request, requestCheckContainer.get());
+		assertArrayEquals(out.toByteArray(), outCheck.toByteArray());
 	}
 
 	@Test
-	@DisplayName("Protocol Version Parsing CRC Fail")
-	void testProtocolVersionFailParsingCRCFail() throws TiesDBProtocolException {
+	@DisplayName("Protocol Version Parsing Success Different Version")
+	void testProtocolVersionParsingSuccessDifferentVersion() throws TiesDBProtocolException {
+		TiesDBProtocol protocol = createProtocol();
+		TiesDBProtocolPacketChannel channel = createChannel();
+		TiesConversationHandler tiesConversationHandler = mock(TiesConversationHandler.class);
 		fakeInput("C001 BA5E"//
-				+ "9398 C813"//
+				+ "DB04 CD96"//
+				+ "0000 0000"//
 				+ "0000 FFFF"//
-				+ "0002 0002");
-		Handler handler = spy(new Handler() {
-			@Override
-			public void handle(Conversation c) throws TiesDBProtocolException {
-				PacketContext pc = c.getPacketContext();
-				assertEquals(PacketContext.Part.HEADER, pc.next());
-				assertThrows(CRCMissmatchException.class, pc::parse);
-			}
-		});
-		protocol.acceptPacket(channel, handler);
-		verify(handler, times(1)).handle(isA(Conversation.class));
+				, channel);
+		assertTrue(protocol.acceptChannel(channel, tiesConversationHandler));
+		verify(channel, times(1)).getInput();
+		verify(tiesConversationHandler, times(1)).handle(isA(TiesConversation.class));
 	}
 
-	private void fakeInput(String hexString) {
-		when(channel.getInput()).thenReturn(new HexStringInput(hexString));
+	@Test
+	@DisplayName("Protocol Version Parsing Fail Different Version")
+	void testProtocolVersionParsingFailDifferentVersion() throws TiesDBProtocolException {
+		TiesDBProtocol protocol = createProtocol();
+		TiesDBProtocolPacketChannel channel = createChannel();
+		TiesConversationHandler tiesConversationHandler = mock(TiesConversationHandler.class);
+		fakeInput("C001 BA5E"//
+				+ "13E7 85C8"//
+				+ "0000 0000"//
+				+ "0001 0001"//
+				, channel);
+		assertFalse(protocol.acceptChannel(channel, tiesConversationHandler));
+		verify(channel, times(1)).getInput();
+		verify(tiesConversationHandler, times(0)).handle(isA(TiesConversation.class));
 	}
+
+	@Test
+	@DisplayName("Protocol Version Parsing Fail Wrong CRC")
+	void testProtocolVersionParsingFailWrongCRC() throws TiesDBProtocolException {
+		TiesDBProtocol protocol = createProtocol();
+		TiesDBProtocolPacketChannel channel = createChannel();
+		TiesConversationHandler tiesConversationHandler = mock(TiesConversationHandler.class);
+		fakeInput("C001 BA5E"//
+				+ "13E7 85C8"//
+				+ "0000 0000"//
+				+ "0000 0001"//
+				, channel);
+		assertThrows(CRCMissmatchException.class, () -> protocol.acceptChannel(channel, tiesConversationHandler));
+		verify(channel, times(1)).getInput();
+		verify(tiesConversationHandler, times(0)).handle(isA(TiesConversation.class));
+	}
+
 }

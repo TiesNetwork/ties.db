@@ -1,5 +1,7 @@
 package com.tiesdb.protocol.v0.test.util;
 
+import javax.xml.bind.DatatypeConverter;
+
 import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.Input;
 import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.State;
 
@@ -10,7 +12,8 @@ public class HexStringInput implements Input {
 	private int mark = -1;
 
 	public HexStringInput(String hexString) {
-		this.data = javax.xml.bind.DatatypeConverter.parseHexBinary(hexString.replace(" ", ""));
+		String normalizedHexString = hexString.toLowerCase().replaceAll("<.*?>|[^0123456789abcdef]", "");
+		this.data = DatatypeConverter.parseHexBinary(normalizedHexString);
 	}
 
 	@Override
@@ -44,7 +47,7 @@ public class HexStringInput implements Input {
 	}
 
 	@Override
-	public int seek(int len) {
+	public int skip(int len) {
 		int available = available();
 		return next <= 0 ? 0 : len > available ? (next += available) : (next += len);
 	}
@@ -72,6 +75,16 @@ public class HexStringInput implements Input {
 	@Override
 	public boolean isPeeking() {
 		return mark != -1;
+	}
+
+	@Override
+	public boolean isFinished() {
+		return data.length == next;
+	}
+
+	@Override
+	public void close() {
+		System.out.println("Can't close fake input");
 	}
 
 }

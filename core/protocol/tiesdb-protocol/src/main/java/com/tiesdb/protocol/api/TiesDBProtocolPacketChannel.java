@@ -3,7 +3,7 @@ package com.tiesdb.protocol.api;
 public interface TiesDBProtocolPacketChannel {
 
 	enum State {
-		OPENING, OPENED, CLOSING, CLOSED
+		OPENING, OPENED, FINISHED, CLOSING, CLOSED
 	}
 
 	interface Input {
@@ -14,13 +14,17 @@ public interface TiesDBProtocolPacketChannel {
 
 		boolean isClosed();
 
+		boolean isFinished();
+
+		void close();
+
 		int available();
 
 		int more();
 
 		byte get();
-		
-		int seek(int len);
+
+		int skip(int length);
 
 		void peekStart();
 
@@ -29,6 +33,7 @@ public interface TiesDBProtocolPacketChannel {
 		void peekSkip();
 
 		boolean isPeeking();
+
 	}
 
 	interface Output {
@@ -39,7 +44,17 @@ public interface TiesDBProtocolPacketChannel {
 
 		boolean isClosed();
 
+		boolean isFinished();
+
+		void close();
+
+		int available();
+
+		int more();
+
 		void put(byte b);
+
+		int skip(int length);
 
 		void cacheStart();
 

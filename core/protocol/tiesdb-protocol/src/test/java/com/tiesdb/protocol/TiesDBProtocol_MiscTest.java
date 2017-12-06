@@ -35,7 +35,7 @@ public class TiesDBProtocol_MiscTest {
 				.toArray(size -> new String[size]);
 		assertArrayEquals(p1ref, p1);
 
-		protocols.sort(TiesDBProtocol.PROTOCOL_COMPARATOR);
+		protocols.sort(TiesDBProtocol.ProtocolComparator.FULL);
 		String[] p2ref = new String[] { "0.0.1", "0.0.2", "0.0.3", "0.1", "0.2", "0.3", "1.3", "2.1", "3.2", "null" };
 		String[] p2 = protocols.parallelStream().map(p -> p.getVersion() == null ? "null" : p.getVersion().toString())
 				.toArray(size -> new String[size]);

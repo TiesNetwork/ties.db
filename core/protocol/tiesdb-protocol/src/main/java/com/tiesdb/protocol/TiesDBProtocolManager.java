@@ -14,14 +14,14 @@ public final class TiesDBProtocolManager {
 	}
 
 	public static List<TiesDBProtocol> loadProtocols(ClassLoader cl) {
-		return loadProtocols(new LinkedList<>(), cl);
+		return loadProtocolsTo(new LinkedList<>(), cl);
 	}
 
-	public static <C extends Collection<? super TiesDBProtocol>> C loadProtocols(C protocols) {
-		return loadProtocols(protocols, Thread.currentThread().getContextClassLoader());
+	public static <C extends Collection<? super TiesDBProtocol>> C loadProtocolsTo(C protocols) {
+		return loadProtocolsTo(protocols, Thread.currentThread().getContextClassLoader());
 	}
 
-	public static <C extends Collection<? super TiesDBProtocol>> C loadProtocols(C protocols, ClassLoader cl) {
+	public static <C extends Collection<? super TiesDBProtocol>> C loadProtocolsTo(C protocols, ClassLoader cl) {
 		ServiceLoader.load(TiesDBProtocol.class, cl).forEach(protocol -> protocols.add(protocol));
 		return protocols;
 	}

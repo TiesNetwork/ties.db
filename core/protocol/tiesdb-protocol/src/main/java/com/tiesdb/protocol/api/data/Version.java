@@ -1,29 +1,11 @@
 package com.tiesdb.protocol.api.data;
 
-import static com.tiesdb.protocol.api.data.Version.VersionCompratorThreshold.*;
-
 import java.util.Comparator;
 
 public final class Version {
 
-	public static enum VersionCompratorThreshold {
-		MAJOR, MINOR, FULL
-	}
-
-	public static class VersionComparator implements Comparator<Version> {
-
-		private final VersionCompratorThreshold comparatorThreshold;
-
-		public VersionComparator() {
-			this(VersionCompratorThreshold.FULL);
-		}
-
-		public VersionComparator(VersionCompratorThreshold comparatorThreshold) {
-			if (comparatorThreshold == null) {
-				throw new IllegalArgumentException("comparatorThreshold should not be null");
-			}
-			this.comparatorThreshold = comparatorThreshold;
-		}
+	public static enum VersionComprator implements Comparator<Version> {
+		MAJOR, MINOR, FULL;
 
 		@Override
 		public int compare(Version v1, Version v2) {
@@ -32,10 +14,10 @@ public final class Version {
 				? (v2 == null ? 0 : 1)
 				: v2 == null
 					? -1
-					: (c = Integer.compare(v1.major, v2.major)) != 0 || comparatorThreshold.equals(MAJOR)
+					: (c = Integer.compare(v1.major, v2.major)) != 0 || equals(MAJOR)
 						? c
-						: (c = Integer.compare(v1.minor, v2.minor)) != 0 || comparatorThreshold.equals(MINOR)
-							? c
+						: (c = Integer.compare(v1.minor, v2.minor)) != 0 || equals(MINOR)
+							? c /**/
 							: Integer.compare(v1.maint, v2.maint);
 		}
 	}
@@ -58,6 +40,18 @@ public final class Version {
 		this.major = safeShort(major);
 		this.minor = safeShort(minor);
 		this.maint = safeShort(maint);
+	}
+
+	public int getMajor() {
+		return major;
+	}
+
+	public int getMinor() {
+		return minor;
+	}
+
+	public int getMaint() {
+		return maint;
 	}
 
 	private static int safeShort(int v) {

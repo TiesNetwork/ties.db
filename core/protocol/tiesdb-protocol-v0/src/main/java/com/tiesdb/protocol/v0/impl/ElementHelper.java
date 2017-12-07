@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.ebml.Element;
 import org.ebml.ProtoType;
 
-public abstract class TiesElementHelper {
+public abstract class ElementHelper {
 
 	protected static TiesEBMLExtendedElement asExtended(Element elm) {
 		return elm instanceof TiesEBMLExtendedElement ? ((TiesEBMLExtendedElement) elm) : null;

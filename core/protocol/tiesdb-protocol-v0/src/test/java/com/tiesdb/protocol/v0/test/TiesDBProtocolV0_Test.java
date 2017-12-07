@@ -26,10 +26,10 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0.TiesDBProtocolV0;
 import com.tiesdb.protocol.v0.api.TiesConversation;
 import com.tiesdb.protocol.v0.api.TiesConversationHandler;
+import com.tiesdb.protocol.v0.api.TiesElement;
 import com.tiesdb.protocol.v0.element.TiesDBRequest;
 import com.tiesdb.protocol.v0.element.TiesDBRequestHeader;
 import com.tiesdb.protocol.v0.element.TiesDBRequestSignature;
-import com.tiesdb.protocol.v0.element.TiesElement;
 import com.tiesdb.protocol.v0.exception.CRCMissmatchException;
 import com.tiesdb.protocol.v0.impl.ElementFactory;
 import com.tiesdb.protocol.v0.impl.ProtocolHelper;
@@ -68,16 +68,12 @@ public class TiesDBProtocolV0_Test {
 
 		TiesDBProtocolV0 protocol = spy(new TiesDBProtocolV0(ef, ph));
 
-		final TiesDBRequest request = new TiesDBRequest();
-		for (int c = 0; c < 5; c++) {
-			TiesDBRequestHeader header = new TiesDBRequestHeader();
-			for (int i = 0; i < 10; i++) {
-				TiesDBRequestSignature signature = new TiesDBRequestSignature();
-				signature.setValue(("sig" + i).getBytes());
-				header.add(signature);
-			}
-			request.add(header);
-		}
+		TiesDBRequest request = new TiesDBRequest();
+		TiesDBRequestHeader header = new TiesDBRequestHeader();
+		TiesDBRequestSignature signature = new TiesDBRequestSignature();
+		signature.setValue("Hello Test!".getBytes());
+		header.setSignature(signature);
+		request.setHeader(header);
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		{
@@ -119,13 +115,12 @@ public class TiesDBProtocolV0_Test {
 				}
 
 			});
-
 			assertTrue(protocol.acceptChannel(channel, echoHandler));
 			verify(channel, times(2)).getInput();
 			verify(channel, times(1)).getOutput();
 			verify(echoHandler, times(1)).handle(isA(TiesConversation.class));
 		}
-
+		assertEquals(request, requestCheckContainer.get());
 		assertDeepEquals(request, requestCheckContainer.get());
 		assertArrayEquals(out.toByteArray(), outCheck.toByteArray());
 	}

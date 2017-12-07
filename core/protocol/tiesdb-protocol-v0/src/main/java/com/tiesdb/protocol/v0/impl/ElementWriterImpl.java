@@ -8,22 +8,17 @@ import com.tiesdb.protocol.api.data.Element;
 import com.tiesdb.protocol.api.data.ElementContainer;
 import com.tiesdb.protocol.api.data.ElementWriter;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0.element.TiesElement;
+import com.tiesdb.protocol.v0.api.TiesElement;
 import com.tiesdb.protocol.v0.exception.DataParsingException;
-import com.tiesdb.protocol.v0.impl.TiesEBMLExtendedElement.MasterElement;
+import com.tiesdb.protocol.v0.impl.TiesEBMLExtendedElement.ContainerElement;
 import com.tiesdb.protocol.v0.impl.ebml.TiesEBMLDataWriter;
 
-public class ElementWriterImpl extends TiesElementHelper implements ElementWriter<TiesElement> {
+public class ElementWriterImpl extends ElementHelper implements ElementWriter<TiesElement> {
 
-	private static final TypeVisitor<MasterElement> MASTER = new TypeVisitor.TypeVisitorCommon<MasterElement>() {
+	private static final TypeVisitor<ContainerElement> MASTER = new TypeVisitor.TypeVisitorCommon<ContainerElement>() {
 		@Override
-		public MasterElement visit(MasterElement masterElement) {
-			return masterElement;
-		}
-
-		@Override
-		protected MasterElement defaultValue(TiesEBMLExtendedElement element) {
-			throw new IllegalArgumentException("Can't use " + element + " as Container");
+		public ContainerElement visit(ContainerElement containerElement) {
+			return containerElement;
 		}
 	};
 
@@ -48,14 +43,14 @@ public class ElementWriterImpl extends TiesElementHelper implements ElementWrite
 
 	private org.ebml.Element toEBMLElement(TiesElement e) {
 		if (e instanceof ElementContainer) {
-			MasterElement elm = asExtended(e.getType().getProtoType().getInstance()).accept(MASTER);
+			ContainerElement elm = asExtended(e.getType().getProtoType().getInstance()).accept(MASTER);
 			for (Element child : (ElementContainer<?>) e) {
 				elm.addChildElement(toEBMLElement((TiesElement) child));
 			}
 			return elm;
 		} else if (e instanceof TiesElementValue) {
 			org.ebml.Element elm = e.getType().getProtoType().getInstance();
-			((TiesElementValue) e).getValue(asExtended(elm));
+			((TiesElementValue<?>) e).getForElementValue(asExtended(elm));
 			return elm;
 		} else {
 			throw new DataParsingException(new TiesDBProtocolException("Unknown element type to be written"));

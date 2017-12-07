@@ -8,23 +8,26 @@ public interface TypeVisitor<T> {
 		<T> T accept(TypeVisitor<T> visitor);
 	}
 
-	T visit(MasterElement masterElement);
+	class TypeVisitorCommon<T> implements TypeVisitor<T> {
 
-	T visit(BinaryElement binaryElement);
-
-	abstract class TypeVisitorCommon<T> implements TypeVisitor<T> {
-
-		@Override
-		public T visit(MasterElement masterElement) {
-			return defaultValue(masterElement);
+		protected <E extends org.ebml.Element & TiesEBMLExtendedElement> T defaultValue(E element) {
+			throw new IllegalArgumentException("Unexpected " + element);
 		}
 
 		@Override
-		public T visit(BinaryElement binaryElement) {
-			return defaultValue(binaryElement);
+		public T visit(ContainerElement containerElement) {
+			return defaultValue(containerElement);
 		}
 
-		protected abstract T defaultValue(TiesEBMLExtendedElement element);
+		@Override
+		public T visit(ValueElement valueElement) {
+			return defaultValue(valueElement);
+		}
+
 	}
+
+	T visit(ContainerElement containerElement);
+
+	T visit(ValueElement valueElement);
 
 }

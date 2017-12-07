@@ -6,7 +6,7 @@ import com.tiesdb.protocol.api.data.ElementWriter;
 import com.tiesdb.protocol.api.data.Version;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0.api.TiesConversation;
-import com.tiesdb.protocol.v0.element.TiesElement;
+import com.tiesdb.protocol.v0.api.TiesElement;
 import com.tiesdb.protocol.v0.impl.ElementReaderImpl;
 import com.tiesdb.protocol.v0.impl.ElementWriterImpl;
 

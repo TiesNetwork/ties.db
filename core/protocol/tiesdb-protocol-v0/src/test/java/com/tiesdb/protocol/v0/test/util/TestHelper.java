@@ -1,9 +1,11 @@
 package com.tiesdb.protocol.v0.test.util;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.io.OutputStream;
+import java.util.Iterator;
 
 import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
 import com.tiesdb.protocol.api.data.Element;
@@ -21,11 +23,12 @@ public class TestHelper {
 
 	public static void assertDeepEquals(Element e1, Element e2) {
 		if (e1 instanceof ElementContainer<?> && e2 instanceof ElementContainer<?>) {
-			int size = ((ElementContainer<?>) e1).size();
-			assertEquals(size, ((ElementContainer<?>) e2).size(), e1 + " " + e2 + " size missmatch");
-			for (int i = 0; i < size; i++) {
-				assertDeepEquals(((ElementContainer<?>) e1).get(i), ((ElementContainer<?>) e2).get(i));
+			Iterator<?> i1 = ((ElementContainer<?>) e1).iterator();
+			Iterator<?> i2 = ((ElementContainer<?>) e2).iterator();
+			while (i1.hasNext() && i2.hasNext()) {
+				assertDeepEquals((Element) i1.next(), (Element) i2.next());
 			}
+			assertFalse("Size missmatch", i1.hasNext() || i2.hasNext());
 		} else {
 			assertEquals(e1, e2);
 		}

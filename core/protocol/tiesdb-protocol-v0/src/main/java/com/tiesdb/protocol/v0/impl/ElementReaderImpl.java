@@ -18,12 +18,12 @@ import com.tiesdb.protocol.api.data.ElementContainer;
 import com.tiesdb.protocol.api.data.ElementReader;
 import com.tiesdb.protocol.api.data.ElementType;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0.element.TiesElement;
+import com.tiesdb.protocol.v0.api.TiesElement;
 import com.tiesdb.protocol.v0.exception.DataParsingException;
 import com.tiesdb.protocol.v0.exception.PacketSegmentationException;
 import com.tiesdb.protocol.v0.impl.ebml.TiesEBMLDataSource;
 
-public class ElementReaderImpl extends TiesElementHelper implements ElementReader<TiesElement> {
+public class ElementReaderImpl extends ElementHelper implements ElementReader<TiesElement> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElementReaderImpl.class);
 
@@ -44,12 +44,12 @@ public class ElementReaderImpl extends TiesElementHelper implements ElementReade
 		return new TiesEBMLDataSource(input);
 	}
 
-	private void stackAdvance(long size) {
+	private void stackAdvance(long size, boolean recursive) {
 		if (!stack.isEmpty()) {
 			StackElement elm = stack.peek();
 			elm.remainSize -= size;
-			if (elm.remainSize == 0) {
-				stackAdvance(stack.pop().totalSize);
+			if (elm.remainSize == 0 && recursive) {
+				stackAdvance(stack.pop().totalSize, recursive);
 			}
 		}
 	}
@@ -71,14 +71,14 @@ public class ElementReaderImpl extends TiesElementHelper implements ElementReade
 			if (size == -1) {
 				throw new PacketSegmentationException("EBML size read failed");
 			}
-			stackAdvance(ds.getFilePointer() - start);
+			stackAdvance(ds.getFilePointer() - start, false);
 
 			// TODO Auto skip to be configurable
 			/* Auto skip */
 			if (type == null) {
 				ds.skip(size);
-				stackAdvance(size);
-				LOG.warn("Unknown EBML ID {}", toHexString(typeCode));
+				stackAdvance(size, true);
+				LOG.warn("Unknown EBML ID {}", Integer.toHexString(typeCode.asIntBuffer().get()));
 				continue;
 			}
 
@@ -88,18 +88,6 @@ public class ElementReaderImpl extends TiesElementHelper implements ElementReade
 			break;
 		}
 		return nextType;
-	}
-
-	private final static char[] hex = "0123456789ABCDEF".toCharArray();
-
-	private static String toHexString(ByteBuffer buf) {
-		StringBuilder sb = new StringBuilder(buf.remaining() * 2);
-		while (buf.hasRemaining()) {
-			byte b = buf.get();
-			sb.append(hex[b >>> 4]);
-			sb.append(hex[b & 0xF]);
-		}
-		return sb.toString();
 	}
 
 	private static long readEBMLCodeAlt(final DataSource source) {
@@ -126,12 +114,12 @@ public class ElementReaderImpl extends TiesElementHelper implements ElementReade
 		return parseEBMLCode(data);
 	}
 
-	private void readValue(TiesElementValue element, long size) {
+	private void readValue(TiesElementValue<?> element, long size) {
 		org.ebml.Element elm = element.getType().getProtoType().getInstance();
 		elm.setSize(size);
 		elm.readData(ds);
-		stackAdvance(size);
-		element.setValue(asExtended(elm));
+		stackAdvance(size, true);
+		element.setFromElementValue(asExtended(elm));
 	}
 
 	private void reset() {
@@ -156,7 +144,7 @@ public class ElementReaderImpl extends TiesElementHelper implements ElementReade
 
 	@Override
 	public void skipNext() {
-		stackAdvance(ds.skip(nextSize));
+		stackAdvance(ds.skip(nextSize), true);
 		reset();
 	}
 
@@ -168,12 +156,12 @@ public class ElementReaderImpl extends TiesElementHelper implements ElementReade
 		try {
 			TiesElement element = eFactory.getElement(nextType);
 			if (!stack.isEmpty()) {
-				stack.peek().element.add(element);
+				stack.peek().element.accept(element);
 			}
 			if (element instanceof ElementContainer) {
 				stackPush(element);
 			} else if (element instanceof TiesElementValue) {
-				readValue((TiesElementValue) element, nextSize);
+				readValue((TiesElementValue<?>) element, nextSize);
 			} else {
 				throw new DataParsingException(new TiesDBProtocolException("Unknown element type to be read"));
 			}
@@ -208,7 +196,7 @@ public class ElementReaderImpl extends TiesElementHelper implements ElementReade
 	public ElementContainer<TiesElement> stackSkip(int fromHead) throws EmptyStackException {
 		skipNext();
 		while (!stack.isEmpty() && fromHead-- > 0) {
-			stackAdvance(ds.skip(stack.peek().remainSize));
+			stackAdvance(ds.skip(stack.peek().remainSize), true);
 		}
 		return stack.isEmpty() ? null : stack.peek().element;
 	}

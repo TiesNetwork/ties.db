@@ -1,19 +1,18 @@
 package com.tiesdb.protocol.v0.impl;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.ebml.Element;
 import org.ebml.ProtoType;
 
 import com.tiesdb.protocol.api.data.ElementType;
-import com.tiesdb.protocol.v0.impl.TiesEBMLExtendedElement.*;
+import static com.tiesdb.protocol.v0.impl.TiesEBMLExtendedElement.*;
 
 public enum TiesEBMLType implements ElementType {
 
-	Request(MasterElement.class, 0), //
-	RequestHeader(MasterElement.class, 1), //
-	RequestSignature(BinaryElement.class, 2), //
+	Request(CONTAINER, 0), //
+	RequestHeader(CONTAINER, 1), //
+	RequestHeaderSignature(VALUE, 2), //
 	;
 
 	static {
@@ -55,15 +54,4 @@ public enum TiesEBMLType implements ElementType {
 		}
 	}
 
-	static TiesEBMLType getForProtoType(org.ebml.ProtoType<?> proto) {
-		return proto instanceof TiesEBMLType.ExtendedProtoType ? ((TiesEBMLType.ExtendedProtoType) proto).getTiesEBMLType() : null;
-	}
-
-	static TiesEBMLType getForElement(Element elm) {
-		return elm == null ? null : getForProtoType(elm.getElementType());
-	}
-
-	static TiesEBMLType getForCode(ByteBuffer typeCode) {
-		return getForElement(ProtoType.getInstance(typeCode));
-	}
 }

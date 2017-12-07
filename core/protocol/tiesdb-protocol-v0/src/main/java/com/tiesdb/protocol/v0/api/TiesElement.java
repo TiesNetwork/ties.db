@@ -1,4 +1,4 @@
-package com.tiesdb.protocol.v0.element;
+package com.tiesdb.protocol.v0.api;
 
 import com.tiesdb.protocol.api.data.Element;
 import com.tiesdb.protocol.v0.impl.TiesEBMLType;

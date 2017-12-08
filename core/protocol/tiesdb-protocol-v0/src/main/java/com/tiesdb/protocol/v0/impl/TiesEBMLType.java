@@ -10,9 +10,10 @@ import static com.tiesdb.protocol.v0.impl.TiesEBMLExtendedElement.*;
 
 public enum TiesEBMLType implements ElementType {
 
-	Request(CONTAINER, 0), //
-	RequestHeader(CONTAINER, 1), //
-	RequestHeaderSignature(VALUE, 2), //
+	ModificationRequest(CONTAINER, 0), //
+	RequestConsistency(VALUE, 1), //
+	RequestSignature(VALUE, 1), //
+	Entry(VALUE, 1), //
 	;
 
 	static {

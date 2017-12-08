@@ -9,9 +9,10 @@ import java.util.WeakHashMap;
 
 public enum TiesEBMLTag {
 
-	x1E544945(Request), //
-	xE0(RequestHeader), //
-	xE1(RequestSignature), //
+	x1E544945(ModificationRequest), //
+	xE0(RequestSignature), //
+	xE1(RequestConsistency), //
+	xEE(Entry), //
 	;
 
 	private static final Map<TiesEBMLType, TiesEBMLTag> idMap;

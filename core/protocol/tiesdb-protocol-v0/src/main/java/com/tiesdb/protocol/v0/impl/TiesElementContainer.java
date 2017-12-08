@@ -21,17 +21,27 @@ public abstract class TiesElementContainer<E extends TiesElement> implements Tie
 	}
 
 	@SafeVarargs
-	protected final Iterator<E> createIterator(E... values) {
-		return new ContainerIterator<E>(values);
+	protected final ContainerIterator<E> createIterator(E... values) {
+		return new ValuesIterator<E>(values);
 
 	}
 
-	private static class ContainerIterator<E extends TiesElement> implements Iterator<E> {
+	@SafeVarargs
+	protected final ContainerIterator<E> createIterator(ContainerIterator<E> it, E... values) {
+		return new CompoundIterator<E>(it, values);
+
+	}
+
+	protected static interface ContainerIterator<E extends TiesElement> extends Iterator<E> {
+
+	}
+
+	private static class ValuesIterator<E extends TiesElement> implements ContainerIterator<E> {
 
 		private final E[] values;
 		private int cursor = 0;
 
-		private ContainerIterator(E[] values) {
+		ValuesIterator(E[] values) {
 			this.values = values;
 		}
 
@@ -49,6 +59,27 @@ public abstract class TiesElementContainer<E extends TiesElement> implements Tie
 				throw new NoSuchElementException();
 			}
 			return values[cursor++];
+		}
+
+	}
+
+	private static class CompoundIterator<E extends TiesElement> extends ValuesIterator<E> {
+
+		private final ContainerIterator<E> it;
+
+		CompoundIterator(ContainerIterator<E> it, E[] values) {
+			super(values);
+			this.it = it;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return it.hasNext() || super.hasNext();
+		}
+
+		@Override
+		public E next() {
+			return it.hasNext() ? it.next() : super.next();
 		}
 
 	}

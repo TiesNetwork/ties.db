@@ -22,9 +22,9 @@ public abstract class TiesElementValue<T> implements TiesElement {
 		return this.type;
 	}
 
-	protected abstract T getValue();
+	public abstract T getValue();
 
-	protected abstract void setValue(T value);
+	public abstract void setValue(T value);
 
 	protected abstract byte[] getRawValue();
 

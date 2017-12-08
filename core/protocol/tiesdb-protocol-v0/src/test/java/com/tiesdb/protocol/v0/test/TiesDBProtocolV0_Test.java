@@ -24,11 +24,14 @@ import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
 import com.tiesdb.protocol.api.data.ElementReader;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0.TiesDBProtocolV0;
+import com.tiesdb.protocol.v0.api.ConsistencyLevel;
 import com.tiesdb.protocol.v0.api.TiesConversation;
 import com.tiesdb.protocol.v0.api.TiesConversationHandler;
 import com.tiesdb.protocol.v0.api.TiesElement;
-import com.tiesdb.protocol.v0.element.TiesDBRequest;
-import com.tiesdb.protocol.v0.element.TiesDBRequestHeader;
+import com.tiesdb.protocol.v0.element.TiesDBBaseRequest;
+import com.tiesdb.protocol.v0.element.TiesDBEntry;
+import com.tiesdb.protocol.v0.element.TiesDBModificationRequest;
+import com.tiesdb.protocol.v0.element.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0.element.TiesDBRequestSignature;
 import com.tiesdb.protocol.v0.exception.CRCMissmatchException;
 import com.tiesdb.protocol.v0.impl.ElementFactory;
@@ -68,12 +71,16 @@ public class TiesDBProtocolV0_Test {
 
 		TiesDBProtocolV0 protocol = spy(new TiesDBProtocolV0(ef, ph));
 
-		TiesDBRequest request = new TiesDBRequest();
-		TiesDBRequestHeader header = new TiesDBRequestHeader();
+		TiesDBModificationRequest request = new TiesDBModificationRequest();
 		TiesDBRequestSignature signature = new TiesDBRequestSignature();
 		signature.setValue("Hello Test!".getBytes());
-		header.setSignature(signature);
-		request.setHeader(header);
+		request.setSignature(signature);
+		TiesDBRequestConsistency consistency = new TiesDBRequestConsistency();
+		consistency.setValue(ConsistencyLevel.ALL);
+		request.setConsistency(consistency);
+		TiesDBEntry entry = new TiesDBEntry();
+		entry.setValue("Yahoooooooooooooooooo!!!".getBytes());
+		request.setEntry(entry);
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		{
@@ -123,6 +130,7 @@ public class TiesDBProtocolV0_Test {
 		assertEquals(request, requestCheckContainer.get());
 		assertDeepEquals(request, requestCheckContainer.get());
 		assertArrayEquals(out.toByteArray(), outCheck.toByteArray());
+		System.out.println(outCheck.toString());
 	}
 
 	@Test

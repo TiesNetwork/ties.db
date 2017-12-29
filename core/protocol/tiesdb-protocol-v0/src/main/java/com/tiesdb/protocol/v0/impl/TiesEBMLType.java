@@ -26,7 +26,7 @@ public enum TiesEBMLType implements ElementType {
 	private final int level;
 
 	@SuppressWarnings("unchecked")
-	private <T extends Element & TiesEBMLExtendedElement> TiesEBMLType(Class<T> type, int level) {
+	private <T extends Element> TiesEBMLType(Class<T> type, int level) {
 		Objects.nonNull(type);
 		this.type = (Class<Element>) type;
 		this.level = level;

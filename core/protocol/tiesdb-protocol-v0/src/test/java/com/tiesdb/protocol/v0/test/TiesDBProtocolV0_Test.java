@@ -130,7 +130,6 @@ public class TiesDBProtocolV0_Test {
 		assertEquals(request, requestCheckContainer.get());
 		assertDeepEquals(request, requestCheckContainer.get());
 		assertArrayEquals(out.toByteArray(), outCheck.toByteArray());
-		System.out.println(outCheck.toString());
 	}
 
 	@Test

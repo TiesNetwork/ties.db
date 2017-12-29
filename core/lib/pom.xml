@@ -30,6 +30,8 @@
         <module>merkletree</module>
         <module>tiescheque</module>
         <module>crypto</module>
+        <module>sparse</module>
+        <module>abio</module>
     </modules>
 
 </project>

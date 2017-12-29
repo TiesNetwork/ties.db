@@ -24,14 +24,26 @@
 		</license>
 	</licenses>
 
+	<properties>
+		<org.bouncycastle.version>bcprov-jdk15on</org.bouncycastle.version>
+	</properties>
+
+	<profiles>
+		<profile>
+			<id>debug</id>
+			<properties>
+				<org.bouncycastle.version>bcprov-debug-jdk15on</org.bouncycastle.version>
+			</properties>
+		</profile>
+	</profiles>
+
 	<dependencies>
 		<!-- Compile scope -->
 		<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-debug-jdk15on</artifactId>
+			<artifactId>${org.bouncycastle.version}</artifactId>
 			<version>1.58</version>
-			<scope>provided</scope>
 		</dependency>
 		<!-- Test scope -->
 		<dependency>

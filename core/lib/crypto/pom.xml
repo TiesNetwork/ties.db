@@ -1,28 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.tiesdb.lib</groupId>
-        <artifactId>lib-parent</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>com.tiesdb.lib</groupId>
+		<artifactId>lib-parent</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+	</parent>
 
-    <artifactId>crypto</artifactId>
-    <packaging>jar</packaging>
+	<artifactId>crypto</artifactId>
+	<packaging>jar</packaging>
 
-    <name>Ties crypto library</name>
-    <inceptionYear>2017</inceptionYear>
+	<name>Ties crypto library</name>
+	<inceptionYear>2017</inceptionYear>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<dependencies>
+		<!-- Compile scope -->
+		<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-debug-jdk15on</artifactId>
+			<version>1.58</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- Test scope -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+		</dependency>
+	</dependencies>
 
 </project>

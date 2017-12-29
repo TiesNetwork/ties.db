@@ -25,4 +25,12 @@
         </license>
     </licenses>
 
+    <dependencies>
+        <!-- Compile scope -->
+        <dependency>
+            <groupId>com.tiesdb.lib</groupId>
+            <artifactId>crypto</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

@@ -9,7 +9,7 @@ public class ChecksumManager {
 
 	public static Checksum getChecksum(String algorythm) {
 		switch (algorythm) {
-		case "CRC32":
+		case CRC32:
 			return new CRC32();
 
 		default:

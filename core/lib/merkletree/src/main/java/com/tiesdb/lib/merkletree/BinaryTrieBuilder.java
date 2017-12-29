@@ -1,8 +1,7 @@
 package com.tiesdb.lib.merkletree;
 
+import java.util.Arrays;
 import java.util.UUID;
-
-import org.bouncycastle.util.Arrays;
 
 import com.tiesdb.lib.crypto.digest.DigestManager;
 import com.tiesdb.lib.crypto.digest.api.Digest;
@@ -35,7 +34,7 @@ public class BinaryTrieBuilder {
 		
 		trie.recomputeHash();
 		
-		if(!Arrays.areEqual(rootHash, trie.hash))
+		if(!Arrays.equals(rootHash, trie.hash))
 			return null;
 		
 		trie.properties.isBuildingMode = false;

@@ -16,7 +16,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with Ties.DB project.If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
+    with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -49,9 +49,8 @@
 
     <licenses>
         <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
+            <name>GNU Lesser General Public License, Version 3.0</name>
+            <url>http://www.gnu.org/licenses/lgpl-3.0.txt</url>
         </license>
     </licenses>
 

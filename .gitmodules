@@ -1,0 +1,8 @@
+[submodule "core/lib/abio"]
+	path = core/lib/abio
+	url = ../abio.git
+	branch = filatov-dev
+[submodule "core/lib/sparse"]
+	path = core/lib/sparse
+	url = ../sparse.git
+	branch = filatov-dev

@@ -30,10 +30,10 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>tiesdb-protocol-v0</artifactId>
+    <artifactId>tiesdb-protocol-v0r0</artifactId>
     <packaging>jar</packaging>
 
-    <name>TiesDB protocol version 0</name>
+    <name>TiesDB protocol version 0 revision 0</name>
     <inceptionYear>2017</inceptionYear>
 
     <licenses>

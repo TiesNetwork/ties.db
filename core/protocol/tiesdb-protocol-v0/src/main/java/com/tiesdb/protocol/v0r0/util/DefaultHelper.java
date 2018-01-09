@@ -16,20 +16,27 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0.element;
+package com.tiesdb.protocol.v0r0.util;
 
-import com.tiesdb.protocol.v0.element.common.TiesElementValueBinary;
-import com.tiesdb.protocol.v0.impl.TiesEBMLType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class TiesDBEntry extends TiesElementValueBinary implements TiesDBModificationRequest.Part {
+public final class DefaultHelper {
 
-	public TiesDBEntry() {
-		super(TiesEBMLType.Entry);
+	private static final Logger LOG = LoggerFactory.getLogger(DefaultHelper.class);
+
+	public static boolean traceFull;
+
+	public static final void trace(String message, Object... obj) {
+		LOG.debug(message, obj);
+		Exception ex = new Exception();
+		StackTraceElement[] st = ex.getStackTrace();
+		int len = traceFull ? st.length : 3;
+		for (int i = 1; i < len; i++) {
+			LOG.debug("\tat {}", st[i]);
+		}
 	}
 
-	@Override
-	public void accept(TiesDBModificationRequest.PartVisitor v) {
-		v.visit(this);
+	private DefaultHelper() {
 	}
-
 }

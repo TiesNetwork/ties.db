@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0.api;
+package com.tiesdb.protocol.v0r0.api;
 
 import java.util.Collections;
 import java.util.HashMap;

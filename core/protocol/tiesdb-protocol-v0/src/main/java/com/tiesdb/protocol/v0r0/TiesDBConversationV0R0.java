@@ -16,24 +16,23 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0.impl;
+package com.tiesdb.protocol.v0r0;
 
-public interface TiesEBMLExtendedElement extends TypeVisitor.Acceptor {
+import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
+import com.tiesdb.protocol.api.Version;
 
-	public static final Class<ContainerElement> CONTAINER = ContainerElement.class;
-	public static final Class<ValueElement> VALUE = ValueElement.class;
+public class TiesDBConversationV0R0 {
 
-	static class ContainerElement extends org.ebml.MasterElement implements TiesEBMLExtendedElement {
-		@Override
-		public <T> T accept(TypeVisitor<T> visitor) {
-			return visitor.visit(this);
-		}
+	private final TiesDBProtocolPacketChannel packetChannel;
+	private final TiesDBProtocolV0R0 protocol;
+
+	public TiesDBConversationV0R0(TiesDBProtocolV0R0 protocol, TiesDBProtocolPacketChannel packetChannel) {
+		this.protocol = protocol;
+		this.packetChannel = packetChannel;
 	}
 
-	static class ValueElement extends org.ebml.BinaryElement implements TiesEBMLExtendedElement {
-		@Override
-		public <T> T accept(TypeVisitor<T> visitor) {
-			return visitor.visit(this);
-		}
+	public Version getVersion() {
+		return protocol.getVersion();
 	}
+
 }

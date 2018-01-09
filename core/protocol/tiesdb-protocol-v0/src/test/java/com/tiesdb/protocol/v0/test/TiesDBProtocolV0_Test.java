@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0.test;
+package com.tiesdb.protocol.v0r0.test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static com.tiesdb.protocol.v0.test.util.TestHelper.*;
+import static com.tiesdb.protocol.v0r0.test.util.TestHelper.*;
 
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
@@ -41,19 +41,19 @@ import com.tiesdb.protocol.api.TiesDBProtocol;
 import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
 import com.tiesdb.protocol.api.data.ElementReader;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0.TiesDBProtocolV0;
-import com.tiesdb.protocol.v0.api.ConsistencyLevel;
-import com.tiesdb.protocol.v0.api.TiesConversation;
-import com.tiesdb.protocol.v0.api.TiesConversationHandler;
-import com.tiesdb.protocol.v0.api.TiesElement;
-import com.tiesdb.protocol.v0.element.TiesDBBaseRequest;
-import com.tiesdb.protocol.v0.element.TiesDBEntry;
-import com.tiesdb.protocol.v0.element.TiesDBModificationRequest;
-import com.tiesdb.protocol.v0.element.TiesDBRequestConsistency;
-import com.tiesdb.protocol.v0.element.TiesDBRequestSignature;
-import com.tiesdb.protocol.v0.exception.CRCMissmatchException;
-import com.tiesdb.protocol.v0.impl.ElementFactory;
-import com.tiesdb.protocol.v0.impl.ProtocolHelper;
+import com.tiesdb.protocol.v0r0.TiesDBProtocolV0;
+import com.tiesdb.protocol.v0r0.api.ConsistencyLevel;
+import com.tiesdb.protocol.v0r0.api.TiesDBConversationV0R0;
+import com.tiesdb.protocol.v0r0.api.TiesDBConversationV0R0Handler;
+import com.tiesdb.protocol.v0r0.api.TiesElement;
+import com.tiesdb.protocol.v0r0.element.TiesDBBaseRequest;
+import com.tiesdb.protocol.v0r0.element.TiesDBEntry;
+import com.tiesdb.protocol.v0r0.element.TiesDBModificationRequest;
+import com.tiesdb.protocol.v0r0.element.TiesDBRequestConsistency;
+import com.tiesdb.protocol.v0r0.element.TiesDBRequestSignature;
+import com.tiesdb.protocol.v0r0.exception.CRCMissmatchException;
+import com.tiesdb.protocol.v0r0.impl.ElementFactory;
+import com.tiesdb.protocol.v0r0.impl.ProtocolHelper;
 
 @DisplayName("TiesDBProtocol version 0 Test")
 public class TiesDBProtocolV0_Test {
@@ -62,7 +62,7 @@ public class TiesDBProtocolV0_Test {
 
 	private static final TiesDBProtocolPacketChannel createChannel() {
 		TiesDBProtocolPacketChannel channel = mock(TiesDBProtocolPacketChannel.class);
-		when(channel.getInput()).thenReturn(mock(TiesDBProtocolPacketChannel.Input.class));
+		when(channel.getInput()).thenReturn(mock(TiesDBProtocolPacketChannel.PacketInput.class));
 		return channel;
 	}
 

@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0.test.util;
+package com.tiesdb.protocol.v0r0.test.util;
 
 import javax.xml.bind.DatatypeConverter;
 
-import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.Input;
+import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.PacketInput;
 import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.State;
 
-public class HexStringInput implements Input {
+public class HexStringInput implements PacketInput {
 
 	private final byte[] data;
 	private int next = 0;

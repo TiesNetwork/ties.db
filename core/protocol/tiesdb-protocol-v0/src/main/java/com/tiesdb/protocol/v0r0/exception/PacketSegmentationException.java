@@ -16,22 +16,22 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0.api;
+package com.tiesdb.protocol.v0r0.exception;
 
-import com.tiesdb.protocol.api.TiesDBProtocol;
-import com.tiesdb.protocol.api.data.ElementReader;
-import com.tiesdb.protocol.api.data.ElementWriter;
-import com.tiesdb.protocol.api.data.Version;
-import com.tiesdb.protocol.exception.TiesDBProtocolException;
+public class PacketSegmentationException extends RuntimeException {
 
-public interface TiesConversation {
+	private static final long serialVersionUID = 3607434390457221186L;
 
-	Version getVersion();
+	public PacketSegmentationException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-	TiesDBProtocol getProtocol();
+	public PacketSegmentationException(String message) {
+		super(message);
+	}
 
-	ElementReader<TiesElement> getReader() throws TiesDBProtocolException;
-
-	ElementWriter<TiesElement> getWriter() throws TiesDBProtocolException;
+	public PacketSegmentationException(Throwable cause) {
+		super(cause);
+	}
 
 }

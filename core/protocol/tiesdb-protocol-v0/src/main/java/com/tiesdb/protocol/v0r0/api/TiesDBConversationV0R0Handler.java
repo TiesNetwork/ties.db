@@ -16,10 +16,14 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.api.data;
+package com.tiesdb.protocol.v0r0.api;
 
-public interface ElementWriter<E extends Element> {
+import com.tiesdb.protocol.api.TiesDBProtocolHandler;
+import com.tiesdb.protocol.exception.TiesDBProtocolException;
+import com.tiesdb.protocol.v0r0.TiesDBConversationV0R0;
 
-	void write(E e);
+public interface TiesDBConversationV0R0Handler extends TiesDBProtocolHandler {
+
+	void handle(TiesDBConversationV0R0 conv) throws TiesDBProtocolException;
 
 }

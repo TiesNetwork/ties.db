@@ -16,19 +16,23 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0.exception;
+package com.tiesdb.protocol.v0r0.exception;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 
-public class DataParsingException extends RuntimeException {
+public class CRCMissmatchException extends TiesDBProtocolException {
 
-	private static final long serialVersionUID = 1445466184069662493L;
+	private static final long serialVersionUID = 909803823041430521L;
 
-	public DataParsingException(String message, TiesDBProtocolException cause) {
+	public CRCMissmatchException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public DataParsingException(TiesDBProtocolException cause) {
+	public CRCMissmatchException(String message) {
+		super(message);
+	}
+
+	public CRCMissmatchException(Throwable cause) {
 		super(cause);
 	}
 

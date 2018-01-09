@@ -18,72 +18,58 @@
  */
 package com.tiesdb.protocol.api;
 
+import one.utopic.abio.api.Closable;
+import one.utopic.abio.api.Finishable;
+import one.utopic.abio.api.Skippable;
+import one.utopic.abio.api.Stateful;
+import one.utopic.abio.api.input.Input;
+import one.utopic.abio.api.output.Flushable;
+import one.utopic.abio.api.output.Output;
+
 public interface TiesDBProtocolPacketChannel {
 
 	enum State {
 		OPENING, OPENED, FINISHED, CLOSING, CLOSED
 	}
 
-	interface Input {
+	interface PacketInput extends Input, Stateful, Skippable, Closable {
 
-		State state();
-
-		boolean isOpened();
-
-		boolean isClosed();
-
-		boolean isFinished();
-
-		void close();
-
-		int available();
-
+		@Deprecated
 		int more();
 
-		byte get();
-
-		int skip(int length);
-
+		@Deprecated
 		void peekStart();
 
+		@Deprecated
 		void peekRewind();
 
+		@Deprecated
 		void peekSkip();
 
+		@Deprecated
 		boolean isPeeking();
 
 	}
 
-	interface Output {
+	interface PacketOutput extends Output, Stateful, Skippable, Closable, Flushable {
 
-		State state();
-
-		boolean isOpened();
-
-		boolean isClosed();
-
-		boolean isFinished();
-
-		void close();
-
-		int available();
-
+		@Deprecated
 		int more();
 
-		void put(byte b);
-
-		int skip(int length);
-
+		@Deprecated
 		void cacheStart();
 
+		@Deprecated
 		void cacheClear();
 
+		@Deprecated
 		void cacheFlush();
 
+		@Deprecated
 		boolean isCaching();
 	}
 
-	Input getInput();
+	PacketInput getInput();
 
-	Output getOutput();
+	PacketOutput getOutput();
 }

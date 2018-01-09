@@ -18,21 +18,17 @@
  */
 package com.tiesdb.protocol.api;
 
+import static com.tiesdb.protocol.api.Version.VersionComprator;
+
 import java.util.Comparator;
 
-import com.tiesdb.protocol.api.data.Version;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-
-import static com.tiesdb.protocol.api.data.Version.VersionComprator;
 
 public interface TiesDBProtocol {
 
 	public static enum ProtocolComparator implements Comparator<TiesDBProtocol> {
 
-		FULL(VersionComprator.FULL), //
-		MAJOR(VersionComprator.MAJOR), //
-		MINOR(VersionComprator.MINOR),//
-		;
+		FULL(VersionComprator.FULL), VERSION(VersionComprator.VERSION), REVISION(VersionComprator.REVISION),;
 
 		private final VersionComprator versionComparatorThreshold;
 
@@ -53,8 +49,8 @@ public interface TiesDBProtocol {
 
 	Version getVersion();
 
-	boolean createChannel(TiesDBProtocolPacketChannel packetChannel, TiesDBProtocolHandler handler) throws TiesDBProtocolException;
+	void createChannel(TiesDBProtocolPacketChannel packetChannel, TiesDBProtocolHandler handler) throws TiesDBProtocolException;
 
-	boolean acceptChannel(TiesDBProtocolPacketChannel packetChannel, TiesDBProtocolHandler handler) throws TiesDBProtocolException;
+	void acceptChannel(TiesDBProtocolPacketChannel packetChannel, TiesDBProtocolHandler handler) throws TiesDBProtocolException;
 
 }

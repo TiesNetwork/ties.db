@@ -1,5 +1,6 @@
 package com.tiesdb.schema.impl.contracts;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +10,7 @@ import java.util.List;
 
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.EventValues;
+import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
@@ -28,6 +30,8 @@ import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
+
+import com.tiesdb.web3j.SequentialFastRawTransactionManager;
 
 import rx.Observable;
 import rx.functions.Func1;
@@ -348,10 +352,6 @@ public class TiesDB extends Contract {
         return deployRemoteCall(TiesDB.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
     }
 
-    public static RemoteCall<TiesDB> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
-        return deployRemoteCall(TiesDB.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
-    }
-
     public static TiesDB load(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
         return new TiesDB(contractAddress, web3j, credentials, gasPrice, gasLimit);
     }
@@ -373,4 +373,35 @@ public class TiesDB extends Contract {
 
         public String newOwner;
     }
+    
+    @Override
+    protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(Function function) {
+        return executeRemoteCallTransaction(function, BigInteger.ZERO);
+    }
+
+    @Override
+    protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(
+            Function function, BigInteger weiValue) {
+    	
+    	final String data = FunctionEncoder.encode(function);
+    	BigInteger encodedWei;
+		try {
+			encodedWei = ((SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(weiValue);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+    	
+        return new RemoteCall<>(() -> send(contractAddress, data, encodedWei, gasPrice, gasLimit));
+    }
+    
+    public static RemoteCall<TiesDB> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
+    	BigInteger value;
+    	try {
+			value = ((SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(BigInteger.ZERO);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+        return deployRemoteCall(TiesDB.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "", value);
+    }
+
 }

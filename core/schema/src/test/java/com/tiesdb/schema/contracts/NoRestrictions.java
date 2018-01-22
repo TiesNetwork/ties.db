@@ -1,8 +1,11 @@
 package com.tiesdb.schema.contracts;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
+
+import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.Function;
@@ -10,8 +13,12 @@ import org.web3j.abi.datatypes.Type;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
+
+import com.tiesdb.schema.impl.contracts.Registry;
+import com.tiesdb.web3j.SequentialFastRawTransactionManager;
 
 /**
  * <p>Auto generated code.
@@ -126,10 +133,6 @@ public class NoRestrictions extends Contract {
         return deployRemoteCall(NoRestrictions.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
     }
 
-    public static RemoteCall<NoRestrictions> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
-        return deployRemoteCall(NoRestrictions.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
-    }
-
     public static NoRestrictions load(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
         return new NoRestrictions(contractAddress, web3j, credentials, gasPrice, gasLimit);
     }
@@ -145,4 +148,35 @@ public class NoRestrictions extends Contract {
     public static String getPreviouslyDeployedAddress(String networkId) {
         return _addresses.get(networkId);
     }
+    
+    @Override
+    protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(Function function) {
+        return executeRemoteCallTransaction(function, BigInteger.ZERO);
+    }
+
+    @Override
+    protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(
+            Function function, BigInteger weiValue) {
+    	
+    	final String data = FunctionEncoder.encode(function);
+    	BigInteger encodedWei;
+		try {
+			encodedWei = ((SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(weiValue);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+    	
+        return new RemoteCall<>(() -> send(contractAddress, data, encodedWei, gasPrice, gasLimit));
+    }
+    
+    public static RemoteCall<NoRestrictions> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
+    	BigInteger value;
+    	try {
+			value = ((SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(BigInteger.ZERO);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+        return deployRemoteCall(NoRestrictions.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "", value);
+    }
+
 }

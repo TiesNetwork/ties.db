@@ -1,43 +1,65 @@
 package com.tiesdb.schema.impl;
 
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.web3j.tuples.generated.Tuple3;
+import com.tiesdb.schema.api.Schema;
 import com.tiesdb.schema.api.Table;
 import com.tiesdb.schema.api.Tablespace;
+import com.tiesdb.schema.api.type.Address;
 import com.tiesdb.schema.api.type.Id;
 
 public class TablespaceImpl extends NamedItemImpl implements Tablespace {
+	LinkedHashMap<Id, Table> tables;
+	Address permissions;
+	
 	public TablespaceImpl(SchemaImpl schema, Id id) {
 		super(schema, id);
 	}
 
 	@Override
 	public boolean hasTable(Id id) {
-		return Utils.send(schema.tiesDB.hasTable(this.id.getValue(), id.getValue()));
-	}
-
-	@Override
-	public List<Table> getTables() {
-		List<Table> list = new LinkedList<Table>(); 
-		List<byte[]> tbls = (List<byte[]>) Utils.send(schema.tiesDB.getTablespaceTablesKeys(id.getValue()));
-		for(Iterator it = tbls.iterator(); it.hasNext();) {
-			Id id = new IdImpl((byte[])it.next());
-			list.add(new TableImpl(this, id));
-		}
-		return list;
+		load();
+		return tables.containsKey(id);
 	}
 
 	@Override
 	public Table getTable(Id id) {
-		// TODO Auto-generated method stub
-		return null;
+		load();
+		return tables.get(id);
 	}
 
 	@Override
-	public String getName() {
-		return Utils.send(schema.tiesDB.getTablespaceName(id.getValue()));
+	protected void load() {
+		if(notLoaded()) {
+			if(notLoaded()) {
+				Tuple3<String, String, List<byte[]>> t = 
+						Utils.send(schema.tiesDB.getTablespace(id.getValue()));
+				
+				name = t.getValue1();
+				
+				permissions = new AddressImpl(t.getValue2());
+				
+				tables = new LinkedHashMap<Id, Table>();
+				for(Iterator<byte[]> it=t.getValue3().iterator(); it.hasNext();) {
+					Id id = new IdImpl(it.next());
+					tables.put(id, schema.createTable(this, id));
+				}
+			}
+		}
+	}
+
+	@Override
+	public LinkedHashMap<Id, Table> getTables() {
+		load();
+		return tables;
+	}
+
+	@Override
+	public Schema getSchema() {
+		return schema;
 	}
 
 }

@@ -1,6 +1,5 @@
 package com.tiesdb.schema.impl.contracts;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,9 +27,6 @@ import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
-
-import com.tiesdb.web3j.SequentialFastRawTransactionManager;
-
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -361,6 +357,18 @@ public class TieToken extends Contract {
         return deployRemoteCall(TieToken.class, web3j, credentials, gasPrice, gasLimit, BINARY, encodedConstructor);
     }
 
+    public static RemoteCall<TieToken> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit, String multisigOwner) {
+    	BigInteger value;
+    	try {
+			value = ((com.tiesdb.web3j.SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(BigInteger.ZERO);
+		} catch (java.io.IOException e) {
+			throw new RuntimeException(e);
+		}
+
+        String encodedConstructor = FunctionEncoder.encodeConstructor(Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(multisigOwner)));
+        return deployRemoteCall(TieToken.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, encodedConstructor, value);
+    }
+
     public static TieToken load(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
         return new TieToken(contractAddress, web3j, credentials, gasPrice, gasLimit);
     }
@@ -408,7 +416,7 @@ public class TieToken extends Contract {
 
         public BigInteger value;
     }
-    
+
     @Override
     protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(Function function) {
         return executeRemoteCallTransaction(function, BigInteger.ZERO);
@@ -418,26 +426,15 @@ public class TieToken extends Contract {
     protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(
             Function function, BigInteger weiValue) {
     	
-    	final String data = FunctionEncoder.encode(function);
+    	final String data = org.web3j.abi.FunctionEncoder.encode(function);
     	BigInteger encodedWei;
 		try {
-			encodedWei = ((SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(weiValue);
-		} catch (IOException e) {
+			encodedWei = ((com.tiesdb.web3j.SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(weiValue);
+		} catch (java.io.IOException e) {
 			throw new RuntimeException(e);
 		}
     	
         return new RemoteCall<>(() -> send(contractAddress, data, encodedWei, gasPrice, gasLimit));
     }
-    
-    public static RemoteCall<TieToken> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit, String multisigOwner) {
-    	BigInteger value;
-    	try {
-			value = ((SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(BigInteger.ZERO);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-        String encodedConstructor = FunctionEncoder.encodeConstructor(Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(multisigOwner)));
-        return deployRemoteCall(TieToken.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, encodedConstructor, value);
-    }
-    
+
 }

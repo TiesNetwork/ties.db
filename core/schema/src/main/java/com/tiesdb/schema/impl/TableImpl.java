@@ -1,17 +1,31 @@
 package com.tiesdb.schema.impl;
 
+import java.math.BigInteger;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.web3j.tuples.generated.Tuple8;
+
 import com.tiesdb.schema.api.Field;
+import com.tiesdb.schema.api.Index;
+import com.tiesdb.schema.api.Node;
 import com.tiesdb.schema.api.Table;
 import com.tiesdb.schema.api.Tablespace;
 import com.tiesdb.schema.api.Trigger;
+import com.tiesdb.schema.api.type.Address;
 import com.tiesdb.schema.api.type.Id;
 
 public class TableImpl extends NamedItemImpl implements Table {
 	Tablespace ts;
+	
+	LinkedHashMap<Id, Field> fields;
+	LinkedHashMap<Id, Index> indexes;
+	LinkedHashMap<Id, Trigger> triggers;
+	LinkedHashMap<Address, Node> nodes;
+	int replicas;
+	int ranges;
+	Index primary;
 
 	public TableImpl(Tablespace ts, Id id) {
 		super(((TablespaceImpl)ts).schema, id);
@@ -20,54 +34,116 @@ public class TableImpl extends NamedItemImpl implements Table {
 
 	@Override
 	public boolean hasField(Id id) {
-		return Utils.send(schema.tiesDB.hasField(ts.getId().getValue(), id.getValue(), id.getValue()));
+		load();
+		return fields.containsKey(id);
 	}
 
 	@Override
 	public boolean hasTrigger(Id id) {
-		return Utils.send(schema.tiesDB.hasTrigger(ts.getId().getValue(), id.getValue(), id.getValue()));
+		load();
+		return triggers.containsKey(id);
 	}
 
 	@Override
-	public List<Field> getFields() {
-		List<Field> list = new LinkedList<Field>(); 
-		List<byte[]> tss = (List<byte[]>)Utils.send(schema.tiesDB.getTableFieldsKeys(ts.getId().getValue(), id.getValue()));
-		for(Iterator<byte[]> it = tss.iterator(); it.hasNext();) {
-			Id id = new IdImpl(it.next());
-			list.add(new FieldImpl(this, id));
-		}
-		return list;
+	public LinkedHashMap<Id, Field> getFields() {
+		load();
+		return fields;
 	}
 
 	@Override
-	public List<Trigger> getTriggers() {
-		List<Trigger> list = new LinkedList<Trigger>(); 
-		List<byte[]> tss = (List<byte[]>)Utils.send(schema.tiesDB.getTableFieldsKeys(ts.getId().getValue(), id.getValue()));
-		for(Iterator<byte[]> it = tss.iterator(); it.hasNext();) {
-			Id id = new IdImpl(it.next());
-			list.add(new TriggerImpl(this, id));
-		}
-		return list;
+	public LinkedHashMap<Id, Trigger> getTriggers() {
+		load();
+		return triggers;
 	}
 
+	@Override
+	public LinkedHashMap<Id, Index> getIndexes() {
+		load();
+		return indexes;
+	}
+	
 	@Override
 	public Field getField(Id id) {
-		return new FieldImpl(this, id);
+		load();
+		return fields.get(id);
 	}
 
 	@Override
 	public Trigger getTrigger(Id id) {
-		return new TriggerImpl(this, id);
-	}
-
-	@Override
-	public String getName() {
-		return Utils.send(schema.tiesDB.getTableName(ts.getId().getValue(), id.getValue()));
+		load();
+		return triggers.get(id);
 	}
 
 	@Override
 	public Tablespace getTablespace() {
 		return ts;
+	}
+
+	@Override
+	public boolean hasIndex(Id id) {
+		load();
+		return indexes.containsKey(id);
+	}
+
+	@Override
+	public Index getIndex(Id id) {
+		load();
+		return indexes.get(id);
+	}
+
+	@Override
+	protected void load() {
+		if(notLoaded()) {
+			Tuple8<String, String, List<byte[]>, List<byte[]>, List<byte[]>, BigInteger, BigInteger, List<String>> t = 
+					Utils.send(schema.tiesDB.getTable(id.getValue()));
+			name = t.getValue1();
+			
+			fields = new LinkedHashMap<Id, Field>();
+			for(Iterator<byte[]> it=t.getValue3().iterator(); it.hasNext();) {
+				Id id = new IdImpl(it.next());
+				fields.put(id, new FieldImpl(this, id));
+			}
+			
+			triggers = new LinkedHashMap<Id, Trigger>();
+			for(Iterator<byte[]> it=t.getValue4().iterator(); it.hasNext();) {
+				Id id = new IdImpl(it.next());
+				triggers.put(id, new TriggerImpl(this, id));
+			}
+			
+			indexes = new LinkedHashMap<Id, Index>();
+			for(Iterator<byte[]> it=t.getValue5().iterator(); it.hasNext();) {
+				Id id = new IdImpl(it.next());
+				Index index = new IndexImpl(this, id);
+				indexes.put(id, index);
+				
+				if(index.getType() == 1)
+					primary = index;
+			}
+			
+			replicas = t.getValue6().intValue();
+			ranges = t.getValue7().intValue();
+			
+			nodes = new LinkedHashMap<Address, Node>();
+			for(Iterator<String> it=t.getValue8().iterator(); it.hasNext();) {
+				Address id = new AddressImpl(it.next());
+				Node node = schema.getNode(id);
+				assert(node != null);
+				nodes.put(id, node);
+			}
+		}
+		
+	}
+
+	@Override
+	public LinkedHashMap<Address, Node> getNodes() {
+		load();
+		return nodes;
+	}
+
+	@Override
+	public Node getNode(Address id) {
+		load();
+		return nodes.get(id);
 	}
 
 }

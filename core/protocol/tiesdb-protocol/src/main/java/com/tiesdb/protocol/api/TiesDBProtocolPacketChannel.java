@@ -19,7 +19,6 @@
 package com.tiesdb.protocol.api;
 
 import one.utopic.abio.api.Closable;
-import one.utopic.abio.api.Finishable;
 import one.utopic.abio.api.Skippable;
 import one.utopic.abio.api.Stateful;
 import one.utopic.abio.api.input.Input;
@@ -35,9 +34,6 @@ public interface TiesDBProtocolPacketChannel {
 	interface PacketInput extends Input, Stateful, Skippable, Closable {
 
 		@Deprecated
-		int more();
-
-		@Deprecated
 		void peekStart();
 
 		@Deprecated
@@ -51,10 +47,7 @@ public interface TiesDBProtocolPacketChannel {
 
 	}
 
-	interface PacketOutput extends Output, Stateful, Skippable, Closable, Flushable {
-
-		@Deprecated
-		int more();
+	interface PacketOutput extends Output, Stateful, Flushable, Closable  {
 
 		@Deprecated
 		void cacheStart();

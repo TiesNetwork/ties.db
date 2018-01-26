@@ -16,22 +16,8 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0r0.exception;
+package com.tiesdb.protocol.v0r0.api.message;
 
-public class PacketSegmentationException extends RuntimeException {
-
-	private static final long serialVersionUID = 3607434390457221186L;
-
-	public PacketSegmentationException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public PacketSegmentationException(String message) {
-		super(message);
-	}
-
-	public PacketSegmentationException(Throwable cause) {
-		super(cause);
-	}
-
+public enum RequestConsistencyLevel {
+	ONE, QUORUM, ALL;
 }

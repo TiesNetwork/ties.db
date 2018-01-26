@@ -27,10 +27,10 @@ import org.junit.jupiter.api.Test;
 
 import com.tiesdb.protocol.TiesDBProtocolManager;
 import com.tiesdb.protocol.api.TiesDBProtocol;
-import com.tiesdb.protocol.v0r0.TiesDBProtocolV0;
+import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0;
 
-@DisplayName("TiesDBProtocol version 0 Miscelaneous Test")
-public class TiesDBProtocolV0_MiscTest {
+@DisplayName("TiesDBProtocol Miscelaneous Test")
+public class TiesDBProtocolTest {
 
 	@Test
 	@DisplayName("Protocol Service Loading")
@@ -38,7 +38,7 @@ public class TiesDBProtocolV0_MiscTest {
 		List<TiesDBProtocol> protocols = TiesDBProtocolManager.loadProtocols();
 		assertFalse(protocols.isEmpty(), "No Protocols found");
 		assertEquals(1, protocols.size());
-		assertEquals(new TiesDBProtocolV0().getVersion(), protocols.get(0).getVersion());
+		assertEquals(new TiesDBProtocolV0R0().getVersion(), protocols.get(0).getVersion());
 	}
 
 }

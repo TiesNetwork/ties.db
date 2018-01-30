@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.Web3j;
@@ -56,7 +57,7 @@ public class SchemaImpl extends ItemImpl implements Schema {
 			}
 			
 			nodes = new LinkedHashMap<Address, Node>();
-			for(Iterator<byte[]> it=t.getValue1().iterator(); it.hasNext();) {
+			for(Iterator<String> it=t.getValue2().iterator(); it.hasNext();) {
 				Address id = new AddressImpl(it.next());
 				nodes.put(id, new NodeImpl(this, id));
 			}

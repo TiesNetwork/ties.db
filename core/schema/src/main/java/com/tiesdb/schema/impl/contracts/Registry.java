@@ -62,6 +62,7 @@ public class Registry extends Contract {
         ArrayList<OverdraftEventResponse> responses = new ArrayList<OverdraftEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             OverdraftEventResponse typedResponse = new OverdraftEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.deadbeat = (String) eventValues.getNonIndexedValues().get(0).getValue();
             responses.add(typedResponse);
         }
@@ -79,6 +80,7 @@ public class Registry extends Contract {
             public OverdraftEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 OverdraftEventResponse typedResponse = new OverdraftEventResponse();
+                typedResponse.log = log;
                 typedResponse.deadbeat = (String) eventValues.getNonIndexedValues().get(0).getValue();
                 return typedResponse;
             }
@@ -93,6 +95,7 @@ public class Registry extends Contract {
         ArrayList<ChequeRedeemedEventResponse> responses = new ArrayList<ChequeRedeemedEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             ChequeRedeemedEventResponse typedResponse = new ChequeRedeemedEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.issuer = (String) eventValues.getNonIndexedValues().get(0).getValue();
             typedResponse.beneficiary = (String) eventValues.getNonIndexedValues().get(1).getValue();
             typedResponse.total = (BigInteger) eventValues.getNonIndexedValues().get(2).getValue();
@@ -114,6 +117,7 @@ public class Registry extends Contract {
             public ChequeRedeemedEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 ChequeRedeemedEventResponse typedResponse = new ChequeRedeemedEventResponse();
+                typedResponse.log = log;
                 typedResponse.issuer = (String) eventValues.getNonIndexedValues().get(0).getValue();
                 typedResponse.beneficiary = (String) eventValues.getNonIndexedValues().get(1).getValue();
                 typedResponse.total = (BigInteger) eventValues.getNonIndexedValues().get(2).getValue();
@@ -132,6 +136,7 @@ public class Registry extends Contract {
         ArrayList<ErrorEventResponse> responses = new ArrayList<ErrorEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             ErrorEventResponse typedResponse = new ErrorEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.text = (String) eventValues.getNonIndexedValues().get(0).getValue();
             responses.add(typedResponse);
         }
@@ -149,6 +154,7 @@ public class Registry extends Contract {
             public ErrorEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 ErrorEventResponse typedResponse = new ErrorEventResponse();
+                typedResponse.log = log;
                 typedResponse.text = (String) eventValues.getNonIndexedValues().get(0).getValue();
                 return typedResponse;
             }
@@ -291,10 +297,14 @@ public class Registry extends Contract {
     }
 
     public static class OverdraftEventResponse {
+        public Log log;
+
         public String deadbeat;
     }
 
     public static class ChequeRedeemedEventResponse {
+        public Log log;
+
         public String issuer;
 
         public String beneficiary;
@@ -307,6 +317,8 @@ public class Registry extends Contract {
     }
 
     public static class ErrorEventResponse {
+        public Log log;
+
         public String text;
     }
 

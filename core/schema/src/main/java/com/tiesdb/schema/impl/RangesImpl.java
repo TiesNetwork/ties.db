@@ -22,6 +22,7 @@ public class RangesImpl extends ItemImpl implements Ranges {
 
 	@Override
 	public List<Range> getRanges() {
+		load();
 		return ranges;
 	}
 

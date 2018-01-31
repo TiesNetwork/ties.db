@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.EventValues;
 import org.web3j.abi.TypeReference;
@@ -36,7 +35,6 @@ import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tuples.generated.Tuple8;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
-
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -75,6 +73,7 @@ public class TiesDB extends Contract {
         ArrayList<OwnershipTransferredEventResponse> responses = new ArrayList<OwnershipTransferredEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             OwnershipTransferredEventResponse typedResponse = new OwnershipTransferredEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.previousOwner = (String) eventValues.getIndexedValues().get(0).getValue();
             typedResponse.newOwner = (String) eventValues.getIndexedValues().get(1).getValue();
             responses.add(typedResponse);
@@ -93,6 +92,7 @@ public class TiesDB extends Contract {
             public OwnershipTransferredEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 OwnershipTransferredEventResponse typedResponse = new OwnershipTransferredEventResponse();
+                typedResponse.log = log;
                 typedResponse.previousOwner = (String) eventValues.getIndexedValues().get(0).getValue();
                 typedResponse.newOwner = (String) eventValues.getIndexedValues().get(1).getValue();
                 return typedResponse;
@@ -108,11 +108,11 @@ public class TiesDB extends Contract {
                 new Callable<Tuple3<String, String, List<byte[]>>>() {
                     @Override
                     public Tuple3<String, String, List<byte[]>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);;
+                        List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple3<String, String, List<byte[]>>(
                                 (String) results.get(0).getValue(), 
                                 (String) results.get(1).getValue(), 
-                                (List<byte[]>) results.get(2).getValue());
+                                convertToNative((List<Bytes32>) results.get(2).getValue()));
                     }
                 });
     }
@@ -134,7 +134,7 @@ public class TiesDB extends Contract {
                 new Callable<Tuple2<String, byte[]>>() {
                     @Override
                     public Tuple2<String, byte[]> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);;
+                        List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple2<String, byte[]>(
                                 (String) results.get(0).getValue(), 
                                 (byte[]) results.get(1).getValue());
@@ -167,7 +167,7 @@ public class TiesDB extends Contract {
                 new Callable<Tuple3<String, String, byte[]>>() {
                     @Override
                     public Tuple3<String, String, byte[]> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);;
+                        List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple3<String, String, byte[]>(
                                 (String) results.get(0).getValue(), 
                                 (String) results.get(1).getValue(), 
@@ -184,10 +184,10 @@ public class TiesDB extends Contract {
                 new Callable<Tuple2<List<byte[]>, List<String>>>() {
                     @Override
                     public Tuple2<List<byte[]>, List<String>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);;
+                        List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple2<List<byte[]>, List<String>>(
-                                ((List<Bytes32>) results.get(0).getValue()).stream().map(x -> x.getValue()).collect(Collectors.toList()), 
-                                ((List<Address>) results.get(1).getValue()).stream().map(x -> x.getValue()).collect(Collectors.toList()));
+                                convertToNative((List<Bytes32>) results.get(0).getValue()), 
+                                convertToNative((List<Address>) results.get(1).getValue()));
                     }
                 });
     }
@@ -254,11 +254,11 @@ public class TiesDB extends Contract {
                 new Callable<Tuple3<String, BigInteger, List<byte[]>>>() {
                     @Override
                     public Tuple3<String, BigInteger, List<byte[]>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);;
+                        List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple3<String, BigInteger, List<byte[]>>(
                                 (String) results.get(0).getValue(), 
                                 (BigInteger) results.get(1).getValue(), 
-                                (List<byte[]>) results.get(2).getValue());
+                                convertToNative((List<Bytes32>) results.get(2).getValue()));
                     }
                 });
     }
@@ -271,16 +271,16 @@ public class TiesDB extends Contract {
                 new Callable<Tuple8<String, String, List<byte[]>, List<byte[]>, List<byte[]>, BigInteger, BigInteger, List<String>>>() {
                     @Override
                     public Tuple8<String, String, List<byte[]>, List<byte[]>, List<byte[]>, BigInteger, BigInteger, List<String>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);;
+                        List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple8<String, String, List<byte[]>, List<byte[]>, List<byte[]>, BigInteger, BigInteger, List<String>>(
                                 (String) results.get(0).getValue(), 
                                 (String) results.get(1).getValue(), 
-                                (List<byte[]>) results.get(2).getValue(), 
-                                (List<byte[]>) results.get(3).getValue(), 
-                                (List<byte[]>) results.get(4).getValue(), 
+                                convertToNative((List<Bytes32>) results.get(2).getValue()), 
+                                convertToNative((List<Bytes32>) results.get(3).getValue()), 
+                                convertToNative((List<Bytes32>) results.get(4).getValue()), 
                                 (BigInteger) results.get(5).getValue(), 
                                 (BigInteger) results.get(6).getValue(), 
-                                (List<String>) results.get(7).getValue());
+                                convertToNative((List<Address>) results.get(7).getValue()));
                     }
                 });
     }
@@ -289,7 +289,14 @@ public class TiesDB extends Contract {
         Function function = new Function("getTableNodes", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(tKey)), 
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Address>>() {}));
-        return executeRemoteCallSingleValueReturn(function, List.class);
+        return new RemoteCall<List>(
+                new Callable<List>() {
+                    @Override
+                    public List call() throws Exception {
+                        List<Type> result = (List<Type>) executeCallSingleValueReturn(function, List.class);
+                        return convertToNative(result);
+                    }
+                });
     }
 
     public RemoteCall<String> owner() {
@@ -318,10 +325,10 @@ public class TiesDB extends Contract {
                 new Callable<Tuple2<Boolean, List<byte[]>>>() {
                     @Override
                     public Tuple2<Boolean, List<byte[]>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);;
+                        List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple2<Boolean, List<byte[]>>(
                                 (Boolean) results.get(0).getValue(), 
-                                (List<byte[]>) results.get(1).getValue());
+                                convertToNative((List<Bytes32>) results.get(1).getValue()));
                     }
                 });
     }
@@ -436,7 +443,14 @@ public class TiesDB extends Contract {
         Function function = new Function("getNodes", 
                 Arrays.<Type>asList(), 
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Address>>() {}));
-        return executeRemoteCallSingleValueReturn(function, List.class);
+        return new RemoteCall<List>(
+                new Callable<List>() {
+                    @Override
+                    public List call() throws Exception {
+                        List<Type> result = (List<Type>) executeCallSingleValueReturn(function, List.class);
+                        return convertToNative(result);
+                    }
+                });
     }
 
     public RemoteCall<TransactionReceipt> deleteTable(byte[] tsKey, byte[] tKey) {
@@ -486,7 +500,14 @@ public class TiesDB extends Contract {
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(node), 
                 new org.web3j.abi.datatypes.generated.Bytes32(tKey)), 
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint64>>() {}));
-        return executeRemoteCallSingleValueReturn(function, List.class);
+        return new RemoteCall<List>(
+                new Callable<List>() {
+                    @Override
+                    public List call() throws Exception {
+                        List<Type> result = (List<Type>) executeCallSingleValueReturn(function, List.class);
+                        return convertToNative(result);
+                    }
+                });
     }
 
     public static RemoteCall<TiesDB> deploy(Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
@@ -514,6 +535,10 @@ public class TiesDB extends Contract {
         return new TiesDB(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
     }
 
+    protected static <OriginalType extends Type, NewType> List<NewType> convertToNative(List<OriginalType> arr) {
+        return (List<NewType>) arr.stream().map(v -> v.getValue()).collect(Collectors.toList());
+    }
+
     protected String getStaticDeployedAddress(String networkId) {
         return _addresses.get(networkId);
     }
@@ -523,6 +548,8 @@ public class TiesDB extends Contract {
     }
 
     public static class OwnershipTransferredEventResponse {
+        public Log log;
+
         public String previousOwner;
 
         public String newOwner;

@@ -13,7 +13,6 @@ import com.tiesdb.schema.api.type.Address;
 import com.tiesdb.schema.api.type.Id;
 
 public class NodeImpl extends ItemImpl implements Node {
-	TableImpl table; //For table-bound node
 	Address id;
 	
 	LinkedHashMap<Id, Table> tables;
@@ -23,13 +22,11 @@ public class NodeImpl extends ItemImpl implements Node {
 	public NodeImpl(SchemaImpl schema, Address id) {
 		super(schema);
 		this.id = id; 
+		this.ranges = new LinkedHashMap<>();
 	}
 
 	public NodeImpl(TableImpl table, Address id) {
 		super(table.schema);
-		this.table = table;
-		this.id = id;
-		this.ranges = new LinkedHashMap<>();
 	}
 
 	@Override

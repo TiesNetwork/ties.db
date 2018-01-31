@@ -3,7 +3,6 @@ package com.tiesdb.schema.contracts;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
-
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.Function;
@@ -11,7 +10,6 @@ import org.web3j.abi.datatypes.Type;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
 
@@ -176,25 +174,4 @@ public class NoRestrictions extends Contract {
     public static String getPreviouslyDeployedAddress(String networkId) {
         return _addresses.get(networkId);
     }
-
-    @Override
-    protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(Function function) {
-        return executeRemoteCallTransaction(function, BigInteger.ZERO);
-    }
-
-    @Override
-    protected RemoteCall<TransactionReceipt> executeRemoteCallTransaction(
-            Function function, BigInteger weiValue) {
-    	
-    	final String data = org.web3j.abi.FunctionEncoder.encode(function);
-    	BigInteger encodedWei;
-		try {
-			encodedWei = ((com.tiesdb.web3j.SequentialFastRawTransactionManager)transactionManager).encodeNonceToValue(weiValue);
-		} catch (java.io.IOException e) {
-			throw new RuntimeException(e);
-		}
-    	
-        return new RemoteCall<>(() -> send(contractAddress, data, encodedWei, gasPrice, gasLimit));
-    }
-
 }

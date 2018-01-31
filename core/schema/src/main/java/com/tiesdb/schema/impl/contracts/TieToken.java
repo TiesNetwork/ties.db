@@ -64,6 +64,7 @@ public class TieToken extends Contract {
         ArrayList<TransferDataEventResponse> responses = new ArrayList<TransferDataEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             TransferDataEventResponse typedResponse = new TransferDataEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.from = (String) eventValues.getIndexedValues().get(0).getValue();
             typedResponse.to = (String) eventValues.getIndexedValues().get(1).getValue();
             typedResponse.value = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
@@ -84,6 +85,7 @@ public class TieToken extends Contract {
             public TransferDataEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 TransferDataEventResponse typedResponse = new TransferDataEventResponse();
+                typedResponse.log = log;
                 typedResponse.from = (String) eventValues.getIndexedValues().get(0).getValue();
                 typedResponse.to = (String) eventValues.getIndexedValues().get(1).getValue();
                 typedResponse.value = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
@@ -101,6 +103,7 @@ public class TieToken extends Contract {
         ArrayList<OwnershipTransferredEventResponse> responses = new ArrayList<OwnershipTransferredEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             OwnershipTransferredEventResponse typedResponse = new OwnershipTransferredEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.previousOwner = (String) eventValues.getIndexedValues().get(0).getValue();
             typedResponse.newOwner = (String) eventValues.getIndexedValues().get(1).getValue();
             responses.add(typedResponse);
@@ -119,6 +122,7 @@ public class TieToken extends Contract {
             public OwnershipTransferredEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 OwnershipTransferredEventResponse typedResponse = new OwnershipTransferredEventResponse();
+                typedResponse.log = log;
                 typedResponse.previousOwner = (String) eventValues.getIndexedValues().get(0).getValue();
                 typedResponse.newOwner = (String) eventValues.getIndexedValues().get(1).getValue();
                 return typedResponse;
@@ -134,6 +138,7 @@ public class TieToken extends Contract {
         ArrayList<ApprovalEventResponse> responses = new ArrayList<ApprovalEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             ApprovalEventResponse typedResponse = new ApprovalEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.owner = (String) eventValues.getIndexedValues().get(0).getValue();
             typedResponse.spender = (String) eventValues.getIndexedValues().get(1).getValue();
             typedResponse.value = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
@@ -153,6 +158,7 @@ public class TieToken extends Contract {
             public ApprovalEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 ApprovalEventResponse typedResponse = new ApprovalEventResponse();
+                typedResponse.log = log;
                 typedResponse.owner = (String) eventValues.getIndexedValues().get(0).getValue();
                 typedResponse.spender = (String) eventValues.getIndexedValues().get(1).getValue();
                 typedResponse.value = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
@@ -169,6 +175,7 @@ public class TieToken extends Contract {
         ArrayList<TransferEventResponse> responses = new ArrayList<TransferEventResponse>(valueList.size());
         for (EventValues eventValues : valueList) {
             TransferEventResponse typedResponse = new TransferEventResponse();
+            typedResponse.log = transactionReceipt.getLogs().get(valueList.indexOf(eventValues));
             typedResponse.from = (String) eventValues.getIndexedValues().get(0).getValue();
             typedResponse.to = (String) eventValues.getIndexedValues().get(1).getValue();
             typedResponse.value = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
@@ -188,6 +195,7 @@ public class TieToken extends Contract {
             public TransferEventResponse call(Log log) {
                 EventValues eventValues = extractEventParameters(event, log);
                 TransferEventResponse typedResponse = new TransferEventResponse();
+                typedResponse.log = log;
                 typedResponse.from = (String) eventValues.getIndexedValues().get(0).getValue();
                 typedResponse.to = (String) eventValues.getIndexedValues().get(1).getValue();
                 typedResponse.value = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
@@ -388,6 +396,8 @@ public class TieToken extends Contract {
     }
 
     public static class TransferDataEventResponse {
+        public Log log;
+
         public String from;
 
         public String to;
@@ -398,12 +408,16 @@ public class TieToken extends Contract {
     }
 
     public static class OwnershipTransferredEventResponse {
+        public Log log;
+
         public String previousOwner;
 
         public String newOwner;
     }
 
     public static class ApprovalEventResponse {
+        public Log log;
+
         public String owner;
 
         public String spender;
@@ -412,6 +426,8 @@ public class TieToken extends Contract {
     }
 
     public static class TransferEventResponse {
+        public Log log;
+
         public String from;
 
         public String to;

@@ -14,24 +14,23 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
-import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tx.Contract;
 import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.TransactionManager;
 
 import com.tiesdb.schema.api.Node;
+import com.tiesdb.schema.api.Range;
+import com.tiesdb.schema.api.Ranges;
 import com.tiesdb.schema.api.Schema;
 import com.tiesdb.schema.api.Table;
 import com.tiesdb.schema.api.Tablespace;
 import com.tiesdb.schema.api.type.Address;
 import com.tiesdb.schema.api.type.Id;
 import com.tiesdb.schema.contracts.NoRestrictions;
-import com.tiesdb.schema.impl.AddressImpl;
 import com.tiesdb.schema.impl.SchemaImpl;
 import com.tiesdb.schema.impl.contracts.Registry;
 import com.tiesdb.schema.impl.contracts.TieToken;
@@ -277,15 +276,27 @@ public class AppTest
     public void testApp()
     {
     	//schema is initialized by this time
-        LinkedHashMap<Id, Tablespace> ts = schema.getTablespaces();
-        assertEquals(ts.size(), 3, "There should be 3 tablespaces");
+        LinkedHashMap<Id, Tablespace> tss = schema.getTablespaces();
+        assertEquals(3, tss.size(), "There should be 3 tablespaces");
         
         LinkedHashMap<Address, Node> nodes = schema.getNodes();
-        assertEquals(ts.size(), 4, "There should be 4 nodes");
+        assertEquals(4, nodes.size(), "There should be 4 nodes");
+        
+        Tablespace ts1 = tss.values().iterator().next();
+        
+        LinkedHashMap<Id, Table> tbls1 = ts1.getTables();
+        assertEquals(4, tbls1.size(), "There should be 4 tables in Tablespace 1");
+
+        Table tbl1 = tbls1.values().iterator().next();
+        
+        Node node = nodes.values().iterator().next();
+        Ranges ranges = node.getTableRanges(tbl1.getId());
+        
+        List<Range> rs = ranges.getRanges();
         
         Tablespace ts3 = schema.getTablespace(schema.idFromName("ts3"));
         LinkedHashMap<Id, Table> tables = ts3.getTables();
-        assertEquals(tables.size(), 4, "There should be 4 tables");
+        assertEquals(3, tables.size(), "There should be 3 tables in Tablespace 3");
         
         
     }

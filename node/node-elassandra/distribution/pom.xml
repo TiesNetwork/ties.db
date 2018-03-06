@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.tiesdb</groupId>
+        <artifactId>node-elassandra-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <packaging>pom</packaging>
+
+    <artifactId>distribution</artifactId>
+
+    <name>TiesDB Distributions Parent POM</name>
+    <description>Different types of distributions for TiesDB project</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>context-yaml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>transport-websocket</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>handler-json</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>service-elassandra</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>bootstrap-elassandra</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Always generate a Javadoc file even if we don't have any java source but only resources -->
+                <!--
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>empty-javadoc-jar</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <classifier>javadoc</classifier>
+                                <classesDirectory>${basedir}/src/main/resources</classesDirectory>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <configuration>
+                        <finalName>tiesdb-${project.version}</finalName>
+                        <appendAssemblyId>false</appendAssemblyId>
+                        <outputDirectory>${project.parent.parent.build.directory}/</outputDirectory>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                <includeScope>runtime</includeScope>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-modules</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>com.strapdata.elasticsearch.distribution.zip</groupId>
+                                        <artifactId>elasticsearch</artifactId>
+                                        <version>${elassandra.version}</version>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${project.build.directory}/elassandra-distribution</outputDirectory>
+                                    </artifactItem>
+                                    <artifactItem>
+                                        <groupId>com.tiesdb</groupId>
+                                        <artifactId>distribution-common</artifactId>
+                                        <version>${project.version}</version>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${project.build.directory}/elassandra</outputDirectory>
+                                        <excludes>META-INF/**</excludes>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.strapdata.elasticsearch.distribution.zip</groupId>
+                            <artifactId>elasticsearch</artifactId>
+                            <version>${elassandra.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>com.tiesdb</groupId>
+                            <artifactId>distribution-common</artifactId>
+                            <version>${project.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.7</version>
+                    <executions>
+                        <execution>
+                            <phase>prepare-package</phase>
+                            <configuration>
+                                <target>
+                                    <move todir="${project.build.directory}/elassandra" includeEmptyDirs="true">
+                                        <fileset dir="${project.build.directory}/elassandra-distribution"/>
+                                        <cutdirsmapper dirs="1"/>
+                                    </move>
+                                    <delete dir="${project.build.directory}/elassandra-distribution"/>
+                                </target>
+                            </configuration>
+                            <goals>
+                                <goal>run</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <configuration>
+                        <!-- distribution modules don't provide any jar. No need to upload empty jars to maven central -->
+                        <skipIfEmpty>true</skipIfEmpty>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <modules>
+        <module>common</module>
+        <module>zip</module>
+        <!-- <module>tar</module> -->
+    </modules>
+
+</project>

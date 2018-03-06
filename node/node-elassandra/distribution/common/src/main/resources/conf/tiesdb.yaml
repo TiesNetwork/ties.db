@@ -1,0 +1,13 @@
+# TiesDB config YAML
+#saveSettingsOnStop: true
+config:
+  TEST: !!TiesService
+    transports:
+      - !!WebSocketTransport
+        handler: !!TiesHandler
+          charset: UTF-8
+        workerThreadsCount: 1
+        serviceAddress: localhost
+        servicePort: 8080
+        #security:
+        #  securedSocket: false

@@ -45,7 +45,7 @@
     </licenses>
 
     <modules>
-        <module>node</module>
+        <module>node-elassandra</module>
     </modules>
 
 </project>

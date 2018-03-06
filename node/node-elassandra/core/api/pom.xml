@@ -27,15 +27,13 @@
 
     <parent>
         <groupId>com.tiesdb</groupId>
-        <artifactId>node-parent</artifactId>
+        <artifactId>core</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>node</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>core-api</artifactId>
 
-    <name>TiesDB Node</name>
-    <inceptionYear>2017</inceptionYear>
+    <name>TiesDB Core API</name>
 
     <licenses>
         <license>

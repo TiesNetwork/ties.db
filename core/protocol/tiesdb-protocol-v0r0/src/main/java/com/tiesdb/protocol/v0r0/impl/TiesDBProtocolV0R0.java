@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0r0;
+package com.tiesdb.protocol.v0r0.impl;
 
 import static com.tiesdb.protocol.api.Version.VersionComprator.REVISION;
 
@@ -32,21 +32,27 @@ import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
 import com.tiesdb.protocol.api.Version;
 import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel.PacketInput;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0r0.api.TiesDBConversationV0R0Handler;
-import com.tiesdb.protocol.v0r0.impl.ProtocolHelper;
+import com.tiesdb.protocol.v0r0.api.TiesDBProtocolV0R0Handler;
 
-public class TiesDBProtocolV0R0 extends TiesDBProtocolV0R0Base implements TiesDBProtocol {
+public class TiesDBProtocolV0R0 implements TiesDBProtocol {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TiesDBProtocolV0R0.class);
 
 	private static final Version VERSION = new Version(0, 0, 1);
+
+	protected final ProtocolHelper protocolHelper;
 
 	public TiesDBProtocolV0R0() {
 		this(null);
 	}
 
 	public TiesDBProtocolV0R0(ProtocolHelper protocolHelper) {
-		super(protocolHelper);
+		this.protocolHelper = protocolHelper != null ? protocolHelper : getDefaultProtocolHelper();
+	}
+
+	protected ProtocolHelper getDefaultProtocolHelper() {
+		LOG.debug("Using default ProtocolHelper");
+		return ProtocolHelper.Default.INSTANCE;
 	}
 
 	@Override
@@ -68,21 +74,31 @@ public class TiesDBProtocolV0R0 extends TiesDBProtocolV0R0Base implements TiesDB
 			throws TiesDBProtocolException {
 		Objects.requireNonNull(packetChannel);
 		Objects.requireNonNull(handler);
-		if (!TiesDBConversationV0R0Handler.class.isInstance(handler)) {
+		if (!TiesDBProtocolV0R0Handler.class.isInstance(handler)) {
 			throw new IllegalArgumentException(
-					"TiesDBProtocolHandler of class " + handler.getClass() + " should implement an " + TiesDBConversationV0R0Handler.class);
+					"TiesDBProtocolHandler of class " + handler.getClass() + " should implement an " + TiesDBProtocolV0R0Handler.class);
 		}
 		if (checkheader) {
 			checkHeader(packetChannel);
+		} else {
+			writeHeader(packetChannel);
 		}
-		((TiesDBConversationV0R0Handler) handler).handle(createConversation(packetChannel));
+		((TiesDBProtocolV0R0Handler) handler).handle(createConversation(packetChannel));
 	}
 
 	protected TiesDBConversationV0R0 createConversation(TiesDBProtocolPacketChannel packetChannel) throws TiesDBProtocolException {
 		return new TiesDBConversationV0R0(this, packetChannel);
 	}
 
-	@SuppressWarnings("deprecation") // FIXME!!!
+	protected void writeHeader(TiesDBProtocolPacketChannel packetChannel) throws TiesDBProtocolException {
+		try {
+			protocolHelper.writePacketHeader(VERSION, packetChannel.getOutput());
+		} catch (IOException e) {
+			throw new TiesDBProtocolException("Can't write header", e);
+		}
+	}
+
+	@SuppressWarnings("deprecation") // FIXME!!! Remove usage of deprecated methods
 	protected void checkHeader(TiesDBProtocolPacketChannel packetChannel) throws TiesDBProtocolException {
 		PacketInput packetInput = null;
 		try {

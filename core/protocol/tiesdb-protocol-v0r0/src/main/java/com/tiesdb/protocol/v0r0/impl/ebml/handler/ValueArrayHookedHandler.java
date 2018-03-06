@@ -21,6 +21,7 @@ package com.tiesdb.protocol.v0r0.impl.ebml.handler;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.LinkedList;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,7 @@ import com.tiesdb.protocol.v0r0.impl.ebml.TiesDBEBMLParser;
 import one.utopic.sparse.ebml.EBMLHeader;
 import one.utopic.sparse.ebml.EBMLType;
 
-public class ValueArrayHandler<T> implements TiesDBEBMLHandler<T[]> {
+public class ValueArrayHookedHandler<T> implements TiesDBEBMLHandler<T[]> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(DataEntryHandler.class);
 
@@ -40,7 +41,7 @@ public class ValueArrayHandler<T> implements TiesDBEBMLHandler<T[]> {
 	private final EBMLType type;
 	private final Class<T> clz;
 
-	public ValueArrayHandler(Class<T> clz, EBMLType type, TiesDBEBMLHandler<T> elementHandler) {
+	public ValueArrayHookedHandler(Class<T> clz, EBMLType type, TiesDBEBMLHandler<T> elementHandler) {
 		this.clz = clz;
 		this.type = type;
 		this.elementHandler = elementHandler;
@@ -48,11 +49,19 @@ public class ValueArrayHandler<T> implements TiesDBEBMLHandler<T[]> {
 
 	@Override
 	public T[] read(TiesDBEBMLParser parser) throws IOException {
+		return read(parser, e -> {
+		});
+	}
+
+	protected T[] read(TiesDBEBMLParser parser, Consumer<T> elementCousumer) throws IOException {
 		LinkedList<T> results = new LinkedList<>();
 		EBMLHeader elementHeader;
 		while ((elementHeader = parser.readHeader()) != null) {
 			if (this.type.equals(elementHeader.getType())) {
-				results.add(elementHandler.read(parser));
+				T element = elementHandler.read(parser);
+				if (results.add(element)) {
+					elementCousumer.accept(element);
+				}
 				parser.next();
 			} else {
 				switch (parser.getSettings().getUnexpectedPartStrategy()) {

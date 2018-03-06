@@ -1,3 +1,21 @@
+/**
+ * Copyright © 2017 Ties BV
+ *
+ * This file is part of Ties.DB project.
+ *
+ * Ties.DB project is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ties.DB project is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
+ */
 package com.tiesdb.protocol.v0r0.test.util;
 
 import static org.mockito.Mockito.verify;
@@ -15,11 +33,11 @@ import org.mockito.verification.VerificationMode;
 
 public final class TestHelper {
 
-	private static final HashSet<Method> filteredMethods = new HashSet<Method>();
+	private static final HashSet<String> filteredMethods = new HashSet<>();
 	static {
 		Method[] methods = Object.class.getMethods();
 		for (int i = 0; i < methods.length; i++) {
-			filteredMethods.add(methods[i]);
+			filteredMethods.add(methods[i].getName());
 		}
 	}
 
@@ -41,11 +59,11 @@ public final class TestHelper {
 	public static <T> void verifyAllInteractions(Object o, Class<?> type, VerificationMode mode) {
 		Method[] methods = type.getMethods();
 		for (int i = 0; i < methods.length; i++) {
-			if (filteredMethods.contains(methods[i])) {
+			Method method = methods[i];
+			if (filteredMethods.contains(method.getName())) {
 				continue;
 			}
 			try {
-				Method method = methods[i];
 				method.invoke(verify(o, mode), anyParams(method.getParameterTypes()));
 			} catch (IllegalAccessException | IllegalArgumentException e) {
 				throw new AssertionError(e);

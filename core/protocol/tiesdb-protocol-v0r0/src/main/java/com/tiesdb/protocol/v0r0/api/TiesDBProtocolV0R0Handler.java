@@ -20,9 +20,9 @@ package com.tiesdb.protocol.v0r0.api;
 
 import com.tiesdb.protocol.api.TiesDBProtocolHandler;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
-import com.tiesdb.protocol.v0r0.TiesDBConversationV0R0;
+import com.tiesdb.protocol.v0r0.impl.TiesDBConversationV0R0;
 
-public interface TiesDBConversationV0R0Handler extends TiesDBProtocolHandler {
+public interface TiesDBProtocolV0R0Handler extends TiesDBProtocolHandler {
 
 	void handle(TiesDBConversationV0R0 conv) throws TiesDBProtocolException;
 

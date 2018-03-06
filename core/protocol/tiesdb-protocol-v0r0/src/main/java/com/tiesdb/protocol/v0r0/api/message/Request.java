@@ -16,23 +16,10 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0r0;
+package com.tiesdb.protocol.v0r0.api.message;
 
-import com.tiesdb.protocol.api.TiesDBProtocolPacketChannel;
-import com.tiesdb.protocol.api.Version;
+public interface Request {
 
-public class TiesDBConversationV0R0 {
-
-	private final TiesDBProtocolPacketChannel packetChannel;
-	private final TiesDBProtocolV0R0 protocol;
-
-	public TiesDBConversationV0R0(TiesDBProtocolV0R0 protocol, TiesDBProtocolPacketChannel packetChannel) {
-		this.protocol = protocol;
-		this.packetChannel = packetChannel;
-	}
-
-	public Version getVersion() {
-		return protocol.getVersion();
-	}
+	RequestConsistencyLevel getConsistencyLevel();
 
 }

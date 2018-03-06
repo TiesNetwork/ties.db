@@ -1,3 +1,21 @@
+/**
+ * Copyright © 2017 Ties BV
+ *
+ * This file is part of Ties.DB project.
+ *
+ * Ties.DB project is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ties.DB project is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
+ */
 package com.tiesdb.protocol.v0r0.test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,16 +32,17 @@ import javax.xml.bind.DatatypeConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.tiesdb.protocol.v0r0.api.message.BlockchainAddress;
 import com.tiesdb.protocol.v0r0.api.message.Cheque;
+import com.tiesdb.protocol.v0r0.api.message.ChequeData;
 import com.tiesdb.protocol.v0r0.api.message.DataEntry;
 import com.tiesdb.protocol.v0r0.api.message.DataEntryField;
 import com.tiesdb.protocol.v0r0.api.message.DataModificationRequest;
+import com.tiesdb.protocol.v0r0.api.message.EthereumAddress;
 import com.tiesdb.protocol.v0r0.api.message.FieldValue;
 import com.tiesdb.protocol.v0r0.api.message.DataEntryHeader;
 import com.tiesdb.protocol.v0r0.api.message.DataEntryType;
 import com.tiesdb.protocol.v0r0.api.message.RequestConsistencyLevel;
-import com.tiesdb.protocol.v0r0.api.message.part.BlockchainAddress;
-import com.tiesdb.protocol.v0r0.impl.EthereumAddress;
 import com.tiesdb.protocol.v0r0.impl.ebml.TiesDBEBMLFormatter;
 import com.tiesdb.protocol.v0r0.impl.ebml.TiesDBEBMLHandler;
 import com.tiesdb.protocol.v0r0.impl.ebml.TiesDBEBMLParser;
@@ -67,8 +86,11 @@ public class TiesDBEBMLReadWriteTest {
 	void testDataEntry() throws IOException {
 		testReadWrite(new DataEntry(), DataEntryHandler.INSTANCE, TiesDBEBMLTypeContainer.DATA_ENTRY, data -> {
 			data.setHeader(new DataEntryHeader());
-			data.setFields(new DataEntryField[] { new DataEntryField() });
+			DataEntryField dataEntryField = new DataEntryField();
+			dataEntryField.setName("test");
+			data.setFields(new DataEntryField[] { dataEntryField });
 			data.setCheques(new Cheque[] { new Cheque() });
+			data.setEntrySigner(new EthereumAddress("FakeEthereumAddress0".getBytes()));
 		});
 	}
 
@@ -101,13 +123,15 @@ public class TiesDBEBMLReadWriteTest {
 			data.setTablespaceName("testTablespace");
 			data.setTimestamp(123456789L);
 			data.setFieldsHash("testHash".getBytes());
+			data.getHeaderRawBytes();
+			data.setHeaderRawBytes(new byte[0]);
 		});
 	}
 
 	@Test
-	@DisplayName("Cheque")
-	void testCheque() throws IOException {
-		testReadWrite(new Cheque(), ChequeHandler.INSTANCE, TiesDBEBMLTypeContainer.CHEQUE, data -> {
+	@DisplayName("ChequeData")
+	void testChequeData() throws IOException {
+		testReadWrite(new ChequeData(), ChequeDataHandler.INSTANCE, TiesDBEBMLTypeContainer.CHEQUE_DATA, data -> {
 			data.setAmount(BigInteger.TEN);
 			data.setNumber(12345L);
 			data.setRange(UUID.randomUUID());

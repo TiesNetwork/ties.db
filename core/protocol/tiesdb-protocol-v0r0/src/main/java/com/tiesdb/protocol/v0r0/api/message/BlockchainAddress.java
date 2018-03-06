@@ -16,24 +16,10 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0r0.impl.ebml;
+package com.tiesdb.protocol.v0r0.api.message;
 
-import java.util.Objects;
+public interface BlockchainAddress {
 
-public class TiesDBEBMLParserSettings {
-
-	public static enum UnexpectedPartStrategy {
-		SKIP, ERROR
-	}
-
-	private UnexpectedPartStrategy unexpectedPartStrategy = UnexpectedPartStrategy.SKIP;
-
-	public UnexpectedPartStrategy getUnexpectedPartStrategy() {
-		return unexpectedPartStrategy;
-	}
-
-	public void setUnexpectedPartStrategy(UnexpectedPartStrategy unexpectedPartStrategy) {
-		this.unexpectedPartStrategy = Objects.requireNonNull(unexpectedPartStrategy);
-	}
+	String getBlockchainType();
 
 }

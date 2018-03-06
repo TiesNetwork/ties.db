@@ -28,7 +28,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.tiesdb.protocol.api.TiesDBProtocol;
-import com.tiesdb.protocol.api.data.Version;
+import com.tiesdb.protocol.api.Version;
 
 @DisplayName("TiesDBProtocol Miscelaneous Test")
 public class TiesDBProtocol_MiscTest {
@@ -39,22 +39,23 @@ public class TiesDBProtocol_MiscTest {
 		List<TiesDBProtocol> protocols = new ArrayList<>();
 		protocols.add(newProtocol(new Version(0, 0, 1)));
 		protocols.add(newProtocol(new Version(0, 0, 3)));
-		protocols.add(newProtocol(new Version(2, 1, 0)));
+		protocols.add(newProtocol(new Version(2, 1)));
 		protocols.add(newProtocol(new Version(0, 0, 2)));
 		protocols.add(newProtocol(new Version(0, 3, 0)));
 		protocols.add(newProtocol(null));
 		protocols.add(newProtocol(new Version(1, 3, 0)));
 		protocols.add(newProtocol(new Version(0, 1, 0)));
-		protocols.add(newProtocol(new Version(0, 2, 0)));
+		protocols.add(newProtocol(new Version(0, 2)));
 		protocols.add(newProtocol(new Version(3, 2, 0)));
+		protocols.add(newProtocol(new Version(4)));
 
-		String[] p1ref = new String[] { "0.0.1", "0.0.3", "2.1", "0.0.2", "0.3", "null", "1.3", "0.1", "0.2", "3.2" };
+		String[] p1ref = new String[] { "V0R0M1", "V0R0M3", "V2R1", "V0R0M2", "V0R3", "null", "V1R3", "V0R1", "V0R2", "V3R2", "V4R0" };
 		String[] p1 = protocols.parallelStream().map(p -> p.getVersion() == null ? "null" : p.getVersion().toString())
 				.toArray(size -> new String[size]);
 		assertArrayEquals(p1ref, p1);
 
 		protocols.sort(TiesDBProtocol.ProtocolComparator.FULL);
-		String[] p2ref = new String[] { "0.0.1", "0.0.2", "0.0.3", "0.1", "0.2", "0.3", "1.3", "2.1", "3.2", "null" };
+		String[] p2ref = new String[] { "V0R0M1", "V0R0M2", "V0R0M3", "V0R1", "V0R2", "V0R3", "V1R3", "V2R1", "V3R2", "V4R0", "null" };
 		String[] p2 = protocols.parallelStream().map(p -> p.getVersion() == null ? "null" : p.getVersion().toString())
 				.toArray(size -> new String[size]);
 		assertArrayEquals(p2ref, p2);

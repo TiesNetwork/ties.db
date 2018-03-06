@@ -47,7 +47,7 @@
 
     <modules>
         <module>tiesdb-protocol</module>
-        <module>tiesdb-protocol-v0</module>
+        <module>tiesdb-protocol-v0r0</module>
     </modules>
 
 </project>

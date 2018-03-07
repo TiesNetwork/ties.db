@@ -1,3 +1,0 @@
-# To prevent some classes from binding you can mark them with exclamation mark like this:
-# !network.tiesdb.transport.impl.ws.TiesTransportConfigImpl
-network.tiesdb.transport.impl.ws.TiesTransportConfigImpl

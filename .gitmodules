@@ -6,3 +6,7 @@
 	path = core/lib/sparse
 	url = ../sparse.git
 	branch = filatov-dev
+[submodule "node/node-elassandra"]
+	path = node/node-elassandra
+	url = ../node-elassandra.git
+	branch = filatov-dev

@@ -44,6 +44,23 @@ public interface Digest
      */
     public void update(byte in);
 
+
+
+    /**
+     * update the message digest with a block of bytes.
+     *
+     * @param in the byte array containing the data.
+     */
+    public void update(byte[] in);
+
+    /**
+     * update the message digest with a block of bytes.
+     *
+     * @param in the byte array containing the data.
+     * @param inOff the offset into the byte array where the data starts.
+     */
+    public void update(byte[] in, int inOff);
+
     /**
      * update the message digest with a block of bytes.
      *

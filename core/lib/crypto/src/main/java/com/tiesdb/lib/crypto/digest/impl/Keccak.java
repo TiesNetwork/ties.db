@@ -28,4 +28,14 @@ public final class Keccak extends org.bouncycastle.crypto.digests.KeccakDigest i
 	public Keccak(int bitLength) {
 		super(bitLength);
 	}
+
+    @Override
+    public void update(byte[] in) {
+        update(in, 0, in.length);
+    }
+
+    @Override
+    public void update(byte[] in, int inOff) {
+        update(in, inOff, in.length);
+    }
 }

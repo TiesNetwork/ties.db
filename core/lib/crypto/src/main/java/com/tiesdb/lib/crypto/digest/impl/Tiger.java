@@ -22,4 +22,14 @@ import com.tiesdb.lib.crypto.digest.api.Digest;
 
 public final class Tiger extends org.bouncycastle.crypto.digests.TigerDigest implements Digest {
 
+    @Override
+    public void update(byte[] in) {
+        update(in, 0, in.length);
+    }
+
+    @Override
+    public void update(byte[] in, int inOff) {
+        update(in, inOff, in.length);
+    }
+
 }

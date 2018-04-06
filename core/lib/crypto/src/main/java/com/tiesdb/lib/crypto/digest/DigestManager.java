@@ -23,23 +23,30 @@ import com.tiesdb.lib.crypto.digest.impl.Keccak;
 import com.tiesdb.lib.crypto.digest.impl.Tiger;
 
 public class DigestManager {
-	public static final String CRYPTO_PROVIDER = "BC";
 
-	public static final String TIGER = "TIGER";
-	public static final String KECCAK = "KECCAK-256";
-	public static final String KECCAK_512 = "KECCAK-512";
+    public static final String TIGER = "TIGER";
+    public static final String KECCAK = "KECCAK";
+    public static final String KECCAK_224 = "KECCAK-224";
+    public static final String KECCAK_256 = "KECCAK-256";
+    public static final String KECCAK_384 = "KECCAK-384";
+    public static final String KECCAK_512 = "KECCAK-512";
 
-	public static Digest getDigest(String algorythm) {
-		switch (algorythm) {
-		case TIGER:
-			return new Tiger();
-		case KECCAK:
+    public static Digest getDigest(String algorythm) {
+        switch (algorythm) {
+        case TIGER:
+            return new Tiger();
+        case KECCAK:
+        case KECCAK_256:
             return new Keccak(256);
-		case KECCAK_512:
+        case KECCAK_224:
+            return new Keccak(224);
+        case KECCAK_384:
+            return new Keccak(384);
+        case KECCAK_512:
             return new Keccak(512);
 
-		default:
-			throw new IllegalArgumentException("No algorythm was found for name " + algorythm);
-		}
-	}
+        default:
+            throw new IllegalArgumentException("No algorythm was found for name " + algorythm);
+        }
+    }
 }

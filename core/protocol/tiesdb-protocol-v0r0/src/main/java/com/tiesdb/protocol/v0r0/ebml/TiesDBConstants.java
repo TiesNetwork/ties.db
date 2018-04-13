@@ -16,12 +16,15 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.api;
+package com.tiesdb.protocol.v0r0.ebml;
 
-import com.tiesdb.protocol.exception.TiesDBException;
+public final class TiesDBConstants {
 
-public interface TiesDBProtocolHandler<T> {
+    public static final int ENTRY_TYPE_INSERT = 1;
+    public static final int ENTRY_TYPE_UPDATE = 2;
 
-    void handle(T session) throws TiesDBException;
+    public static final int ENTRY_NETWORK_ETHEREUM = 60; // BIP-0044/SLIP-0044
 
+    private TiesDBConstants() {
+    }
 }

@@ -19,28 +19,45 @@
 package com.tiesdb.protocol;
 
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.tiesdb.protocol.api.TiesDBProtocol;
+import com.tiesdb.protocol.api.Version;
 
 public final class TiesDBProtocolManager {
 
-	public static List<TiesDBProtocol> loadProtocols() {
-		return loadProtocols(Thread.currentThread().getContextClassLoader());
-	}
+    private static final Map<Version, TiesDBProtocol> PROTOCOL_MAP = new ConcurrentHashMap<>();
+    private static final Collection<TiesDBProtocol> PROTOCOLS = Collections.unmodifiableCollection(PROTOCOL_MAP.values());
+    private static final Set<Version> PROTOCOL_VERSIONS = Collections.unmodifiableSet(PROTOCOL_MAP.keySet());
 
-	public static List<TiesDBProtocol> loadProtocols(ClassLoader cl) {
-		return loadProtocolsTo(new LinkedList<>(), cl);
-	}
+    static {
+        reloadProtocols(Thread.currentThread().getContextClassLoader());
+    }
 
-	public static <C extends Collection<? super TiesDBProtocol>> C loadProtocolsTo(C protocols) {
-		return loadProtocolsTo(protocols, Thread.currentThread().getContextClassLoader());
-	}
+    synchronized public static void reloadProtocols(ClassLoader classLoader) {
+        Iterator<TiesDBProtocol> pIter = ServiceLoader.load(TiesDBProtocol.class, classLoader).iterator();
+        PROTOCOL_MAP.clear();
+        while (pIter.hasNext()) {
+            TiesDBProtocol p = pIter.next();
+            PROTOCOL_MAP.put(p.getVersion(), p);
+        }
+    }
 
-	public static <C extends Collection<? super TiesDBProtocol>> C loadProtocolsTo(C protocols, ClassLoader cl) {
-		ServiceLoader.load(TiesDBProtocol.class, cl).forEach(protocol -> protocols.add(protocol));
-		return protocols;
-	}
+    public static Collection<TiesDBProtocol> getProtocols() {
+        return PROTOCOLS;
+    }
+
+    public static Set<Version> getProtocolVersions() {
+        return PROTOCOL_VERSIONS;
+    }
+
+    public static TiesDBProtocol getProtocol(Version version) {
+        return PROTOCOL_MAP.get(version);
+    }
+
 }

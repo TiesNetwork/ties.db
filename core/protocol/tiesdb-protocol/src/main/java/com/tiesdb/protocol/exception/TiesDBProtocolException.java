@@ -18,7 +18,7 @@
  */
 package com.tiesdb.protocol.exception;
 
-public class TiesDBProtocolException extends Exception {
+public class TiesDBProtocolException extends TiesDBException {
 
 	private static final long serialVersionUID = -8447132076835783648L;
 

@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.api;
+package com.tiesdb.protocol.v0r0.ebml;
 
-import com.tiesdb.protocol.exception.TiesDBException;
+import one.utopic.sparse.ebml.EBMLType;
 
-public interface TiesDBProtocolHandler<T> {
+public interface TiesEBMLType extends EBMLType {
 
-    void handle(T session) throws TiesDBException;
+    boolean isStructural();
 
 }

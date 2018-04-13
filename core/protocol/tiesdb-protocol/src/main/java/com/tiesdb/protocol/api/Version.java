@@ -22,93 +22,98 @@ import java.util.Comparator;
 
 public final class Version {
 
-	public static enum VersionComprator implements Comparator<Version> {
-		VERSION, REVISION, FULL;
+    public static enum VersionComprator implements Comparator<Version> {
 
-		@Override
-		public int compare(Version v1, Version v2) {
-			int c = 0;
-			return v1 == null
-				? (v2 == null ? 0 : 1)
-				: v2 == null
-					? -1
-					: (c = Integer.compare(v1.version, v2.version)) != 0 || equals(VERSION)
-						? c
-						: (c = Integer.compare(v1.revision, v2.revision)) != 0 || equals(REVISION)
-							? c /**/
-							: Integer.compare(v1.maintenceence, v2.maintenceence);
-		}
-	}
+        VERSION, //
+        REVISION, //
+        FULL, //
 
-	private static final int MAX_UNSIGNED_VALUE = 1 + Short.MAX_VALUE * 2;
+        ;
 
-	private final int version;
-	private final int revision;
-	private final int maintenceence;
+        @Override
+        public int compare(Version v1, Version v2) {
+            int c = 0;
+            return v1 == null
+                ? (v2 == null ? 0 : 1)
+                : v2 == null
+                    ? -1
+                    : (c = Integer.compare(v1.version, v2.version)) != 0 || equals(VERSION)
+                        ? c
+                        : (c = Integer.compare(v1.revision, v2.revision)) != 0 || equals(REVISION)
+                            ? c /**/
+                            : Integer.compare(v1.maintenceence, v2.maintenceence);
+        }
+    }
 
-	public Version(int version) {
-		this(version, 0, 0);
-	}
+    private static final int MAX_UNSIGNED_VALUE = 1 + Short.MAX_VALUE * 2;
 
-	public Version(int version, int revision) {
-		this(version, revision, 0);
-	}
+    private final int version;
+    private final int revision;
+    private final int maintenceence;
 
-	public Version(int version, int revision, int maintence) {
-		this.version = safeShort(version);
-		this.revision = safeShort(revision);
-		this.maintenceence = safeShort(maintence);
-	}
+    public Version(int version) {
+        this(version, 0, 0);
+    }
 
-	public int getVersion() {
-		return version;
-	}
+    public Version(int version, int revision) {
+        this(version, revision, 0);
+    }
 
-	public int getRevision() {
-		return revision;
-	}
+    public Version(int version, int revision, int maintence) {
+        this.version = safeShort(version);
+        this.revision = safeShort(revision);
+        this.maintenceence = safeShort(maintence);
+    }
 
-	public int getMaintence() {
-		return maintenceence;
-	}
+    public int getVersion() {
+        return version;
+    }
 
-	private static int safeShort(int v) {
-		if (v < 0 || v > MAX_UNSIGNED_VALUE) {
-			throw new IllegalArgumentException("Unsigned short should be 0 - " + MAX_UNSIGNED_VALUE);
-		}
-		return v;
-	}
+    public int getRevision() {
+        return revision;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + version;
-		result = prime * result + revision;
-		result = prime * result + maintenceence;
-		return result;
-	}
+    public int getMaintence() {
+        return maintenceence;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Version other = (Version) obj;
-		if (version != other.version)
-			return false;
-		if (revision != other.revision)
-			return false;
-		if (maintenceence != other.maintenceence)
-			return false;
-		return true;
-	}
+    private static int safeShort(int v) {
+        if (v < 0 || v > MAX_UNSIGNED_VALUE) {
+            throw new IllegalArgumentException("Unsigned short should be 0 - " + MAX_UNSIGNED_VALUE);
+        }
+        return v;
+    }
 
-	@Override
-	public String toString() {
-		return "V" + version + "R" + revision + (maintenceence != 0 ? "M" + maintenceence : "");
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + version;
+        result = prime * result + revision;
+        result = prime * result + maintenceence;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Version other = (Version) obj;
+        if (version != other.version)
+            return false;
+        if (revision != other.revision)
+            return false;
+        if (maintenceence != other.maintenceence)
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "V" + version + "R" + revision + (maintenceence != 0 ? "M" + maintenceence : "");
+    }
 }

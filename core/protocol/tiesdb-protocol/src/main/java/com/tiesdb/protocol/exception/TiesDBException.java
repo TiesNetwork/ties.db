@@ -16,12 +16,22 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.api;
+package com.tiesdb.protocol.exception;
 
-import com.tiesdb.protocol.exception.TiesDBException;
+public class TiesDBException extends Exception {
 
-public interface TiesDBProtocolHandler<T> {
+	private static final long serialVersionUID = -8447132076835783648L;
 
-    void handle(T session) throws TiesDBException;
+	public TiesDBException(String message) {
+		super(message);
+	}
+
+	public TiesDBException(Throwable cause) {
+		super(cause);
+	}
+
+	public TiesDBException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
 }

@@ -30,6 +30,7 @@ import java.util.Objects;
 public enum TiesDBType implements TiesEBMLType {
 
     CONSISTENCY(0xEE, Context.VALUE, Context.REQUEST), // Unsigned
+    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST), // Unsigned
 
     SIGNATURE(0xFE, Context.VALUE, Context.SIGNED), // Binary
     SIGNER(0xFC, Context.VALUE, Context.SIGNED), // Binary

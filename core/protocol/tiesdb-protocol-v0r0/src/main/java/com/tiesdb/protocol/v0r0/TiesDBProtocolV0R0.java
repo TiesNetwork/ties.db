@@ -284,8 +284,8 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
             }
         } catch (IOException e) {
             LOG.debug("CreateChannelHandshake failed", e);
+            throw new TiesDBProtocolException("Can't create channel", e);
         }
-        throw new TiesDBProtocolException("Can't create channel");
     }
 
     @Override
@@ -304,8 +304,8 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
             }
         } catch (IOException e) {
             LOG.debug("AcceptChannelHandshake failed", e);
+            throw new TiesDBProtocolException("Can't accept channel", e);
         }
-        throw new TiesDBProtocolException("Can't accept channel");
     }
 
     @Override

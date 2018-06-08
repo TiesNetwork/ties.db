@@ -40,7 +40,7 @@ public class UUIDFormat implements EBMLFormat<UUID> {
         if (data.length != REQUIRED_LENGTH) {
             throw new SparseReaderException("Not enough bytes to construct UUID. Required " + REQUIRED_LENGTH + " but was " + data.length);
         }
-        return UUID.fromString(DatatypeConverter.printHexBinary(data).replaceFirst("(.{8})(.{4})(.{4})(.{4})(.{12})", "\1-\2-\3-\4-\5"));
+        return UUID.fromString(DatatypeConverter.printHexBinary(data).replaceFirst("(.{8})(.{4})(.{4})(.{4})(.{12})", "$1-$2-$3-$4-$5"));
     }
 
     @Override

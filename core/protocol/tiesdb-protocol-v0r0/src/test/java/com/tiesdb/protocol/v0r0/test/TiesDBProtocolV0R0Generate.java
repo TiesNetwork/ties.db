@@ -22,7 +22,6 @@ import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.test.util.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -176,15 +175,6 @@ public class TiesDBProtocolV0R0Generate {
 
         LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
 
-        byte[] uuidHash = getHash(//
-                d -> encodeTies(//
-                        ties(d::update, //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "uuid"), //
-                                part(FIELD_VALUE, UUIDFormat.INSTANCE, UUID.fromString("75e6b139-de73-4e31-9600-e216e4239030")) //
-                        ) //
-                ) //
-        );
-
         byte[] fieldsData = encodeTies(//
                 part(FIELD, //
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
@@ -193,12 +183,6 @@ public class TiesDBProtocolV0R0Generate {
                                 part(FIELD_VALUE, UTF8StringFormat.INSTANCE, "Updated description") //
                         ) //
                 ), //
-                /*
-                 * part(FIELD, // part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "binary"), //
-                 * part(FIELD_NAME, UTF8StringFormat.INSTANCE, "uuid"), //
-                 * ties(newBytesConsumer(fieldHashes), // part(FIELD_HASH, BytesFormat.INSTANCE,
-                 * uuidHash) // ) // ) //
-                 */
                 part(FIELD, //
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
                         ties(newDigestConsumer(fieldHashes), //
@@ -414,14 +398,6 @@ public class TiesDBProtocolV0R0Generate {
             return buf;
         });
         return digest::update;
-    }
-
-    private Consumer<Byte> newBytesConsumer(LinkedList<Supplier<byte[]>> fieldHashes) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        fieldHashes.addLast(() -> {
-            return baos.toByteArray();
-        });
-        return baos::write;
     }
 
     private byte[] hs2ba(String hexString) {

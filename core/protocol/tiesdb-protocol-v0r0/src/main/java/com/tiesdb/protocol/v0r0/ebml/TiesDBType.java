@@ -18,27 +18,33 @@
  */
 package com.tiesdb.protocol.v0r0.ebml;
 
-import one.utopic.sparse.ebml.EBMLCode;
-import one.utopic.sparse.ebml.EBMLType;
-
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-// TODO!!! check code consistency: even - final, odd - structural element codes
+import one.utopic.sparse.ebml.EBMLCode;
+import one.utopic.sparse.ebml.EBMLType;
+
 public enum TiesDBType implements TiesEBMLType {
 
+    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST, Context.RESPONSE), // Unsigned
+
     CONSISTENCY(0xEE, Context.VALUE, Context.REQUEST), // Unsigned
-    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST), // Unsigned
 
     SIGNATURE(0xFE, Context.VALUE, Context.SIGNED), // Binary
     SIGNER(0xFC, Context.VALUE, Context.SIGNED), // Binary
 
     ERROR(0x7FFF, Context.ERROR, Context.ROOT), // Meta
-    ERROR_MESSAGE(0xF0, Context.VALUE, Context.ERROR), // UTF-8
+    ERROR_MESSAGE(0xE0, Context.VALUE, Context.ERROR), // UTF-8
 
     MODIFICATION_REQUEST(0x1E544945, Context.MODIFICATION_REQUEST, Context.ROOT), // Meta
+
+    MODIFICATION_RESPONSE(0x1F544945, Context.MODIFICATION_RESPONSE, Context.ROOT), // Meta
+
+    MODIFICATION_RESULT(0xE1, Context.MODIFICATION_RESULT, Context.MODIFICATION_RESPONSE), // Meta
+    MODIFICATION_ERROR(0xEF, Context.MODIFICATION_ERROR, Context.MODIFICATION_RESPONSE), // Meta
+    ENTRY_HASH(0x80, Context.VALUE, Context.MODIFICATION_RESULT, Context.MODIFICATION_ERROR), // Binary (Keccak-256)
 
     ENTRY(0xE1, Context.ENTRY, Context.MODIFICATION_REQUEST), // Meta
 
@@ -82,6 +88,12 @@ public enum TiesDBType implements TiesEBMLType {
         REQUEST, //
         MODIFICATION_REQUEST(REQUEST), //
 
+        RESPONSE, //
+        MODIFICATION_RESPONSE(RESPONSE), //
+
+        MODIFICATION_RESULT(SIGNED), //
+        MODIFICATION_ERROR(ERROR), //
+
         ENTRY, //
         ENTRY_HEADER(SIGNED), //
         FIELD_LIST, //
@@ -98,6 +110,12 @@ public enum TiesDBType implements TiesEBMLType {
         }, //
 
         ;
+
+        static {
+            if (null != TiesDBType.class) { // Initialize TiesDB types for all contexts
+                // OK
+            }
+        }
 
         private final Map<EBMLCode, EBMLType> typeMap = new HashMap<>();
         private final Context[] parentContexts;
@@ -145,6 +163,11 @@ public enum TiesDBType implements TiesEBMLType {
         try {
             this.context = Objects.requireNonNull(context);
             this.code = new EBMLCode(code > 0xFF ? longToBytes(code) : new byte[] { (byte) (0xFF & code) });
+            if (Context.VALUE.equals(context) && (code & 1) > 0) {
+                throw new IllegalArgumentException("Wrong " + this.code + " for " + this + ". Code should be even for data frames.");
+            } else if (!Context.VALUE.equals(context) && (code & 1) == 0) {
+                throw new IllegalArgumentException("Wrong " + this.code + " for " + this + ". Code should be odd for structural frames.");
+            }
             for (int i = 0; i < regContexts.length; i++) {
                 regContexts[i].register(this);
             }

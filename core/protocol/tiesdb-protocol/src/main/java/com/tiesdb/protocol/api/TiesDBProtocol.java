@@ -49,11 +49,11 @@ public interface TiesDBProtocol {
 
         @Override
         public int compare(TiesDBProtocol p1, TiesDBProtocol p2) {
-            return p1 == null
-                ? (p2 == null ? 0 : 1)
-                : p2 == null
-                    ? -1 //
-                    : versionComparatorThreshold.compare(p1.getVersion(), p2.getVersion());
+            return p1 == null //
+                    ? (p2 == null ? 0 : 1)
+                    : p2 == null //
+                            ? -1 //
+                            : versionComparatorThreshold.compare(p1.getVersion(), p2.getVersion());
         }
 
     }
@@ -68,15 +68,16 @@ public interface TiesDBProtocol {
 
         TiesDBProtocol getProtocol();
 
-        void processChannel(TiesDBChannelInput input, TiesDBChannelOutput output)
-                throws TiesDBProtocolException;
+        void processChannel(TiesDBChannelInput input, TiesDBChannelOutput output) throws TiesDBProtocolException;
 
     }
 
     Version getVersion();
 
-    void createChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider) throws TiesDBException;
+    void createChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
+            throws TiesDBException;
 
-    void acceptChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider) throws TiesDBException;
+    void acceptChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
+            throws TiesDBException;
 
 }

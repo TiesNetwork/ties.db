@@ -7,7 +7,7 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.EventState;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBType;
 import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 
-import one.utopic.sparse.ebml.EBMLWriter;
+import one.utopic.sparse.ebml.EBMLWriter.EBMLWriteFormat;
 
 final class WriterUtil {
 
@@ -29,7 +29,7 @@ final class WriterUtil {
         return s -> writeTag(s, t, c);
     }
 
-    public static <O> ConversationConsumer write(TiesDBType t, EBMLWriter.EBMLWriteFormat<O> f, O d) {
+    public static <O> ConversationConsumer write(TiesDBType t, EBMLWriteFormat<O> f, O d) {
         return write(t, s -> writeData(s, f, d));
     }
 
@@ -39,7 +39,7 @@ final class WriterUtil {
         s.accept(new Event(t, EventState.END));
     }
 
-    private static <O> void writeData(Conversation s, EBMLWriter.EBMLWriteFormat<O> format, O data) throws TiesDBProtocolException {
+    private static <O> void writeData(Conversation s, EBMLWriteFormat<O> format, O data) throws TiesDBProtocolException {
         s.write(format, data);
     }
 }

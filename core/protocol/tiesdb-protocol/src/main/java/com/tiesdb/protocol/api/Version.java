@@ -33,15 +33,15 @@ public final class Version {
         @Override
         public int compare(Version v1, Version v2) {
             int c = 0;
-            return v1 == null
-                ? (v2 == null ? 0 : 1)
-                : v2 == null
-                    ? -1
-                    : (c = Integer.compare(v1.version, v2.version)) != 0 || equals(VERSION)
-                        ? c
-                        : (c = Integer.compare(v1.revision, v2.revision)) != 0 || equals(REVISION)
-                            ? c /**/
-                            : Integer.compare(v1.maintenceence, v2.maintenceence);
+            return v1 == null //
+                    ? (v2 == null ? 0 : 1)
+                    : v2 == null //
+                            ? -1
+                            : (c = Integer.compare(v1.version, v2.version)) != 0 || equals(VERSION) //
+                                    ? c
+                                    : (c = Integer.compare(v1.revision, v2.revision)) != 0 || equals(REVISION) //
+                                            ? c
+                                            : Integer.compare(v1.maintenceence, v2.maintenceence);
         }
     }
 

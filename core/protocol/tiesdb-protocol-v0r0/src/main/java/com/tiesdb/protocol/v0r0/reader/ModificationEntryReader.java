@@ -87,7 +87,7 @@ public class ModificationEntryReader implements Reader<ModificationEntryReader.M
             return true;
         // $CASES-OMITTED$
         default:
-        // throw new TiesDBProtocolException("Illegal packet format");
+            // throw new TiesDBProtocolException("Illegal packet format");
         }
         return false;
     }

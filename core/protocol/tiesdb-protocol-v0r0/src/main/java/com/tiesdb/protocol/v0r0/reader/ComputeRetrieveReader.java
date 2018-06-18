@@ -35,60 +35,59 @@ import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
 public class ComputeRetrieveReader implements Reader<ComputeRetrieveReader.ComputeRetrieve> {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ComputeRetrieveReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ComputeRetrieveReader.class);
 
-	public static class ComputeRetrieve extends Function implements Retrieve {
+    public static class ComputeRetrieve extends Function implements Retrieve {
 
-		private String alias;
-		private String type;
+        private String alias;
+        private String type;
 
-		@Override
-		public String toString() {
-			return "ComputeRetrieve [alias=" + alias + ", type=" + type + ", function=" + super.toString() + "]";
-		}
+        @Override
+        public String toString() {
+            return "ComputeRetrieve [alias=" + alias + ", type=" + type + ", function=" + super.toString() + "]";
+        }
 
-		@Override
-		public <T> T accept(Visitor<T> v) {
-			return v.on(this);
-		}
+        @Override
+        public <T> T accept(Visitor<T> v) {
+            return v.on(this);
+        }
 
-		public String getAlias() {
-			return alias;
-		}
+        public String getAlias() {
+            return alias;
+        }
 
-		public String getType() {
-			return type;
-		}
+        public String getType() {
+            return type;
+        }
 
-	}
+    }
 
-	private final FunctionReader functionReader = new FunctionReader();
+    private final FunctionReader functionReader = new FunctionReader();
 
-	public boolean acceptComputeRetrieve(Conversation session, Event e, ComputeRetrieve r)
-			throws TiesDBProtocolException {
-		switch (e.getType()) {
-		case RET_COMPUTE_ALIAS: {
-			r.alias = session.read(UTF8StringFormat.INSTANCE);
-			LOG.debug("RET_COMPUTE_ALIAS: {}", r.alias);
-			end(session, e);
-			return true;
-		}
-		case RET_COMPUTE_TYPE: {
-			r.type = session.read(ASCIIStringFormat.INSTANCE);
-			LOG.debug("RET_COMPUTE_TYPE: {}", r.type);
-			end(session, e);
-			return true;
-		}
-		// $CASES-OMITTED$
-		default:
-			return functionReader.acceptFunction(session, e, r);
-		}
-	}
+    public boolean acceptComputeRetrieve(Conversation session, Event e, ComputeRetrieve r) throws TiesDBProtocolException {
+        switch (e.getType()) {
+        case RET_COMPUTE_ALIAS: {
+            r.alias = session.read(UTF8StringFormat.INSTANCE);
+            LOG.debug("RET_COMPUTE_ALIAS: {}", r.alias);
+            end(session, e);
+            return true;
+        }
+        case RET_COMPUTE_TYPE: {
+            r.type = session.read(ASCIIStringFormat.INSTANCE);
+            LOG.debug("RET_COMPUTE_TYPE: {}", r.type);
+            end(session, e);
+            return true;
+        }
+        // $CASES-OMITTED$
+        default:
+            return functionReader.acceptFunction(session, e, r);
+        }
+    }
 
-	@Override
-	public boolean accept(Conversation session, Event e, ComputeRetrieve r) throws TiesDBProtocolException {
-		acceptEach(session, e, this::acceptComputeRetrieve, r);
-		return true;
-	}
+    @Override
+    public boolean accept(Conversation session, Event e, ComputeRetrieve r) throws TiesDBProtocolException {
+        acceptEach(session, e, this::acceptComputeRetrieve, r);
+        return true;
+    }
 
 }

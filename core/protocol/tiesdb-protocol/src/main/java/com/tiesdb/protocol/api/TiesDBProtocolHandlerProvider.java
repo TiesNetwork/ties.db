@@ -22,6 +22,6 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 
 public interface TiesDBProtocolHandlerProvider {
 
-    <S> TiesDBProtocolHandler<S>  getHandler(Version localVersion, Version remoteVersion, S session) throws TiesDBProtocolException;
+    <S> TiesDBProtocolHandler<S> getHandler(Version localVersion, Version remoteVersion, S session) throws TiesDBProtocolException;
 
 }

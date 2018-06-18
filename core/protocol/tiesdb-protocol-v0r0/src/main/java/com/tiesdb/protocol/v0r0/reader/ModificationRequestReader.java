@@ -49,7 +49,8 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
 
         @Override
         public String toString() {
-            return "ModificationRequest [messageId=" + messageId + ", consistency=" + consistency + ", modificationEntries=" + modificationEntries + "]";
+            return "ModificationRequest [messageId=" + messageId + ", consistency=" + consistency + ", modificationEntries="
+                    + modificationEntries + "]";
         }
 
         @Override

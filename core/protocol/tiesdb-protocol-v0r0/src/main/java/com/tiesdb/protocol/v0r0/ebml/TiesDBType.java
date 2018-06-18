@@ -92,12 +92,12 @@ public enum TiesDBType implements TiesEBMLType {
     FUN_ARGUMENT_FUNCTION(0xF3, Context.FUNCTION, Context.FUNCTION), // Meta
     FUN_ARGUMENT_REFERENCE(0xF2, Context.VALUE, Context.FUNCTION), // UTF-8
     FUN_ARGUMENT_STATIC(0xF1, Context.ARGUMENT_STATIC, Context.FUNCTION), // Meta
-    
+
     ARG_STATIC_TYPE(0x80, Context.VALUE, Context.ARGUMENT_STATIC), // ASCII
     ARG_STATIC_VALUE(0x82, Context.VALUE, Context.ARGUMENT_STATIC), // Binary
 
     FILTER_LIST(0xA3, Context.FILTER_LIST, Context.RECOLLECTION_REQUEST), // Meta
-	FILTER(0xF1, Context.FILTER, Context.FILTER_LIST), // Meta
+    FILTER(0xF1, Context.FILTER, Context.FILTER_LIST), // Meta
     FILTER_FIELD(0xE0, Context.VALUE, Context.FILTER), // UTF-8
 
     RECOLLECTION_RESPONSE(0x12544945, Context.RECOLLECTION_RESPONSE, Context.ROOT), // Meta

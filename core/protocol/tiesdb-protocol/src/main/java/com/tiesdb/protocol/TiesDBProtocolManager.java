@@ -18,8 +18,10 @@
  */
 package com.tiesdb.protocol;
 
+import static java.util.Collections.unmodifiableCollection;
+import static java.util.Collections.unmodifiableSet;
+
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -32,8 +34,8 @@ import com.tiesdb.protocol.api.Version;
 public final class TiesDBProtocolManager {
 
     private static final Map<Version, TiesDBProtocol> PROTOCOL_MAP = new ConcurrentHashMap<>();
-    private static final Collection<TiesDBProtocol> PROTOCOLS = Collections.unmodifiableCollection(PROTOCOL_MAP.values());
-    private static final Set<Version> PROTOCOL_VERSIONS = Collections.unmodifiableSet(PROTOCOL_MAP.keySet());
+    private static final Collection<TiesDBProtocol> PROTOCOLS = unmodifiableCollection(PROTOCOL_MAP.values());
+    private static final Set<Version> PROTOCOL_VERSIONS = unmodifiableSet(PROTOCOL_MAP.keySet());
 
     static {
         reloadProtocols(Thread.currentThread().getContextClassLoader());

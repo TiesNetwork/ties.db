@@ -20,18 +20,18 @@ package com.tiesdb.protocol.exception;
 
 public class TiesDBException extends Exception {
 
-	private static final long serialVersionUID = -8447132076835783648L;
+    private static final long serialVersionUID = -8447132076835783648L;
 
-	public TiesDBException(String message) {
-		super(message);
-	}
+    public TiesDBException(String message) {
+        super(message);
+    }
 
-	public TiesDBException(Throwable cause) {
-		super(cause);
-	}
+    public TiesDBException(Throwable cause) {
+        super(cause);
+    }
 
-	public TiesDBException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public TiesDBException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
 }

@@ -86,7 +86,8 @@ public class TiesDBRequestConsistencyFormat implements EBMLFormat<TiesDBRequestC
             @Override
             public void writeFormat(Output out) throws IOException {
                 byte b = 0;
-                switch (c.getType()) {
+                ConsistencyType cType = c.getType();
+                switch (cType) {
                 case COUNT:
                     b |= Byte.MIN_VALUE;
                     b |= 0 - c.getValue();
@@ -96,6 +97,8 @@ public class TiesDBRequestConsistencyFormat implements EBMLFormat<TiesDBRequestC
                     break;
                 case QUORUM:
                     break;
+                default:
+                    throw new IOException("Unknown consystency type " + cType);
                 }
                 out.writeByte(b);
             }

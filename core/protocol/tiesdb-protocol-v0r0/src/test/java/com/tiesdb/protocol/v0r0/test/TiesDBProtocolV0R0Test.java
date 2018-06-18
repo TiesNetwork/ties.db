@@ -69,8 +69,7 @@ public class TiesDBProtocolV0R0Test {
     }
 
     private void protocolHanshakeTest(TiesDBProtocol p, Version clientVersion,
-            CheckedBiConsumer<TiesDBProtocol.TiesDBChannelInput, TiesDBProtocol.TiesDBChannelOutput, TiesDBException> c)
-            throws IOException {
+            CheckedBiConsumer<TiesDBProtocol.TiesDBChannelInput, TiesDBProtocol.TiesDBChannelOutput, TiesDBException> c) throws IOException {
         Version protocolVersion = p.getVersion();
         assertNotNull(p);
 
@@ -381,6 +380,43 @@ public class TiesDBProtocolV0R0Test {
                             case FIELD_LIST:
                             case MODIFICATION_REQUEST:
                                 fail(event.get() + " should be a structure element");
+                                break;
+
+                            // NOT READY FOR TEST
+                            case ARG_STATIC_TYPE:
+                            case ARG_STATIC_VALUE:
+                            case COMPUTE_FIELD:
+                            case ENTRY_HASH:
+                            case ERROR:
+                            case ERROR_MESSAGE:
+                            case FILTER:
+                            case FILTER_FIELD:
+                            case FILTER_FUNCTION:
+                            case FILTER_LIST:
+                            case FILTER_OPERATOR:
+                            case FILTER_REFERENCE:
+                            case FILTER_STATIC:
+                            case FUNCTION_NAME:
+                            case FUN_ARGUMENT_FUNCTION:
+                            case FUN_ARGUMENT_REFERENCE:
+                            case FUN_ARGUMENT_STATIC:
+                            case MESSAGE_ID:
+                            case MODIFICATION_ERROR:
+                            case MODIFICATION_RESPONSE:
+                            case MODIFICATION_RESULT:
+                            case RECOLLECTION_COMPUTE:
+                            case RECOLLECTION_ENTRY:
+                            case RECOLLECTION_REQUEST:
+                            case RECOLLECTION_RESPONSE:
+                            case RECOLLECTION_RESULT:
+                            case RECOLLECTION_TABLESPACE_NAME:
+                            case RECOLLECTION_TABLE_NAME:
+                            case RETRIEVE_LIST:
+                            case RET_COMPUTE:
+                            case RET_COMPUTE_ALIAS:
+                            case RET_COMPUTE_TYPE:
+                            case RET_FIELD:
+                                fail(event.get() + " not yet ready for test");
                                 break;
 
                             // UNKNOWN

@@ -391,11 +391,7 @@ public class TiesDBProtocolV0R0Test {
                             case ERROR_MESSAGE:
                             case FILTER:
                             case FILTER_FIELD:
-                            case FILTER_FUNCTION:
                             case FILTER_LIST:
-                            case FILTER_OPERATOR:
-                            case FILTER_REFERENCE:
-                            case FILTER_STATIC:
                             case FUNCTION_NAME:
                             case FUN_ARGUMENT_FUNCTION:
                             case FUN_ARGUMENT_REFERENCE:

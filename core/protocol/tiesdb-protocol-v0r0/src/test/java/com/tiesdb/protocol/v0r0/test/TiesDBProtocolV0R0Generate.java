@@ -461,7 +461,6 @@ public class TiesDBProtocolV0R0Generate {
 		formatMap.put(FUN_ARGUMENT_REFERENCE, UTF8StringFormat.INSTANCE);
 		formatMap.put(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE);
 		formatMap.put(FILTER_FIELD, UTF8StringFormat.INSTANCE);
-		formatMap.put(FILTER_REFERENCE, UTF8StringFormat.INSTANCE);
 	}
 
 	public void packetDecode(byte[] encData) {
@@ -545,8 +544,8 @@ public class TiesDBProtocolV0R0Generate {
 						), part(FILTER_LIST, //
 								part(FILTER, //
 										part(FILTER_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
-										part(FILTER_OPERATOR, ASCIIStringFormat.INSTANCE, "IN"), //
-										part(FILTER_STATIC, //
+										part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "IN"), //
+										part(FUN_ARGUMENT_STATIC, //
 												part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
 												part(ARG_STATIC_VALUE, UUIDFormat.INSTANCE, uuid)//
 										)//

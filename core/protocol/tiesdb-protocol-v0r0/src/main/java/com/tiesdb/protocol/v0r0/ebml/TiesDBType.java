@@ -98,12 +98,7 @@ public enum TiesDBType implements TiesEBMLType {
 
     FILTER_LIST(0xA3, Context.FILTER_LIST, Context.RECOLLECTION_REQUEST), // Meta
 	FILTER(0xF1, Context.FILTER, Context.FILTER_LIST), // Meta
-	
     FILTER_FIELD(0xE0, Context.VALUE, Context.FILTER), // UTF-8
-    FILTER_OPERATOR(0xF0, Context.VALUE, Context.FILTER), // Meta
-    FILTER_FUNCTION(0xF3, Context.FUNCTION, Context.FILTER), // Meta
-    FILTER_REFERENCE(0xF2, Context.VALUE, Context.FILTER), // UTF-8
-    FILTER_STATIC(0xF1, Context.ARGUMENT_STATIC, Context.FILTER), // Meta
 
     RECOLLECTION_RESPONSE(0x12544945, Context.RECOLLECTION_RESPONSE, Context.ROOT), // Meta
     RECOLLECTION_RESULT(0xA1, Context.RECOLLECTION_RESULT, Context.RECOLLECTION_RESPONSE), // Meta
@@ -155,7 +150,7 @@ public enum TiesDBType implements TiesEBMLType {
         RET_COMPUTE(FUNCTION), //
 
         FILTER_LIST, //
-        FILTER,
+        FILTER(FUNCTION),
 
         RECOLLECTION_RESULT(SIGNED), //
         RECOLLECTION_ENTRY, //

@@ -21,47 +21,31 @@ package com.tiesdb.protocol.v0r0.reader;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
-import java.util.LinkedList;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentFunction;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentReference;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentStatic;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.FunctionArgument;
+import com.tiesdb.protocol.v0r0.reader.FunctionReader.Function;
 
-import one.utopic.sparse.ebml.format.ASCIIStringFormat;
 import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
 public class FilterReader implements Reader<FilterReader.Filter> {
 
     private static final Logger LOG = LoggerFactory.getLogger(FilterReader.class);
 
-    public static class Filter {
+    public static class Filter extends Function {
 
-        private String operator;
         private String fieldName;
-        private LinkedList<FunctionArgument> arguments = new LinkedList<>();
 
         @Override
         public String toString() {
-            return "Filter [operator=" + operator + ", fieldName=" + fieldName + ", arguments=" + arguments + "]";
-        }
-
-        public String getOperator() {
-            return operator;
+            return "Filter [fieldName=" + fieldName + ", function=" + super.toString() + "]";
         }
 
         public String getFieldName() {
             return fieldName;
-        }
-
-        public LinkedList<FunctionArgument> getArguments() {
-            return arguments;
         }
 
     }
@@ -70,11 +54,6 @@ public class FilterReader implements Reader<FilterReader.Filter> {
 
     public boolean acceptFilter(Conversation session, Event e, Filter f) throws TiesDBProtocolException {
         switch (e.getType()) {
-        case FILTER_OPERATOR:
-            f.operator = session.read(ASCIIStringFormat.INSTANCE);
-            LOG.debug("FILTER_OPERATOR: {}", f.operator);
-            end(session, e);
-            return true;
         case FILTER_FIELD:
             f.fieldName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("FILTER_FIELD: {}", f.fieldName);
@@ -82,43 +61,8 @@ public class FilterReader implements Reader<FilterReader.Filter> {
             return true;
         // $CASES-OMITTED$
         default:
-            // throw new TiesDBProtocolException("Illegal packet format");
+            return functionReader.acceptFunction(session, e, f);
         }
-        return acceptArgument(session, e, f);
-    }
-
-    public boolean acceptArgument(Conversation session, Event e, Filter flt) throws TiesDBProtocolException {
-        switch (e.getType()) {
-        case FILTER_REFERENCE: {
-            ArgumentReference a = new ArgumentReference();
-            if (functionReader.acceptArgumentReference(session, e, a)) {
-                LOG.debug("FILTER_REFERENCE: {}", a);
-                flt.arguments.add(a);
-                return true;
-            }
-            break;
-        }
-        case FILTER_FUNCTION: {
-            ArgumentFunction a = new ArgumentFunction();
-            if (functionReader.acceptArgumentFunction(session, e, a)) {
-                LOG.debug("FILTER_FUNCTION: {}", a);
-                flt.arguments.add(a);
-                return true;
-            }
-            break;
-        }
-        case FILTER_STATIC: {
-            ArgumentStatic a = new ArgumentStatic();
-            acceptEach(session, e, functionReader::acceptArgumentStatic, a);
-            LOG.debug("FILTER_STATIC: {}", a);
-            flt.arguments.add(a);
-            return true;
-        }
-        // $CASES-OMITTED$
-        default:
-            // throw new TiesDBProtocolException("Illegal packet format");
-        }
-        return false;
     }
 
     @Override

@@ -22,9 +22,9 @@ import java.io.IOException;
 
 import one.utopic.abio.api.output.Output;
 
-public final class DataFormatHelper {
+public final class BinaryHelper {
 
-    private DataFormatHelper() {
+    private BinaryHelper() {
     }
 
     /* UTILITY FUNCTIONS */

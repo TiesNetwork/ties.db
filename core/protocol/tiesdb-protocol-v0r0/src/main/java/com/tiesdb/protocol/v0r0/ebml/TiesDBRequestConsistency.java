@@ -31,7 +31,7 @@ public class TiesDBRequestConsistency {
 
     public TiesDBRequestConsistency(ConsistencyType type, Integer value) {
         if (ConsistencyType.QUORUM.equals(type) && 0 != value) {
-            throw new IllegalArgumentException(ConsistencyType.QUORUM + " type value should be 0");
+            throw new IllegalArgumentException(ConsistencyType.QUORUM + " type rawValue should be 0");
         }
         this.type = Objects.requireNonNull(type);
         this.value = Objects.requireNonNull(value);
@@ -47,7 +47,7 @@ public class TiesDBRequestConsistency {
 
     @Override
     public String toString() {
-        return "TiesDBRequestConsistency [type=" + type + ", value=" + value + "]";
+        return "TiesDBRequestConsistency [type=" + type + ", rawValue=" + value + "]";
     }
 
 }

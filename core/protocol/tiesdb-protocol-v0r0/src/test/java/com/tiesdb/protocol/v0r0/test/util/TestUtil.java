@@ -18,9 +18,9 @@
  */
 package com.tiesdb.protocol.v0r0.test.util;
 
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.writeBytes;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.writeInt16;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.writeLong32;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeBytes;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeInt16;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeLong32;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

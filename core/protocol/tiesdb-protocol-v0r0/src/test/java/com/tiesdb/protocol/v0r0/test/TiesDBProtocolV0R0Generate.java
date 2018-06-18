@@ -66,423 +66,496 @@ import one.utopic.sparse.ebml.format.UTF8StringFormat;
 @EnabledIfSystemProperty(named = "test-generate", matches = "true")
 public class TiesDBProtocolV0R0Generate {
 
-    @Test
-    public void generateSampleDate() {
-        Date date = new Date(1522661357000L);
-        System.out.println(date);
-        byte[] entryDate = encode(//
-                part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date) //
-        );
-        System.out.println("Date " + DatatypeConverter.printHexBinary(entryDate));
-        decode(entryDate, ENTRY_HEADER.getContext(), r -> {
-            r.forEachRemaining(e -> {
-                System.out.println(DateFormat.INSTANCE.read(r));
-            });
-        });
-    }
+	@Test
+	public void generateSampleDate() {
+		Date date = new Date(1522661357000L);
+		System.out.println(date);
+		byte[] entryDate = encode(//
+				part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date) //
+		);
+		System.out.println("Date " + DatatypeConverter.printHexBinary(entryDate));
+		decode(entryDate, ENTRY_HEADER.getContext(), r -> {
+			r.forEachRemaining(e -> {
+				System.out.println(DateFormat.INSTANCE.read(r));
+			});
+		});
+	}
 
-    @DisplayName("generateSampleBigNumberTest")
-    @ParameterizedTest(name = "{index}. {arguments}")
-    @ValueSource(strings = { //
-            "0", //
-            "-1", //
-            "57896044618658097711785492504343953926634992332820282019728792003956564819967", //
-            "-57896044618658097711785492504343953926634992332820282019728792003956564819968", //
-    })
-    public void generateSampleBigNumber(String value) {
-        BigInteger amount = new BigInteger(value);
-        byte[] entryDate = encode(//
-                part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, amount) //
-        );
-        System.out.println("BigNumber  DEC " + value + "\nBigNumber EBML " + DatatypeConverter.printHexBinary(entryDate));
-    }
+	@DisplayName("generateSampleBigNumberTest")
+	@ParameterizedTest(name = "{index}. {arguments}")
+	@ValueSource(strings = { //
+			"0", //
+			"-1", //
+			"57896044618658097711785492504343953926634992332820282019728792003956564819967", //
+			"-57896044618658097711785492504343953926634992332820282019728792003956564819968", //
+	})
+	public void generateSampleBigNumber(String value) {
+		BigInteger amount = new BigInteger(value);
+		byte[] entryDate = encode(//
+				part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, amount) //
+		);
+		System.out
+				.println("BigNumber  DEC " + value + "\nBigNumber EBML " + DatatypeConverter.printHexBinary(entryDate));
+	}
 
-    @Test
-    public void generateSampleInsertRequest() {
-        Date date = new Date(1522661357000L);
-        ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
+	@Test
+	public void generateSampleInsertRequest() {
+		Date date = new Date(1522661357000L);
+		ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
 
-        LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
+		LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
 
-        byte[] fieldsData = encodeTies(//
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "description"), //
-                                part(FIELD_VALUE, UTF8StringFormat.INSTANCE, "Initial description") //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "uuid"), //
-                                part(FIELD_VALUE, UUIDFormat.INSTANCE, UUID.fromString("75e6b139-de73-4e31-9600-e216e4239030")) //
-                        ) //
-                ) //
-        );
+		byte[] fieldsData = encodeTies(//
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "description"), //
+								part(FIELD_VALUE, UTF8StringFormat.INSTANCE, "Initial description") //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "uuid"), //
+								part(FIELD_VALUE, UUIDFormat.INSTANCE,
+										UUID.fromString("75e6b139-de73-4e31-9600-e216e4239030")) //
+						) //
+				) //
+		);
 
-        byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
-            byte[] hash = s.get();
-            System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
-            d.update(hash);
-        }));
+		byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
+			byte[] hash = s.get();
+			System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+			d.update(hash);
+		}));
 
-        System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
+		System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
 
-        byte[] encData = encodeTies(//
-                part(MODIFICATION_REQUEST, //
-                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
-                        part(ENTRY, //
-                                part(ENTRY_HEADER, //
-                                        tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
-                                                part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
-                                                part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
-                                                part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
-                                                part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                        ) //
-                                ), //
-                                part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
-                                part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
-                                ) //
-                        ) //
-                ) //
-        );
-        System.out.println("Insert " + DatatypeConverter.printHexBinary(encData));
-    }
+		byte[] encData = encodeTies(//
+				part(MODIFICATION_REQUEST, //
+						part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+						part(MODIFICATION_ENTRY, //
+								part(ENTRY_HEADER, //
+										tiesPartSign(key, SIGNATURE, //
+												part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE,
+														"filatov-dev.node.dev.tablespace"), //
+												part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+												part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
+												part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
+												part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
+												part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
+												part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
+												part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+										) //
+								), //
+								part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
+								part(CHEQUE_LIST, //
+										part(CHEQUE, //
+												tiesPartSign(key, SIGNATURE, //
+														part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
+																UUID.fromString(
+																		"38007241-b550-4fa5-87d6-8ee7587d4073")), //
+														part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
+														part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
+														part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
+														part(ADDRESS_LIST, //
+																part(ADDRESS, BytesFormat.INSTANCE, hs2ba(
+																		"64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
+														), //
+														part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+												) //
+										) //
+								) //
+						) //
+				) //
+		);
+		System.out.println("Insert " + DatatypeConverter.printHexBinary(encData));
+	}
 
-    @Test
-    public void generateSampleUpdateRequest() {
-        Date date = new Date(1522661357000L);
-        ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
+	@Test
+	public void generateSampleUpdateRequest() {
+		Date date = new Date(1522661357000L);
+		ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
 
-        LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
+		LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
 
-        byte[] fieldsData = encodeTies(//
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "description"), //
-                                part(FIELD_VALUE, UTF8StringFormat.INSTANCE, "Updated description") //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "uuid"), //
-                                part(FIELD_VALUE, UUIDFormat.INSTANCE, UUID.fromString("75e6b139-de73-4e31-9600-e216e4239030")) //
-                        ) //
-                ) //
-        );
+		byte[] fieldsData = encodeTies(//
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "description"), //
+								part(FIELD_VALUE, UTF8StringFormat.INSTANCE, "Updated description") //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "uuid"), //
+								part(FIELD_VALUE, UUIDFormat.INSTANCE,
+										UUID.fromString("75e6b139-de73-4e31-9600-e216e4239030")) //
+						) //
+				) //
+		);
 
-        byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
-            byte[] hash = s.get();
-            System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
-            d.update(hash);
-        }));
+		byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
+			byte[] hash = s.get();
+			System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+			d.update(hash);
+		}));
 
-        System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
+		System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
 
-        byte[] encData = encodeTies(//
-                part(MODIFICATION_REQUEST, //
-                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
-                        part(ENTRY, //
-                                part(ENTRY_HEADER, //
-                                        tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
-                                                part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
-                                                part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // from 1 to 2
-                                                part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
-                                                        hs2ba("9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658")), //
-                                                part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
-                                                part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                        ) //
-                                ), //
-                                part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
-                                part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 2L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
-                                ) //
-                        ) //
-                ) //
-        );
-        System.out.println("Update " + DatatypeConverter.printHexBinary(encData));
-    }
+		byte[] encData = encodeTies(//
+				part(MODIFICATION_REQUEST, //
+						part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+						part(MODIFICATION_ENTRY, //
+								part(ENTRY_HEADER, //
+										tiesPartSign(key, SIGNATURE, //
+												part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE,
+														"filatov-dev.node.dev.tablespace"), //
+												part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+												part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
+												part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
+												part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // from 1 to 2
+												part(ENTRY_OLD_HASH, BytesFormat.INSTANCE, hs2ba(
+														"9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658")), //
+												part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
+												part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
+												part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+										) //
+								), //
+								part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
+								part(CHEQUE_LIST, //
+										part(CHEQUE, //
+												tiesPartSign(key, SIGNATURE, //
+														part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
+																UUID.fromString(
+																		"38007241-b550-4fa5-87d6-8ee7587d4073")), //
+														part(CHEQUE_NUMBER, LongFormat.INSTANCE, 2L), //
+														part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
+														part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
+														part(ADDRESS_LIST, //
+																part(ADDRESS, BytesFormat.INSTANCE, hs2ba(
+																		"64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
+														), //
+														part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+												) //
+										) //
+								) //
+						) //
+				) //
+		);
+		System.out.println("Update " + DatatypeConverter.printHexBinary(encData));
+	}
 
-    @Test
-    public void generateMultivalueSampleInsertRequest() {
-        Date date = new Date(1522661357000L);
-        ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
+	@Test
+	public void generateMultivalueSampleInsertRequest() {
+		Date date = new Date(1522661357000L);
+		ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
 
-        LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
+		LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
 
-        Random rg = new SecureRandom();
+		Random rg = new SecureRandom();
 
-        byte[] randomBytes = new byte[rg.nextInt(32) + 32];
-        rg.nextBytes(randomBytes);
-        System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
-        byte[] fieldsData = encodeTies(//
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "Id"), //
-                                part(FIELD_VALUE, UUIDFormat.INSTANCE, UUID.randomUUID()) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "binary"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fBinary"), //
-                                part(FIELD_VALUE, BytesFormat.INSTANCE, randomBytes) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "boolean"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fBoolean"), //
-                                part(FIELD_VALUE, IntegerFormat.INSTANCE, rg.nextInt(2)) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "decimal"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDecimal"), //
-                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "double"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDouble"), //
-                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "duration"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDuration"), //
-                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal("267512643.210")) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "float"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fFloat"), //
-                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "integer"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fInteger"), //
-                                part(FIELD_VALUE, IntegerFormat.INSTANCE, rg.nextInt()) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "long"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fLong"), //
-                                part(FIELD_VALUE, LongFormat.INSTANCE, rg.nextLong()) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fString"), //
-                                part(FIELD_VALUE, UTF8StringFormat.INSTANCE, this.toString()) //
-                        ) //
-                ), //
-                part(FIELD, //
-                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "time"), //
-                        ties(newDigestConsumer(fieldHashes), //
-                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fTime"), //
-                                part(FIELD_VALUE, DateFormat.INSTANCE, new Date()) //
-                        ) //
-                ) //
-        );
+		byte[] randomBytes = new byte[rg.nextInt(32) + 32];
+		rg.nextBytes(randomBytes);
+		System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
+		byte[] fieldsData = encodeTies(//
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "Id"), //
+								part(FIELD_VALUE, UUIDFormat.INSTANCE, UUID.randomUUID()) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "binary"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fBinary"), //
+								part(FIELD_VALUE, BytesFormat.INSTANCE, randomBytes) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "boolean"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fBoolean"), //
+								part(FIELD_VALUE, IntegerFormat.INSTANCE, rg.nextInt(2)) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "decimal"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDecimal"), //
+								part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "double"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDouble"), //
+								part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "duration"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDuration"), //
+								part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal("267512643.210")) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "float"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fFloat"), //
+								part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "integer"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fInteger"), //
+								part(FIELD_VALUE, IntegerFormat.INSTANCE, rg.nextInt()) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "long"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fLong"), //
+								part(FIELD_VALUE, LongFormat.INSTANCE, rg.nextLong()) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fString"), //
+								part(FIELD_VALUE, UTF8StringFormat.INSTANCE, this.toString()) //
+						) //
+				), //
+				part(FIELD, //
+						part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "time"), //
+						ties(newDigestConsumer(fieldHashes), //
+								part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fTime"), //
+								part(FIELD_VALUE, DateFormat.INSTANCE, new Date()) //
+						) //
+				) //
+		);
 
-        byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
-            byte[] hash = s.get();
-            // System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
-            d.update(hash);
-        }));
+		byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
+			byte[] hash = s.get();
+			// System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+			d.update(hash);
+		}));
 
-        // System.out.println("EntryFieldsHash: " +
-        // DatatypeConverter.printHexBinary(fldsHash));
+		// System.out.println("EntryFieldsHash: " +
+		// DatatypeConverter.printHexBinary(fldsHash));
 
-        byte[] encData = encodeTies(//
-                part(MODIFICATION_REQUEST, //
-                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
-                        part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
-                        part(ENTRY, //
-                                part(ENTRY_HEADER, //
-                                        tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
-                                                part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
-                                                part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
-                                                part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
-                                                part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                        ) //
-                                ), //
-                                part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
-                                part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
-                                ) //
-                        ) //
-                ) //
-        );
-        System.out.println("MultivalueInsert " + DatatypeConverter.printHexBinary(encData));
-    }
+		byte[] encData = encodeTies(//
+				part(MODIFICATION_REQUEST, //
+						part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+						part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
+						part(MODIFICATION_ENTRY, //
+								part(ENTRY_HEADER, //
+										tiesPartSign(key, SIGNATURE, //
+												part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE,
+														"client-dev.test"), //
+												part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+												part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
+												part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
+												part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
+												part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
+												part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
+												part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+										) //
+								), //
+								part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
+								part(CHEQUE_LIST, //
+										part(CHEQUE, //
+												tiesPartSign(key, SIGNATURE, //
+														part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
+																UUID.fromString(
+																		"38007241-b550-4fa5-87d6-8ee7587d4073")), //
+														part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
+														part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
+														part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
+														part(ADDRESS_LIST, //
+																part(ADDRESS, BytesFormat.INSTANCE, hs2ba(
+																		"64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
+														), //
+														part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+												) //
+										) //
+								) //
+						) //
+				) //
+		);
+		System.out.println("MultivalueInsert " + DatatypeConverter.printHexBinary(encData));
+	}
 
-    private byte[] getHash(Consumer<Digest> d) {
-        Digest digest = DigestManager.getDigest(DEFAULT_DIGEST_NAME);
-        d.accept(digest);
-        byte[] out = new byte[digest.getDigestSize()];
-        digest.doFinal(out, 0);
-        return out;
-    }
+	private byte[] getHash(Consumer<Digest> d) {
+		Digest digest = DigestManager.getDigest(DEFAULT_DIGEST_NAME);
+		d.accept(digest);
+		byte[] out = new byte[digest.getDigestSize()];
+		digest.doFinal(out, 0);
+		return out;
+	}
 
-    private Consumer<Byte> newDigestConsumer(LinkedList<Supplier<byte[]>> fieldHashes) {
-        Digest digest = DigestManager.getDigest(DEFAULT_DIGEST_NAME);
-        fieldHashes.addLast(() -> {
-            byte[] buf = new byte[digest.getDigestSize()];
-            digest.doFinal(buf, 0);
-            return buf;
-        });
-        return digest::update;
-    }
+	private Consumer<Byte> newDigestConsumer(LinkedList<Supplier<byte[]>> fieldHashes) {
+		Digest digest = DigestManager.getDigest(DEFAULT_DIGEST_NAME);
+		fieldHashes.addLast(() -> {
+			byte[] buf = new byte[digest.getDigestSize()];
+			digest.doFinal(buf, 0);
+			return buf;
+		});
+		return digest::update;
+	}
 
-    private byte[] hs2ba(String hexString) {
-        return DatatypeConverter.parseHexBinary(hexString);
-    }
+	private byte[] hs2ba(String hexString) {
+		return DatatypeConverter.parseHexBinary(hexString);
+	}
 
-    public static void main(String[] args) {
-        TreeSet<String> values = new TreeSet<>();
-        for (int i = 0; i < args.length; i++) {
-            values.add(args[i]);
-        }
-        values.forEach(System.out::println);
-    }
+	public static void main(String[] args) {
+		TreeSet<String> values = new TreeSet<>();
+		for (int i = 0; i < args.length; i++) {
+			values.add(args[i]);
+		}
+		values.forEach(System.out::println);
+	}
 
-    @Test
-    public void packetDecoder() {
+	// @Test
+	public void packetDecodeTest() {
+		String[] dataStrings = new String[] {
+				"1E5449454314EE8164EC820309E1430AE140A7808F636C69656E742D6465762E746573748289616C6C5F747970657384810186857EBE0941C88881018CA03A0065BEC50CD1A4300303DB5396944135D81317058610B471B2AC41DADDE5F08E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC13D4FA923031F342877D0D5193CF97E5213C246E6934E115A28892C23AD0C23D50BD63A6ACE98271680F09B5596330993ECD6AB022A7D21D6B6C1585E40BD02D325D141C7D19C8284757569648082496486905D9A8A68B1494AFE9903901EEF70E82ED1CB828662696E61727980876642696E61727986B8C4F15FF411B49FEF804DD8913451E2092F67FD20F433B186AF71E2B8048176D14B31145A796CCDFCB3FD2A5DDAD5BF10BC30C285BC153134D1968287626F6F6C65616E808866426F6F6C65616E868100D1AC8287646563696D616C808866446563696D616C8697E806824B0E5BAF33E1BC7C24D4A9AADC3ED07E9C5A37B1D1AA8286646F75626C65808766446F75626C658697E8199CB4BDD0B01542C664E6A41E6B118195E2E1C945B3D19D82886475726174696F6E8089664475726174696F6E8686863E48FEFE8AD1A88285666C6F6174808666466C6F61748697E80E5812C7E49B7CCB352DCC9A550E4C8D256F8FF0ECD9D1998287696E7465676572808866496E746567657286848698873CD19782846C6F6E678085664C6F6E6786880E9A521BE2E16886D1D48286737472696E67808766537472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403666653761616338D195828474696D6580856654696D65868600801D23E153C14093C14090809038007241B5504FA587D68EE7587D407382810184857EBE0941C8868101A196A09464ED31C6187765D40271EE4F9B4C29A5A125DE23FC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC12C06F9333BE122E2F32D8D9D7A9216D27CEE6C4219F72AA56E04D21FA4A0DBC33AB1129244908432DC54A9AEED4E60396178CB27695886CB7D23CA539EBAB2A326",
+				"C001BA5E1225EFFF00000000000000011F544945A8EC820309E1A280A0C3ACF777B49DD23E7DEA861D90512B46FFB842F7AE1F53B493B1147A6938CC00",
+				"C001BA5E1225EFFF00000000000000011F544945BAEC820309EFB480A0C3ACF777B49DD23E7DEA861D90512B46FFB842F7AE1F53B493B1147A6938CC00E090496E73657274696F6E206661696C6564",
+				//
+		};
 
-        String[] dataStrings = new String[] {
-                "1E5449454314EE8164EC820309E1430AE140A7808F636C69656E742D6465762E746573748289616C6C5F747970657384810186857EBE0941C88881018CA03A0065BEC50CD1A4300303DB5396944135D81317058610B471B2AC41DADDE5F08E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC13D4FA923031F342877D0D5193CF97E5213C246E6934E115A28892C23AD0C23D50BD63A6ACE98271680F09B5596330993ECD6AB022A7D21D6B6C1585E40BD02D325D141C7D19C8284757569648082496486905D9A8A68B1494AFE9903901EEF70E82ED1CB828662696E61727980876642696E61727986B8C4F15FF411B49FEF804DD8913451E2092F67FD20F433B186AF71E2B8048176D14B31145A796CCDFCB3FD2A5DDAD5BF10BC30C285BC153134D1968287626F6F6C65616E808866426F6F6C65616E868100D1AC8287646563696D616C808866446563696D616C8697E806824B0E5BAF33E1BC7C24D4A9AADC3ED07E9C5A37B1D1AA8286646F75626C65808766446F75626C658697E8199CB4BDD0B01542C664E6A41E6B118195E2E1C945B3D19D82886475726174696F6E8089664475726174696F6E8686863E48FEFE8AD1A88285666C6F6174808666466C6F61748697E80E5812C7E49B7CCB352DCC9A550E4C8D256F8FF0ECD9D1998287696E7465676572808866496E746567657286848698873CD19782846C6F6E678085664C6F6E6786880E9A521BE2E16886D1D48286737472696E67808766537472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403666653761616338D195828474696D6580856654696D65868600801D23E153C14093C14090809038007241B5504FA587D68EE7587D407382810184857EBE0941C8868101A196A09464ED31C6187765D40271EE4F9B4C29A5A125DE23FC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC12C06F9333BE122E2F32D8D9D7A9216D27CEE6C4219F72AA56E04D21FA4A0DBC33AB1129244908432DC54A9AEED4E60396178CB27695886CB7D23CA539EBAB2A326",
-                "C001BA5E1225EFFF00000000000000011F544945A8EC820309E1A280A0C3ACF777B49DD23E7DEA861D90512B46FFB842F7AE1F53B493B1147A6938CC00",
-                "C001BA5E1225EFFF00000000000000011F544945BAEC820309EFB480A0C3ACF777B49DD23E7DEA861D90512B46FFB842F7AE1F53B493B1147A6938CC00E090496E73657274696F6E206661696C6564",
-                //
-        };
+		for (String data : dataStrings) {
+			packetDecode(DatatypeConverter.parseHexBinary(data.replaceFirst("C001BA5E1225EFFF0000000000000001", "")));
+		}
+	}
 
-        HashMap<TiesDBType, EBMLReadFormat<?>> formatMap = new HashMap<>();
-        formatMap.put(MESSAGE_ID, BigIntegerFormat.INSTANCE);
-        formatMap.put(ERROR_MESSAGE, UTF8StringFormat.INSTANCE);
-        formatMap.put(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
-        formatMap.put(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE);
-        formatMap.put(FIELD_NAME, UTF8StringFormat.INSTANCE);
-        formatMap.put(FIELD_TYPE, ASCIIStringFormat.INSTANCE);
-        formatMap.put(ENTRY_TYPE, IntegerFormat.INSTANCE);
-        formatMap.put(ENTRY_VERSION, LongFormat.INSTANCE);
-        formatMap.put(ENTRY_NETWORK, IntegerFormat.INSTANCE);
-        formatMap.put(ENTRY_TIMESTAMP, DateFormat.INSTANCE);
-        formatMap.put(CHEQUE_TIMESTAMP, DateFormat.INSTANCE);
-        formatMap.put(CHEQUE_RANGE, UUIDFormat.INSTANCE);
-        formatMap.put(CHEQUE_NUMBER, LongFormat.INSTANCE);
-        formatMap.put(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE);
+	HashMap<TiesDBType, EBMLReadFormat<?>> formatMap = new HashMap<>();
+	{
+		formatMap.put(MESSAGE_ID, BigIntegerFormat.INSTANCE);
+		formatMap.put(ERROR_MESSAGE, UTF8StringFormat.INSTANCE);
+		formatMap.put(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
+		formatMap.put(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE);
+		formatMap.put(FIELD_NAME, UTF8StringFormat.INSTANCE);
+		formatMap.put(FIELD_TYPE, ASCIIStringFormat.INSTANCE);
+		formatMap.put(ENTRY_TYPE, IntegerFormat.INSTANCE);
+		formatMap.put(ENTRY_VERSION, LongFormat.INSTANCE);
+		formatMap.put(ENTRY_NETWORK, IntegerFormat.INSTANCE);
+		formatMap.put(ENTRY_TIMESTAMP, DateFormat.INSTANCE);
+		formatMap.put(CHEQUE_TIMESTAMP, DateFormat.INSTANCE);
+		formatMap.put(CHEQUE_RANGE, UUIDFormat.INSTANCE);
+		formatMap.put(CHEQUE_NUMBER, LongFormat.INSTANCE);
+		formatMap.put(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE);
 
-        for (String data : dataStrings) {
-            byte[] encData = DatatypeConverter.parseHexBinary(data.replaceFirst("C001BA5E1225EFFF0000000000000001", ""));
-            // TiesDBType x = TiesDBType.MODIFICATION_RESPONSE;
-            decode(encData, Context.ROOT, r -> {
-                System.out.println("<!--\n" + DatatypeConverter.printHexBinary(encData) + "\n-->");
-                int i = 0;
-                while (r.hasNext()) {
-                    EBMLEvent e = r.next();
-                    EBMLType type = e.get();
-                    if (e.getType().equals(CommonEventType.BEGIN)) {
+		formatMap.put(RECOLLECTION_TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
+		formatMap.put(RECOLLECTION_TABLE_NAME, UTF8StringFormat.INSTANCE);
+		formatMap.put(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE);
+		formatMap.put(RET_COMPUTE_TYPE, ASCIIStringFormat.INSTANCE);
+		formatMap.put(RET_FIELD, UTF8StringFormat.INSTANCE);
+		formatMap.put(FUNCTION_NAME, UTF8StringFormat.INSTANCE);
+		formatMap.put(FUN_ARGUMENT_REFERENCE, UTF8StringFormat.INSTANCE);
+		formatMap.put(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE);
+		formatMap.put(FILTER_FIELD, UTF8StringFormat.INSTANCE);
+		formatMap.put(FILTER_REFERENCE, UTF8StringFormat.INSTANCE);
+	}
 
-                        char[] tab = new char[i];
-                        Arrays.fill(tab, '\t');
-                        System.out.print(tab);
-                        i++;
+	public void packetDecode(byte[] encData) {
+		// TiesDBType x = TiesDBType.MODIFICATION_RESPONSE;
+		decode(encData, Context.ROOT, r -> {
+			System.out.println("<!--\n" + DatatypeConverter.printHexBinary(encData) + "\n-->");
+			int i = 0;
+			while (r.hasNext()) {
+				EBMLEvent e = r.next();
+				EBMLType type = e.get();
+				if (e.getType().equals(CommonEventType.BEGIN)) {
 
-                        System.out.print("<" + type + " code=\"" + type.getEBMLCode().toHexString() + "\"");
-                        if (type.getContext().equals(Context.VALUE)) {
-                            EBMLReadFormat<?> format = formatMap.get(type);
-                            if (null == format) {
-                                System.out.print(" format=\"Hex\">" + DatatypeConverter.printHexBinary(BytesFormat.INSTANCE.read(r)));
-                            } else {
-                                System.out.print(" format=\"" + format.getClass().getSimpleName().replaceAll("Format$", "") + "\">"
-                                        + format.read(r));
-                            }
-                        } else {
-                            System.out.println(">");
-                        }
-                    } else if (e.getType().equals(CommonEventType.END)) {
+					char[] tab = new char[i];
+					Arrays.fill(tab, '\t');
+					System.out.print(tab);
+					i++;
 
-                        i--;
-                        if (!type.getContext().equals(Context.VALUE)) {
-                            char[] tab = new char[i];
-                            Arrays.fill(tab, '\t');
-                            System.out.print(tab);
-                        }
+					System.out.print("<" + type + " code=\"" + type.getEBMLCode().toHexString() + "\"");
+					if (type.getContext().equals(Context.VALUE)) {
+						EBMLReadFormat<?> format = formatMap.get(type);
+						if (null == format) {
+							System.out.print(" format=\"Hex\">"
+									+ DatatypeConverter.printHexBinary(BytesFormat.INSTANCE.read(r)));
+						} else {
+							System.out.print(" format=\"" + format.getClass().getSimpleName().replaceAll("Format$", "")
+									+ "\">" + format.read(r));
+						}
+					} else {
+						System.out.println(">");
+					}
+				} else if (e.getType().equals(CommonEventType.END)) {
 
-                        System.out.println("</" + type + ">");
-                    } else {
-                        fail("Wrong event " + e);
-                    }
-                }
-                System.out.println();
-            });
-        }
-    }
+					i--;
+					if (!type.getContext().equals(Context.VALUE)) {
+						char[] tab = new char[i];
+						Arrays.fill(tab, '\t');
+						System.out.print(tab);
+					}
+
+					System.out.println("</" + type + ">");
+				} else {
+					fail("Wrong event " + e);
+				}
+			}
+			System.out.println();
+		});
+	}
+
+	@Test
+	public void generateSampleSelectRequest() {
+
+		UUID uuid = UUID.fromString("7606fc02-8c19-44ee-99be-a24fc1449008");
+		byte[] encData = encodeTies(//
+				part(RECOLLECTION_REQUEST, //
+						part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+						part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
+						part(RECOLLECTION_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+						part(RECOLLECTION_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+						part(RETRIEVE_LIST, //
+								part(RET_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
+								part(RET_COMPUTE, //
+										part(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE, "WriteTime"), //
+										part(RET_COMPUTE_TYPE, UTF8StringFormat.INSTANCE, "binary"), //
+										part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "bigIntAsBlob"), //
+										part(FUN_ARGUMENT_FUNCTION, //
+												part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "toUnixTimestamp"), //
+												part(FUN_ARGUMENT_FUNCTION, //
+														part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "writeTime"), //
+														part(FUN_ARGUMENT_REFERENCE, UTF8StringFormat.INSTANCE, "fTime")//
+												)//
+										)//
+								), //
+								part(RET_COMPUTE, //
+										part(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE, "TestValue"), //
+										part(RET_COMPUTE_TYPE, UTF8StringFormat.INSTANCE, "binary"), //
+										part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "intAsBlob"), //
+										part(FUN_ARGUMENT_STATIC, //
+												part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "integer"), //
+												part(ARG_STATIC_VALUE, IntegerFormat.INSTANCE, 777))//
+								)//
+						), part(FILTER_LIST, //
+								part(FILTER, //
+										part(FILTER_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
+										part(FILTER_OPERATOR, ASCIIStringFormat.INSTANCE, "IN"), //
+										part(FILTER_STATIC, //
+												part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
+												part(ARG_STATIC_VALUE, UUIDFormat.INSTANCE, uuid)//
+										)//
+								)//
+						)//
+				)//
+		);
+
+		packetDecode(encData);
+	}
 
 }

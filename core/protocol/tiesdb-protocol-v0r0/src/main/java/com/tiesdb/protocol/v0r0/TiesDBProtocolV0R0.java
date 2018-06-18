@@ -19,12 +19,12 @@
 package com.tiesdb.protocol.v0r0;
 
 import static com.tiesdb.protocol.api.Version.VersionComprator.REVISION;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.parseInt16;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.parseLong32;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.skip;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.writeBytes;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.writeInt16;
-import static com.tiesdb.protocol.v0r0.util.DataFormatHelper.writeLong32;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.parseInt16;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.parseLong32;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.skip;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeBytes;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeInt16;
+import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeLong32;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tiesdb.lib.crypto.checksum.ChecksumManager;
 import com.tiesdb.lib.crypto.checksum.api.Checksum;
+import com.tiesdb.lib.crypto.digest.DigestManager;
 import com.tiesdb.protocol.api.TiesDBProtocol;
 import com.tiesdb.protocol.api.TiesDBProtocolHandlerProvider;
 import com.tiesdb.protocol.api.Version;
@@ -70,6 +71,8 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
 
     private static final byte[] PACKET_HEADER_MAGIC_NUMBER = new byte[] { (byte) 0xc0, 0x01, (byte) 0xba, 0x5e };
     private static final int PACKET_HEADER_RESERVED_LEN = 2;
+
+    public static final String DEFAULT_DIGEST_ALG = DigestManager.KECCAK_256;
 
     static {
         LOG.debug("Preload TiesDB EBML types: {}", Arrays.toString(TiesDBType.values()));

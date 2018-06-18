@@ -40,13 +40,7 @@ public enum TiesDBType implements TiesEBMLType {
 
     MODIFICATION_REQUEST(0x1E544945, Context.MODIFICATION_REQUEST, Context.ROOT), // Meta
 
-    MODIFICATION_RESPONSE(0x1F544945, Context.MODIFICATION_RESPONSE, Context.ROOT), // Meta
-
-    MODIFICATION_RESULT(0xE1, Context.MODIFICATION_RESULT, Context.MODIFICATION_RESPONSE), // Meta
-    MODIFICATION_ERROR(0xEF, Context.MODIFICATION_ERROR, Context.MODIFICATION_RESPONSE), // Meta
-    ENTRY_HASH(0x80, Context.VALUE, Context.MODIFICATION_RESULT, Context.MODIFICATION_ERROR), // Binary (Keccak-256)
-
-    ENTRY(0xE1, Context.ENTRY, Context.MODIFICATION_REQUEST), // Meta
+    MODIFICATION_ENTRY(0xE1, Context.ENTRY, Context.MODIFICATION_REQUEST), // Meta
 
     ENTRY_HEADER(0xE1, Context.ENTRY_HEADER, Context.ENTRY), // Meta
     ENTRY_TABLESPACE_NAME(0x80, Context.VALUE, Context.ENTRY_HEADER), // UTF-8
@@ -75,9 +69,58 @@ public enum TiesDBType implements TiesEBMLType {
     ADDRESS_LIST(0xA1, Context.ADDRESS_LIST, Context.CHEQUE), // Meta
     ADDRESS(0xA0, Context.VALUE, Context.ADDRESS_LIST), // Binary
 
+    MODIFICATION_RESPONSE(0x1F544945, Context.MODIFICATION_RESPONSE, Context.ROOT), // Meta
+
+    MODIFICATION_RESULT(0xE1, Context.MODIFICATION_RESULT, Context.MODIFICATION_RESPONSE), // Meta
+    MODIFICATION_ERROR(0xEF, Context.MODIFICATION_ERROR, Context.MODIFICATION_RESPONSE), // Meta
+    ENTRY_HASH(0x80, Context.VALUE, Context.MODIFICATION_RESULT, Context.MODIFICATION_ERROR), // Binary (Keccak-256)
+
+    RECOLLECTION_REQUEST(0x11544945, Context.RECOLLECTION_REQUEST, Context.ROOT), // Meta
+
+    RECOLLECTION_TABLESPACE_NAME(0x80, Context.VALUE, Context.RECOLLECTION_REQUEST), // UTF-8
+    RECOLLECTION_TABLE_NAME(0x82, Context.VALUE, Context.RECOLLECTION_REQUEST), // UTF-8
+
+    RETRIEVE_LIST(0x83, Context.RETRIEVE_LIST, Context.RECOLLECTION_REQUEST), // Meta
+
+    RET_FIELD(0xD0, Context.VALUE, Context.RETRIEVE_LIST), // UTF-8
+
+    RET_COMPUTE(0xC1, Context.RET_COMPUTE, Context.RETRIEVE_LIST), // Meta
+    RET_COMPUTE_ALIAS(0xA0, Context.VALUE, Context.RET_COMPUTE), // UTF-8
+    RET_COMPUTE_TYPE(0xA2, Context.VALUE, Context.RET_COMPUTE), // ASCII
+
+    FUNCTION_NAME(0xF0, Context.VALUE, Context.FUNCTION), // UTF-8
+    FUN_ARGUMENT_FUNCTION(0xF3, Context.FUNCTION, Context.FUNCTION), // Meta
+    FUN_ARGUMENT_REFERENCE(0xF2, Context.VALUE, Context.FUNCTION), // UTF-8
+    FUN_ARGUMENT_STATIC(0xF1, Context.ARGUMENT_STATIC, Context.FUNCTION), // Meta
+    
+    ARG_STATIC_TYPE(0x80, Context.VALUE, Context.ARGUMENT_STATIC), // ASCII
+    ARG_STATIC_VALUE(0x82, Context.VALUE, Context.ARGUMENT_STATIC), // Binary
+
+    FILTER_LIST(0xA3, Context.FILTER_LIST, Context.RECOLLECTION_REQUEST), // Meta
+	FILTER(0xF1, Context.FILTER, Context.FILTER_LIST), // Meta
+	
+    FILTER_FIELD(0xE0, Context.VALUE, Context.FILTER), // UTF-8
+    FILTER_OPERATOR(0xF0, Context.VALUE, Context.FILTER), // Meta
+    FILTER_FUNCTION(0xF3, Context.FUNCTION, Context.FILTER), // Meta
+    FILTER_REFERENCE(0xF2, Context.VALUE, Context.FILTER), // UTF-8
+    FILTER_STATIC(0xF1, Context.ARGUMENT_STATIC, Context.FILTER), // Meta
+
+    RECOLLECTION_RESPONSE(0x12544945, Context.RECOLLECTION_RESPONSE, Context.ROOT), // Meta
+    RECOLLECTION_RESULT(0xA1, Context.RECOLLECTION_RESULT, Context.RECOLLECTION_RESPONSE), // Meta
+    RECOLLECTION_ENTRY(0xE1, Context.ENTRY, Context.RECOLLECTION_RESULT), // Meta
+    RECOLLECTION_COMPUTE(0xC1, Context.RECOLLECTION_COMPUTE, Context.RECOLLECTION_RESULT), // Meta
+    COMPUTE_FIELD(0xC1, Context.FIELD, Context.RECOLLECTION_COMPUTE) // Meta
+
     ;
 
     public static enum Context implements EBMLType.Context {
+
+        VALUE {
+            @Override
+            protected void register(TiesDBType type) {
+                throw new UnsupportedOperationException("Type " + type + " should not be registered in context " + this);
+            }
+        }, //
 
         ROOT, //
 
@@ -86,13 +129,10 @@ public enum TiesDBType implements TiesEBMLType {
         SIGNED, //
 
         REQUEST, //
-        MODIFICATION_REQUEST(REQUEST), //
-
         RESPONSE, //
-        MODIFICATION_RESPONSE(RESPONSE), //
 
-        MODIFICATION_RESULT(SIGNED), //
-        MODIFICATION_ERROR(ERROR), //
+        MODIFICATION_REQUEST(REQUEST), //
+        MODIFICATION_RESPONSE(RESPONSE), //
 
         ENTRY, //
         ENTRY_HEADER(SIGNED), //
@@ -102,12 +142,24 @@ public enum TiesDBType implements TiesEBMLType {
         CHEQUE_LIST, //
         CHEQUE(SIGNED), //
 
-        VALUE {
-            @Override
-            protected void register(TiesDBType type) {
-                throw new UnsupportedOperationException("Type " + type + " should not be registered in context " + this);
-            }
-        }, //
+        MODIFICATION_RESULT(SIGNED), //
+        MODIFICATION_ERROR(ERROR), //
+
+        RECOLLECTION_REQUEST(REQUEST), //
+        RECOLLECTION_RESPONSE(RESPONSE), //
+
+        FUNCTION, //
+        ARGUMENT_STATIC, //
+
+        RETRIEVE_LIST, //
+        RET_COMPUTE(FUNCTION), //
+
+        FILTER_LIST, //
+        FILTER,
+
+        RECOLLECTION_RESULT(SIGNED), //
+        RECOLLECTION_ENTRY, //
+        RECOLLECTION_COMPUTE, //
 
         ;
 

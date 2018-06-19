@@ -27,7 +27,6 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
 
-import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 
@@ -102,11 +101,8 @@ class ECKeyTest {
 			byte[] keyb = new byte[32];
 			sr.nextBytes(keyb);
 			key = ECKey.fromPrivate(keyb);
-			BigInteger x = key.getPubKeyPoint().getX().toBigInteger();
+			BigInteger x = key.getPubKeyPoint().getAffineXCoord().toBigInteger();
 			if(x.compareTo(cap) < 0) {
-				int i = 0;
-				i++;
-				
 				break;
 			}
 		} while(true);
@@ -140,7 +136,6 @@ class ECKeyTest {
     	assertEquals(sig.v, 0x26, "Signature v should be the same");
     	
     	byte[] addr = key.getAddress();
-    	String saddr = Hex.toHexString(addr);
     	assertTrue(Arrays.equals(addr, Hex.decode("A39370058B6e7c13F765BEa29EE0623195fC3C6d")), "Address should be the same");
     	
     	addr = ECKey.signatureToAddressBytes(hash, sig);

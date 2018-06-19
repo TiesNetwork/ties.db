@@ -21,8 +21,7 @@ package com.tiesdb.lib.crypto.digest.api;
 /**
  * interface that a message digest conforms to.
  */
-public interface Digest
-{
+public interface Digest {
     /**
      * return the algorithm name
      *
@@ -43,8 +42,6 @@ public interface Digest
      * @param in the input byte to be entered.
      */
     public void update(byte in);
-
-
 
     /**
      * update the message digest with a block of bytes.
@@ -71,8 +68,8 @@ public interface Digest
     public void update(byte[] in, int inOff, int len);
 
     /**
-     * close the digest, producing the final digest value. The doFinal
-     * call leaves the digest reset.
+     * close the digest, producing the final digest value. The doFinal call leaves
+     * the digest reset.
      *
      * @param out the array the digest is to be copied into.
      * @param outOff the offset into the out array the digest is to start at.

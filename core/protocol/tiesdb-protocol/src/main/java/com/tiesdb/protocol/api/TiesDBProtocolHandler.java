@@ -18,6 +18,10 @@
  */
 package com.tiesdb.protocol.api;
 
-public interface TiesDBProtocolHandler {
+import com.tiesdb.protocol.exception.TiesDBException;
+
+public interface TiesDBProtocolHandler<T> {
+
+    void handle(T session) throws TiesDBException;
 
 }

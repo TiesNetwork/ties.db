@@ -18,43 +18,66 @@
  */
 package com.tiesdb.protocol.api;
 
+import static com.tiesdb.protocol.api.Version.VersionComprator;
+
 import java.util.Comparator;
 
-import com.tiesdb.protocol.api.data.Version;
+import com.tiesdb.protocol.exception.TiesDBException;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 
-import static com.tiesdb.protocol.api.data.Version.VersionComprator;
+import one.utopic.abio.api.Closable;
+import one.utopic.abio.api.Skippable;
+import one.utopic.abio.api.input.Input;
+import one.utopic.abio.api.output.Flushable;
+import one.utopic.abio.api.output.Output;
 
 public interface TiesDBProtocol {
 
-	public static enum ProtocolComparator implements Comparator<TiesDBProtocol> {
+    public static enum ProtocolComparator implements Comparator<TiesDBProtocol> {
 
-		FULL(VersionComprator.FULL), //
-		MAJOR(VersionComprator.MAJOR), //
-		MINOR(VersionComprator.MINOR),//
-		;
+        REVISION(VersionComprator.REVISION), //
+        VERSION(VersionComprator.VERSION), //
+        FULL(VersionComprator.FULL), //
 
-		private final VersionComprator versionComparatorThreshold;
+        ;
 
-		private ProtocolComparator(VersionComprator versionComparatorThreshold) {
-			this.versionComparatorThreshold = versionComparatorThreshold;
-		}
+        private final VersionComprator versionComparatorThreshold;
 
-		@Override
-		public int compare(TiesDBProtocol p1, TiesDBProtocol p2) {
-			return p1 == null
-				? (p2 == null ? 0 : 1)
-				: p2 == null
-					? -1 //
-					: versionComparatorThreshold.compare(p1.getVersion(), p2.getVersion());
-		}
+        private ProtocolComparator(VersionComprator versionComparatorThreshold) {
+            this.versionComparatorThreshold = versionComparatorThreshold;
+        }
 
-	}
+        @Override
+        public int compare(TiesDBProtocol p1, TiesDBProtocol p2) {
+            return p1 == null //
+                    ? (p2 == null ? 0 : 1)
+                    : p2 == null //
+                            ? -1 //
+                            : versionComparatorThreshold.compare(p1.getVersion(), p2.getVersion());
+        }
 
-	Version getVersion();
+    }
 
-	boolean createChannel(TiesDBProtocolPacketChannel packetChannel, TiesDBProtocolHandler handler) throws TiesDBProtocolException;
+    interface TiesDBChannelInput extends Input, Skippable, Closable {
+    }
 
-	boolean acceptChannel(TiesDBProtocolPacketChannel packetChannel, TiesDBProtocolHandler handler) throws TiesDBProtocolException;
+    interface TiesDBChannelOutput extends Output, Flushable, Closable {
+    }
+
+    interface TiesDBProtocolProcessor<T> {
+
+        TiesDBProtocol getProtocol();
+
+        void processChannel(TiesDBChannelInput input, TiesDBChannelOutput output) throws TiesDBProtocolException;
+
+    }
+
+    Version getVersion();
+
+    void createChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
+            throws TiesDBException;
+
+    void acceptChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
+            throws TiesDBException;
 
 }

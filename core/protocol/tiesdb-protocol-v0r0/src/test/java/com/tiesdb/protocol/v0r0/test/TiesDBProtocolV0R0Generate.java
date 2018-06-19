@@ -471,7 +471,6 @@ public class TiesDBProtocolV0R0Generate {
     public void packetDecode(byte[] encData) {
         // TiesDBType x = TiesDBType.MODIFICATION_RESPONSE;
         decode(encData, Context.ROOT, r -> {
-            System.out.println("<!--\n" + DatatypeConverter.printHexBinary(encData) + "\n-->");
             int i = 0;
             while (r.hasNext()) {
                 EBMLEvent e = r.next();
@@ -509,6 +508,7 @@ public class TiesDBProtocolV0R0Generate {
                     fail("Wrong event " + e);
                 }
             }
+            System.out.println("<!--\n" + DatatypeConverter.printHexBinary(encData) + "\n-->");
             System.out.println();
         });
     }
@@ -532,8 +532,14 @@ public class TiesDBProtocolV0R0Generate {
                                         part(FUN_ARGUMENT_FUNCTION, //
                                                 part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "toUnixTimestamp"), //
                                                 part(FUN_ARGUMENT_FUNCTION, //
-                                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "writeTime"), //
-                                                        part(FUN_ARGUMENT_REFERENCE, UTF8StringFormat.INSTANCE, "fTime")//
+                                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "cast"), //
+                                                        part(FUN_ARGUMENT_FUNCTION, //
+                                                                part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "writeTime"), //
+                                                                part(FUN_ARGUMENT_REFERENCE, UTF8StringFormat.INSTANCE, "fTime")//
+                                                        ), //
+                                                        part(FUN_ARGUMENT_STATIC, //
+                                                                part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
+                                                                part(ARG_STATIC_VALUE, ASCIIStringFormat.INSTANCE, "date")) //
                                                 )//
                                         )//
                                 ), //

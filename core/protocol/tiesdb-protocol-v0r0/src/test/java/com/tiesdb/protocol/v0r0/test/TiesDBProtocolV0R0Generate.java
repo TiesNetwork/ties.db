@@ -137,7 +137,7 @@ public class TiesDBProtocolV0R0Generate {
                                         tiesPartSign(key, SIGNATURE, //
                                                 part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
                                                 part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
-                                                part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
+                                                // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
@@ -208,7 +208,7 @@ public class TiesDBProtocolV0R0Generate {
                                         tiesPartSign(key, SIGNATURE, //
                                                 part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
                                                 part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
-                                                part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
+                                                // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // from 1 to 2
                                                 part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
@@ -241,10 +241,22 @@ public class TiesDBProtocolV0R0Generate {
         System.out.println("Update " + DatatypeConverter.printHexBinary(encData));
     }
 
+    public byte[] generateModificationRequest(byte[] entryData) {
+        byte[] encData = encodeTies(//
+                part(MODIFICATION_REQUEST, //
+                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+                        part(MESSAGE_ID, LongFormat.INSTANCE, 777L), //
+                        part(MODIFICATION_ENTRY, BytesFormat.INSTANCE, entryData) //
+                ) //
+        );
+        return encData;
+    }
+
     @Test
     public void generateMultivalueSampleInsertRequest() {
         Date date = new Date(1522661357000L);
         ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
+        UUID uuid = UUID.fromString("7606fc02-8c19-44ee-99be-a24fc1449008");
 
         LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
 
@@ -258,7 +270,7 @@ public class TiesDBProtocolV0R0Generate {
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
                         ties(newDigestConsumer(fieldHashes), //
                                 part(FIELD_NAME, UTF8StringFormat.INSTANCE, "Id"), //
-                                part(FIELD_VALUE, UUIDFormat.INSTANCE, UUID.randomUUID()) //
+                                part(FIELD_VALUE, UUIDFormat.INSTANCE, uuid) //
                         ) //
                 ), //
                 part(FIELD, //
@@ -351,9 +363,9 @@ public class TiesDBProtocolV0R0Generate {
                                         tiesPartSign(key, SIGNATURE, //
                                                 part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
                                                 part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
-                                                part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
+                                                // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
+                                                part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
                                                 part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                 part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
@@ -405,6 +417,208 @@ public class TiesDBProtocolV0R0Generate {
         return DatatypeConverter.parseHexBinary(hexString);
     }
 
+    @Test
+    public void generateMultivalueSampleUpdateRequest() {
+        Date date = new Date(1522661357000L);
+        ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
+        UUID uuid = UUID.fromString("7606fc02-8c19-44ee-99be-a24fc1449008");
+
+        LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
+
+        Random rg = new SecureRandom();
+
+        byte[] randomBytes = new byte[rg.nextInt(32) + 32];
+        rg.nextBytes(randomBytes);
+        System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
+        byte[] fieldsData = encodeTies(//
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "Id"), //
+                                part(FIELD_VALUE, UUIDFormat.INSTANCE, uuid) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "binary"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fBinary"), //
+                                part(FIELD_VALUE, BytesFormat.INSTANCE, randomBytes) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "boolean"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fBoolean"), //
+                                part(FIELD_VALUE, IntegerFormat.INSTANCE, rg.nextInt(2)) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "decimal"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDecimal"), //
+                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "double"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDouble"), //
+                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "duration"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fDuration"), //
+                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal("267512643.210")) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "float"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fFloat"), //
+                                part(FIELD_VALUE, BigDecimalFormat.INSTANCE, new BigDecimal(rg.nextDouble())) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "integer"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fInteger"), //
+                                part(FIELD_VALUE, IntegerFormat.INSTANCE, rg.nextInt()) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "long"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fLong"), //
+                                part(FIELD_VALUE, LongFormat.INSTANCE, rg.nextLong()) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fString"), //
+                                part(FIELD_VALUE, UTF8StringFormat.INSTANCE, this.toString()) //
+                        ) //
+                ), //
+                part(FIELD, //
+                        part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "time"), //
+                        ties(newDigestConsumer(fieldHashes), //
+                                part(FIELD_NAME, UTF8StringFormat.INSTANCE, "fTime"), //
+                                part(FIELD_VALUE, DateFormat.INSTANCE, new Date()) //
+                        ) //
+                ) //
+        );
+
+        byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
+            byte[] hash = s.get();
+            // System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+            d.update(hash);
+        }));
+
+        // System.out.println("EntryFieldsHash: " +
+        // DatatypeConverter.printHexBinary(fldsHash));
+
+        byte[] encData = encodeTies(//
+                part(MODIFICATION_REQUEST, //
+                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+                        part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
+                        part(MODIFICATION_ENTRY, //
+                                part(ENTRY_HEADER, //
+                                        tiesPartSign(key, SIGNATURE, //
+                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
+                                                part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
+                                                part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // UPDATE
+                                                part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
+                                                        DatatypeConverter.parseHexBinary(
+                                                                "0917769875F57980143A2127F0B2AB7A32B9956E5E6F881D9685882A144ED103")), // UPDATE
+                                                part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
+                                                part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
+                                                part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+                                        ) //
+                                ), //
+                                part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
+                                part(CHEQUE_LIST, //
+                                        part(CHEQUE, //
+                                                tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
+                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
+                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
+                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
+                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
+                                                        part(ADDRESS_LIST, //
+                                                                part(ADDRESS, BytesFormat.INSTANCE,
+                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
+                                                        ), //
+                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+                                                ) //
+                                        ) //
+                                ) //
+                        ) //
+                ) //
+        );
+        System.out.println("MultivalueInsert " + DatatypeConverter.printHexBinary(encData));
+        packetDecode(encData);
+    }
+
+    @Test
+    public void generateSampleSelectRequest() {
+
+        UUID uuid = UUID.fromString("7606fc02-8c19-44ee-99be-a24fc1449008");
+
+        byte[] encData = encodeTies(//
+                part(RECOLLECTION_REQUEST, //
+                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+                        part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
+                        part(RECOLLECTION_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                        part(RECOLLECTION_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                        part(RETRIEVE_LIST, //
+                                part(RET_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
+                                part(RET_FIELD, UTF8StringFormat.INSTANCE, "fString"), //
+                                part(RET_COMPUTE, //
+                                        part(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE, "WriteTime"), //
+                                        part(RET_COMPUTE_TYPE, UTF8StringFormat.INSTANCE, "binary"), //
+                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "bigIntAsBlob"), //
+                                        part(FUN_ARGUMENT_FUNCTION, //
+                                                part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "toUnixTimestamp"), //
+                                                part(FUN_ARGUMENT_FUNCTION, //
+                                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "cast"), //
+                                                        part(FUN_ARGUMENT_FUNCTION, //
+                                                                part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "writeTime"), //
+                                                                part(FUN_ARGUMENT_REFERENCE, UTF8StringFormat.INSTANCE, "fTime")//
+                                                        ), //
+                                                        part(FUN_ARGUMENT_STATIC, //
+                                                                part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
+                                                                part(ARG_STATIC_VALUE, ASCIIStringFormat.INSTANCE, "date")) //
+                                                )//
+                                        )//
+                                ), //
+                                part(RET_COMPUTE, //
+                                        part(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE, "TestValue"), //
+                                        part(RET_COMPUTE_TYPE, UTF8StringFormat.INSTANCE, "binary"), //
+                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "intAsBlob"), //
+                                        part(FUN_ARGUMENT_STATIC, //
+                                                part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "integer"), //
+                                                part(ARG_STATIC_VALUE, IntegerFormat.INSTANCE, 777))//
+                                )//
+                        ), part(FILTER_LIST, //
+                                part(FILTER, //
+                                        part(FILTER_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
+                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "IN"), //
+                                        part(FUN_ARGUMENT_STATIC, //
+                                                part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
+                                                part(ARG_STATIC_VALUE, UUIDFormat.INSTANCE, uuid)//
+                                        )//
+                                )//
+                        )//
+                )//
+        );
+
+        packetDecode(encData);
+    }
+
     public static void main(String[] args) {
         TreeSet<String> values = new TreeSet<>();
         for (int i = 0; i < args.length; i++) {
@@ -413,12 +627,13 @@ public class TiesDBProtocolV0R0Generate {
         values.forEach(System.out::println);
     }
 
-    // @Test
+    @Test
     public void packetDecodeTest() {
         String[] dataStrings = new String[] {
-                "1E5449454314EE8164EC820309E1430AE140A7808F636C69656E742D6465762E746573748289616C6C5F747970657384810186857EBE0941C88881018CA03A0065BEC50CD1A4300303DB5396944135D81317058610B471B2AC41DADDE5F08E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC13D4FA923031F342877D0D5193CF97E5213C246E6934E115A28892C23AD0C23D50BD63A6ACE98271680F09B5596330993ECD6AB022A7D21D6B6C1585E40BD02D325D141C7D19C8284757569648082496486905D9A8A68B1494AFE9903901EEF70E82ED1CB828662696E61727980876642696E61727986B8C4F15FF411B49FEF804DD8913451E2092F67FD20F433B186AF71E2B8048176D14B31145A796CCDFCB3FD2A5DDAD5BF10BC30C285BC153134D1968287626F6F6C65616E808866426F6F6C65616E868100D1AC8287646563696D616C808866446563696D616C8697E806824B0E5BAF33E1BC7C24D4A9AADC3ED07E9C5A37B1D1AA8286646F75626C65808766446F75626C658697E8199CB4BDD0B01542C664E6A41E6B118195E2E1C945B3D19D82886475726174696F6E8089664475726174696F6E8686863E48FEFE8AD1A88285666C6F6174808666466C6F61748697E80E5812C7E49B7CCB352DCC9A550E4C8D256F8FF0ECD9D1998287696E7465676572808866496E746567657286848698873CD19782846C6F6E678085664C6F6E6786880E9A521BE2E16886D1D48286737472696E67808766537472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403666653761616338D195828474696D6580856654696D65868600801D23E153C14093C14090809038007241B5504FA587D68EE7587D407382810184857EBE0941C8868101A196A09464ED31C6187765D40271EE4F9B4C29A5A125DE23FC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC12C06F9333BE122E2F32D8D9D7A9216D27CEE6C4219F72AA56E04D21FA4A0DBC33AB1129244908432DC54A9AEED4E60396178CB27695886CB7D23CA539EBAB2A326",
-                "C001BA5E1225EFFF00000000000000011F544945A8EC820309E1A280A0C3ACF777B49DD23E7DEA861D90512B46FFB842F7AE1F53B493B1147A6938CC00",
-                "C001BA5E1225EFFF00000000000000011F544945BAEC820309EFB480A0C3ACF777B49DD23E7DEA861D90512B46FFB842F7AE1F53B493B1147A6938CC00E090496E73657274696F6E206661696C6564",
+                "1E5449454316EE8164EC820309E1430CE140A4808F636C69656E742D6465762E746573748289616C6C5F747970657386857EBE0941C88881018CA09A2FC5F82D9A2ACE7A1F07BA0D3D243DCC67E8DFBFB3C4412E2178D15E59A6528E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC1958AEB999D5550B8AA47AE3348B482F2E92C18D17A957B79A8ECBECE8F70726C7443523A9E20B0E952F1D51FB721871B1F48FEF145D2940E59CF39339739EB5D26D141CCD19C8284757569648082496486907606FC028C1944EE99BEA24FC1449008D1D1828662696E61727980876642696E61727986BEE0DCB1C405014B072475985E971BDCE006C7F55E50ADF3EEF5174BBFC6415D10F03080BFCC4AF554961E249FE4B527802C9F5F2F5BA603D0FC6CB5D4A730D1968287626F6F6C65616E808866426F6F6C65616E868101D1AB8287646563696D616C808866446563696D616C8696E20464F9AF575D4083AD82A9523EFA464D0F4DE28A85D1AA8286646F75626C65808766446F75626C658697EA15B12CA0FDACF3E5DE7C0363C10F43E975B8FDB4F96BD19D82886475726174696F6E8089664475726174696F6E8686863E48FEFE8AD1A88285666C6F6174808666466C6F61748697EA14BC4602E04501DFF99F59B289440C90B12BDFACA449D1998287696E7465676572808866496E74656765728684E8CCFE15D19782846C6F6E678085664C6F6E678688BF08AB5B8EF9E48DD1D48286737472696E67808766537472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403363343139363331D195828474696D6580856654696D65868600805A38C324C14093C14090809038007241B5504FA587D68EE7587D407382810184857EBE0941C8868101A196A09464ED31C6187765D40271EE4F9B4C29A5A125DE23FC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC12C06F9333BE122E2F32D8D9D7A9216D27CEE6C4219F72AA56E04D21FA4A0DBC33AB1129244908432DC54A9AEED4E60396178CB27695886CB7D23CA539EBAB2A326",
+                "1E5449454322EE8164EC820309E14318E140C6808F636C69656E742D6465762E746573748289616C6C5F747970657386857EBE0941C88881028AA00917769875F57980143A2127F0B2AB7A32B9956E5E6F881D9685882A144ED1038CA03F9530E87F4F1CD292595A902B800871B9B32075647BC377A57479CB6DF9AC6E8E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC15D3F13EDEBC666EEEF5FC43CCA54E018938D9C6EE8E88B892463E249FD7801A528A98F073BC4EEAF0D75C3ABA46FEB3A6A7C989CABE22E54EC59AB68164A844225D141B6D19C8284757569648082496486907606FC028C1944EE99BEA24FC1449008D1B9828662696E61727980876642696E61727986A6C57AF2EA4ED466156227CE83F89C9EE8AF8D0EA7763A648EEEE3F49ADF57DEC1C074E7A091DFD1968287626F6F6C65616E808866426F6F6C65616E868100D1AC8287646563696D616C808866446563696D616C8697EA7F5A60237720A2D735B02CB808103E0B8EDEBD0156EBD1AB8286646F75626C65808766446F75626C658698EA008BDA51BB1C2C2C53519DD94BEF10395BBC8622C31105D19D82886475726174696F6E8089664475726174696F6E8686863E48FEFE8AD1A88285666C6F6174808666466C6F61748697E8042328CBF8CDDC933CA00E5D08234389F82AB1FBAF83D1998287696E7465676572808866496E74656765728684623842BED19782846C6F6E678085664C6F6E678688696C7E02800F0D64D1D48286737472696E67808766537472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403363343139363331D195828474696D6580856654696D65868600805A3BE189C14093C14090809038007241B5504FA587D68EE7587D407382810184857EBE0941C8868101A196A09464ED31C6187765D40271EE4F9B4C29A5A125DE23FC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC12C06F9333BE122E2F32D8D9D7A9216D27CEE6C4219F72AA56E04D21FA4A0DBC33AB1129244908432DC54A9AEED4E60396178CB27695886CB7D23CA539EBAB2A326",
+                "1E5449454325EE8164EC820309E1431BE140C6808F636C69656E742D6465762E746573748289616C6C5F747970657386857EBE0941C88881038AA04F5E0569913F87FF7E25017F825AD5A366380D05D3DB5D8EFFC05B51086E66A98CA0CBE9E96873DDEBB169F414F0C164FDDC53E72D56A36D4A3C26D5138AF1426A538E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC133D552F102CD9D592726736EC35295B3863D3EC3AE95CE644503685DE14E76B440E784586175FCD5FD755FE172C0623AF3FDB0047C22AECAF5B074FEA7B87C9B26D141B9D19C8284757569648082496486907606FC028C1944EE99BEA24FC1449008D1BC828662696E61727980876642696E61727986A97EBD582F5CEA0B0D1CA7D75DDC2F29A8098742E97CDF6E493CC7796BDD5668003F114C87F9F0D7FBBBD1968287626F6F6C65616E808866426F6F6C65616E868101D1AC8287646563696D616C808866446563696D616C8697EA091CA513DD172A5E44CA137CE71D1B5D178461928433D1AA8286646F75626C65808766446F75626C658697EA7D5ADEA44E63419EBF0CD39FC601FADCD781243020BBD19D82886475726174696F6E8089664475726174696F6E8686863E48FEFE8AD1A98285666C6F6174808666466C6F61748698EA00B4888A69925AC849D72D4C6A01C098E4E06C6E47BADFD1998287696E7465676572808866496E746567657286840C23928DD19782846C6F6E678085664C6F6E6786884689A3296A4D4D3FD1D48286737472696E67808766537472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403363343139363331D195828474696D6580856654696D65868600805A3F9A93C14093C14090809038007241B5504FA587D68EE7587D407382810184857EBE0941C8868101A196A09464ED31C6187765D40271EE4F9B4C29A5A125DE23FC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC12C06F9333BE122E2F32D8D9D7A9216D27CEE6C4219F72AA56E04D21FA4A0DBC33AB1129244908432DC54A9AEED4E60396178CB27695886CB7D23CA539EBAB2A326",
+                "1154494540EAEE8164EC820309808F636C69656E742D6465762E746573748289616C6C5F747970657383409ED0824964D08766537472696E67C1E0A089577269746554696D65A28662696E617279F08C626967496E744173426C6F62F3BDF08F746F556E697854696D657374616D70F3AAF08463617374F392F089777269746554696D65F2856654696D65F18E8086737472696E67828464617465C1ADA0895465737456616C7565A28662696E617279F089696E744173426C6F62F18D8087696E746567657282820309A3A4F1A2E0824964F082494EF19880847575696482907606FC028C1944EE99BEA24FC1449008",
                 //
         };
 
@@ -429,14 +644,27 @@ public class TiesDBProtocolV0R0Generate {
 
     @Test
     public void packetDecodeTest2() {
-        String[] dataStrings = new String[] {
-                "1e54494541f6ee8100ec8101e141ede140a7fc94ae65baf610bad3f0d71aa3c3a8110c2d62cbeb19808f636c69656e742d6465762e746573748289616c6c5f74797065738481018685804c45a6408881018ca0ed58cbba606278f7310d68a6c34cef18d53c2d15277b295b50c72abd7684b2808e813cfec18a4038a539ddd47f152d464b8ecc0c270d3bb0e9d9df9e59b673dd490dfbee0b4a6eb460fa0b3488a30f9f69882a9e905031d310205af113fdd04d9c7ac2afab26d14140d19c8082496482847575696486907feb1c3d769240e59330af4ccf5f992ed19980876642696e617279828662696e6172798686e0a61e5ad74fd195808866426f6f6c65616e8287626f6f6c65616e8680d198808866446563696d616c8287646563696d616c868396fb2dd19e808766446f75626c658286646f75626c65868b416f00db980276caea8182d1a18089664475726174696f6e82886475726174696f6e868a9a00efcee47256c00000d19b808666466c6f61748285666c6f6174868aaefdadfc5d755013dd01d199808866496e74656765728287696e74656765728684193cf1b0d1948085664c6f6e6782846c6f6e67868540d0704ff6d1ad808766537472696e678286737472696e67869a54686973206973205554462d3820d181d182d180d0bed0bad0b0d19480856654696d65828474696d658685804c45a2e8",
-                "7FFF4088E09F546965734442457863657074696F6E3A2052657175657374206661696C6564E0E554696573444250726F746F636F6C457863657074696F6E3A20496C6C6567616C206576656E743A2054696573444250726F746F636F6C5630523024436F6E766572736174696F6E244576656E74205B747970653D4649454C442C2073746174653D454E445D",
+        String[] dataStrings = new String[] { //
+                "125449454341EC820309A1433AE142FBE140A4808F636C69656E742D6465762E746573748289616C6C5F747970657386857EBE0941C88881018CA09A2FC5F82D9A2ACE7A1F07BA0D3D243DCC67E8DFBFB3C4412E2178D15E59A6528E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC1958AEB999D5550B8AA47AE3348B482F2E92C18D17A957B79A8ECBECE8F70726C7443523A9E20B0E952F1D51FB721871B1F48FEF145D2940E59CF39339739EB5D26D14251D19C8082496482847575696486907606FC028C1944EE99BEA24FC1449008D1B380876642696E617279828662696E61727984A0A319749EF77B897C33D86FD09842962E9807A246010711AC9EEF1B206A792691D1B5808866426F6F6C65616E8287626F6F6C65616E84A0CAE62207D2E809E3F65D101DA7DC21C406244B20B91FBD496A83402F02E55CCBD1B5808866446563696D616C8287646563696D616C84A0EBF17D9D8F5491FFC07B1331CB8B008C37AB85A1DC3F0309C8D96A974AC7FF25D1B3808766446F75626C658286646F75626C6584A02B2444E1F794887B7F0B8E9EA4C3CBB4DCC101715BE3CACAC59065518436DD75D1B78089664475726174696F6E82886475726174696F6E84A047CA4AD678B5580200643E94596163E7AF5546E39C0A191A5B040924E388D4CDD1B1808666466C6F61748285666C6F617484A00C810B124089360422E34183F5802A8B69A90BF3AC7406385C450648BA74515CD1B5808866496E74656765728287696E746567657284A0E77E340AC5AEE1359801CFD340DB9C387E797284AB72E1C7A1C84883B1CA06D3D1AF8085664C6F6E6782846C6F6E6784A014EB7C8CBC42818EF3F2D88599BC18B8FEC56C7CA6A8053FDAA7B9B5BD1348ABD1D4808766537472696E678286737472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403363343139363331D1AF80856654696D65828474696D6584A05BDD4DBA601177373C27ED4EF4D47D86F9E5B421961A53EBB386185E002C5C79C1BAC19D8089577269746554696D65828662696E617279868800056F524B1AC400C19980895465737456616C7565828662696E617279868400000309", //
+                "",
                 //
         };
 
         for (String data : dataStrings) {
             packetDecode(DatatypeConverter.parseHexBinary(data.toUpperCase().replaceFirst("C001BA5E1225EFFF0000000000000001", "")));
+        }
+    }
+
+    @Test
+    public void generateSampleModificationRequest() {
+        String[] entryDataStrings = new String[] { //
+                "E140C6808F636C69656E742D6465762E746573748289616C6C5F747970657386857EBE0941C88881038AA04F5E0569913F87FF7E25017F825AD5A366380D05D3DB5D8EFFC05B51086E66A98CA0CBE9E96873DDEBB169F414F0C164FDDC53E72D56A36D4A3C26D5138AF1426A538E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC133D552F102CD9D592726736EC35295B3863D3EC3AE95CE644503685DE14E76B440E784586175FCD5FD755FE172C0623AF3FDB0047C22AECAF5B074FEA7B87C9B26D14251D19C8082496482847575696486907606FC028C1944EE99BEA24FC1449008D1B380876642696E617279828662696E61727984A06A49D4FC8AFD1846672644E5BA70B518B5F106759D12FC26619C4081A1CC1A37D1B5808866426F6F6C65616E8287626F6F6C65616E84A0CAE62207D2E809E3F65D101DA7DC21C406244B20B91FBD496A83402F02E55CCBD1B5808866446563696D616C8287646563696D616C84A035B77925583BFD5EFC86BED4F55CDE85505B894E1E7360F21A854090D39C8A4ED1B3808766446F75626C658286646F75626C6584A033E2DB659C905B16F3244EE6E04EE9921EB510148917700C82B6EF26BFD3C053D1B78089664475726174696F6E82886475726174696F6E84A047CA4AD678B5580200643E94596163E7AF5546E39C0A191A5B040924E388D4CDD1B1808666466C6F61748285666C6F617484A0014904BE5EEFDC3C9A063232F5C027F0F50877135A40391F28752FE06F1A6D95D1B5808866496E74656765728287696E746567657284A0C51D952132E4C06C79087585ACB28BB609BC24B7B5DD4C9989425809715ED197D1AF8085664C6F6E6782846C6F6E6784A0F75986856290C317BD5F817BC080D2898751254159ADC3302806EB5C0012DD4ED1D4808766537472696E678286737472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403363343139363331D1AF80856654696D65828474696D6584A0A63CCA12CE3544C712745F7506C3D2F845A7AB69F5EDBDD094754FFCA7F9C49D", //
+                "E140A4808F636C69656E742D6465762E746573748289616C6C5F747970657386857EBE0941C88881018CA09A2FC5F82D9A2ACE7A1F07BA0D3D243DCC67E8DFBFB3C4412E2178D15E59A6528E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC1958AEB999D5550B8AA47AE3348B482F2E92C18D17A957B79A8ECBECE8F70726C7443523A9E20B0E952F1D51FB721871B1F48FEF145D2940E59CF39339739EB5D26D14251D19C8082496482847575696486907606FC028C1944EE99BEA24FC1449008D1B380876642696E617279828662696E61727984A0A319749EF77B897C33D86FD09842962E9807A246010711AC9EEF1B206A792691D1B5808866426F6F6C65616E8287626F6F6C65616E84A0CAE62207D2E809E3F65D101DA7DC21C406244B20B91FBD496A83402F02E55CCBD1B5808866446563696D616C8287646563696D616C84A0EBF17D9D8F5491FFC07B1331CB8B008C37AB85A1DC3F0309C8D96A974AC7FF25D1B3808766446F75626C658286646F75626C6584A02B2444E1F794887B7F0B8E9EA4C3CBB4DCC101715BE3CACAC59065518436DD75D1B78089664475726174696F6E82886475726174696F6E84A047CA4AD678B5580200643E94596163E7AF5546E39C0A191A5B040924E388D4CDD1B1808666466C6F61748285666C6F617484A00C810B124089360422E34183F5802A8B69A90BF3AC7406385C450648BA74515CD1B5808866496E74656765728287696E746567657284A0E77E340AC5AEE1359801CFD340DB9C387E797284AB72E1C7A1C84883B1CA06D3D1AF8085664C6F6E6782846C6F6E6784A014EB7C8CBC42818EF3F2D88599BC18B8FEC56C7CA6A8053FDAA7B9B5BD1348ABD1D4808766537472696E678286737472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403363343139363331D1AF80856654696D65828474696D6584A05BDD4DBA601177373C27ED4EF4D47D86F9E5B421961A53EBB386185E002C5C79",
+                //
+        };
+
+        for (String data : entryDataStrings) {
+            packetDecode(generateModificationRequest(DatatypeConverter.parseHexBinary(data.toUpperCase().replaceFirst("C001BA5E1225EFFF0000000000000001", ""))));
         }
     }
 
@@ -448,7 +676,7 @@ public class TiesDBProtocolV0R0Generate {
         formatMap.put(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE);
         formatMap.put(FIELD_NAME, UTF8StringFormat.INSTANCE);
         formatMap.put(FIELD_TYPE, ASCIIStringFormat.INSTANCE);
-        formatMap.put(ENTRY_TYPE, IntegerFormat.INSTANCE);
+        // formatMap.put(ENTRY_TYPE, IntegerFormat.INSTANCE);
         formatMap.put(ENTRY_VERSION, LongFormat.INSTANCE);
         formatMap.put(ENTRY_NETWORK, IntegerFormat.INSTANCE);
         formatMap.put(ENTRY_TIMESTAMP, DateFormat.INSTANCE);
@@ -511,60 +739,6 @@ public class TiesDBProtocolV0R0Generate {
             System.out.println("<!--\n" + DatatypeConverter.printHexBinary(encData) + "\n-->");
             System.out.println();
         });
-    }
-
-    @Test
-    public void generateSampleSelectRequest() {
-
-        UUID uuid = UUID.fromString("7606fc02-8c19-44ee-99be-a24fc1449008");
-        byte[] encData = encodeTies(//
-                part(RECOLLECTION_REQUEST, //
-                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
-                        part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
-                        part(RECOLLECTION_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                        part(RECOLLECTION_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
-                        part(RETRIEVE_LIST, //
-                                part(RET_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
-                                part(RET_COMPUTE, //
-                                        part(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE, "WriteTime"), //
-                                        part(RET_COMPUTE_TYPE, UTF8StringFormat.INSTANCE, "binary"), //
-                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "bigIntAsBlob"), //
-                                        part(FUN_ARGUMENT_FUNCTION, //
-                                                part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "toUnixTimestamp"), //
-                                                part(FUN_ARGUMENT_FUNCTION, //
-                                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "cast"), //
-                                                        part(FUN_ARGUMENT_FUNCTION, //
-                                                                part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "writeTime"), //
-                                                                part(FUN_ARGUMENT_REFERENCE, UTF8StringFormat.INSTANCE, "fTime")//
-                                                        ), //
-                                                        part(FUN_ARGUMENT_STATIC, //
-                                                                part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "string"), //
-                                                                part(ARG_STATIC_VALUE, ASCIIStringFormat.INSTANCE, "date")) //
-                                                )//
-                                        )//
-                                ), //
-                                part(RET_COMPUTE, //
-                                        part(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE, "TestValue"), //
-                                        part(RET_COMPUTE_TYPE, UTF8StringFormat.INSTANCE, "binary"), //
-                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "intAsBlob"), //
-                                        part(FUN_ARGUMENT_STATIC, //
-                                                part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "integer"), //
-                                                part(ARG_STATIC_VALUE, IntegerFormat.INSTANCE, 777))//
-                                )//
-                        ), part(FILTER_LIST, //
-                                part(FILTER, //
-                                        part(FILTER_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
-                                        part(FUNCTION_NAME, ASCIIStringFormat.INSTANCE, "IN"), //
-                                        part(FUN_ARGUMENT_STATIC, //
-                                                part(ARG_STATIC_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
-                                                part(ARG_STATIC_VALUE, UUIDFormat.INSTANCE, uuid)//
-                                        )//
-                                )//
-                        )//
-                )//
-        );
-
-        packetDecode(encData);
     }
 
 }

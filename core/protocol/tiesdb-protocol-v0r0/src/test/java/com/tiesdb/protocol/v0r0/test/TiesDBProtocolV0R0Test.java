@@ -134,7 +134,7 @@ public class TiesDBProtocolV0R0Test {
                 tiesPartSign(key, SIGNATURE, //
                         part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
                         part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
-                        part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), //
+                        //part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), //
                         part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), //
                         part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
                         part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
@@ -219,7 +219,7 @@ public class TiesDBProtocolV0R0Test {
                                     part(ENTRY_HEADER, //
                                             part(ENTRY_TABLESPACE_NAME, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_TABLE_NAME, BytesFormat.INSTANCE, stubData), //
-                                            part(ENTRY_TYPE, BytesFormat.INSTANCE, stubData), //
+                                            //part(ENTRY_TYPE, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_VERSION, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_OLD_HASH, BytesFormat.INSTANCE, stubData), //
@@ -334,10 +334,11 @@ public class TiesDBProtocolV0R0Test {
                                         new EBMLType[] { ENTRY_TIMESTAMP, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
-                            case ENTRY_TYPE:
-                                assertArrayEquals(new EBMLType[] { ENTRY_TYPE, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
-                                        stack.toArray());
-                                break;
+                            // case ENTRY_TYPE:
+                            // assertArrayEquals(new EBMLType[] { ENTRY_TYPE, ENTRY_HEADER,
+                            // MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                            // stack.toArray());
+                            // break;
                             case ENTRY_VERSION:
                                 assertArrayEquals(new EBMLType[] { ENTRY_VERSION, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());

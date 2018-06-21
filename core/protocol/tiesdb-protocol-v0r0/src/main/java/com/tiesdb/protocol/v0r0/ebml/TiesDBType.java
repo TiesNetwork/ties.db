@@ -28,7 +28,7 @@ import one.utopic.sparse.ebml.EBMLType;
 
 public enum TiesDBType implements TiesEBMLType {
 
-    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST, Context.RESPONSE), // Unsigned
+    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST, Context.RESPONSE, Context.ERROR), // Unsigned
 
     CONSISTENCY(0xEE, Context.VALUE, Context.REQUEST), // Unsigned
 
@@ -45,7 +45,7 @@ public enum TiesDBType implements TiesEBMLType {
     ENTRY_HEADER(0xE1, Context.ENTRY_HEADER, Context.ENTRY), // Meta
     ENTRY_TABLESPACE_NAME(0x80, Context.VALUE, Context.ENTRY_HEADER), // UTF-8
     ENTRY_TABLE_NAME(0x82, Context.VALUE, Context.ENTRY_HEADER), // UTF-8
-    ENTRY_TYPE(0x84, Context.VALUE, Context.ENTRY_HEADER), // Unsigned
+    //ENTRY_TYPE(0x84, Context.VALUE, Context.ENTRY_HEADER), // Unsigned
     ENTRY_TIMESTAMP(0x86, Context.VALUE, Context.ENTRY_HEADER), // TimeStamp
     ENTRY_VERSION(0x88, Context.VALUE, Context.ENTRY_HEADER), // Unsigned
     ENTRY_OLD_HASH(0x8A, Context.VALUE, Context.ENTRY_HEADER), // Binary (Keccak-256)

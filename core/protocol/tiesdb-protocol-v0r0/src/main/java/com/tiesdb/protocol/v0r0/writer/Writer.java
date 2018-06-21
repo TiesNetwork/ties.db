@@ -23,19 +23,22 @@ import java.math.BigInteger;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResponse;
+import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResponse;
 
 @FunctionalInterface
 public interface Writer<T> {
 
     interface Response {
 
-        interface Visitor {
+        interface Visitor<T> {
 
-            void on(ModificationResponse modificationResponse) throws TiesDBProtocolException;
+            T on(ModificationResponse response) throws TiesDBProtocolException;
+
+            T on(RecollectionResponse response) throws TiesDBProtocolException;
 
         }
 
-        void accept(Visitor v) throws TiesDBProtocolException;
+        <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
 
         BigInteger getMessageId();
 

@@ -20,9 +20,6 @@ package com.tiesdb.protocol.v0r0.ebml;
 
 public final class TiesDBConstants {
 
-    public static final int ENTRY_TYPE_INSERT = 1;
-    public static final int ENTRY_TYPE_UPDATE = 2;
-
     public static final int ENTRY_NETWORK_ETHEREUM = 60; // BIP-0044/SLIP-0044
 
     private TiesDBConstants() {

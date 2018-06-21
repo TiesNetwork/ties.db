@@ -62,6 +62,7 @@ import one.utopic.sparse.ebml.EBMLReader.EBMLReadFormat;
 import one.utopic.sparse.ebml.EBMLType;
 import one.utopic.sparse.ebml.EBMLWriter;
 import one.utopic.sparse.ebml.EBMLWriter.EBMLWriteFormat;
+import one.utopic.sparse.ebml.EBMLWriter.EBMLWriteFormat.Writable;
 
 public class TiesDBProtocolV0R0 implements TiesDBProtocol {
 
@@ -182,6 +183,7 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
             public void removeWriterListener(Object listener) {
                 writer.removeListener(listener);
             }
+
         };
     }
 

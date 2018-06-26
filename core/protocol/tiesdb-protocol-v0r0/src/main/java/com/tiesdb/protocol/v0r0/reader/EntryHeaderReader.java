@@ -113,27 +113,27 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
             header.tablespaceName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("ENTRY_TABLESPACE_NAME: {}", header.tablespaceName);
             end(session, e);
-            return true;
+            break;
         case ENTRY_TABLE_NAME:
             header.tableName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("ENTRY_TABLE_NAME: {}", header.tableName);
             end(session, e);
-            return true;
+            break;
         case ENTRY_TIMESTAMP:
             header.entryTimestamp = session.read(DateFormat.INSTANCE);
             LOG.debug("ENTRY_TIMESTAMP: {}", header.entryTimestamp);
             end(session, e);
-            return true;
+            break;
         case ENTRY_VERSION:
             header.entryVersion = session.read(BigIntegerFormat.INSTANCE);
             LOG.debug("ENTRY_VERSION: {}", header.entryVersion);
             end(session, e);
-            return true;
+            break;
         case ENTRY_NETWORK:
             header.entryNetwork = session.read(IntegerFormat.INSTANCE);
             LOG.debug("ENTRY_NETWORK: {}", header.entryNetwork);
             end(session, e);
-            return true;
+            break;
         case ENTRY_OLD_HASH:
             header.entryOldHash = session.read(BytesFormat.INSTANCE);
             LOG.debug("ENTRY_OLD_HASH: {}", new Object() {
@@ -143,7 +143,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
                 }
             });
             end(session, e);
-            return true;
+            break;
         case ENTRY_FLD_HASH:
             header.entryFldHash = session.read(BytesFormat.INSTANCE);
             LOG.debug("ENTRY_FLD_HASH: {}", new Object() {
@@ -153,12 +153,14 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
                 }
             });
             end(session, e);
-            return true;
+            break;
         // $CASES-OMITTED$
         default:
-            return signatureReader.acceptSignature(session, e, header);
-        // throw new TiesDBProtocolException("Illegal packet format");
+            if (!signatureReader.acceptSignature(session, e, header)) {
+                throw new TiesDBProtocolException("Unknown header field with " + e.getEBMLCode());
+            }
         }
+        return true;
     }
 
     @Override

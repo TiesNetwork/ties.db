@@ -87,7 +87,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
             LOG.debug("MESSAGE_ID : {}", r.messageId);
             end(session, e);
             return true;
-        case MODIFICATION_ENTRY:
+        case ENTRY:
             ModificationEntry modificationEntry = new ModificationEntry();
             boolean result = modificationEntryReader.accept(session, e, modificationEntry);
             if (result) {

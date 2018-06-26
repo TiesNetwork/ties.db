@@ -77,10 +77,10 @@ public class EntryHeaderWriter implements Writer<EntryHeaderWriter.EntryHeader> 
                 write(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, header.getTableName()), //
                 write(ENTRY_TIMESTAMP, DateFormat.INSTANCE, header.getEntryTimestamp()), //
                 write(ENTRY_VERSION, BigIntegerFormat.INSTANCE, header.getEntryVersion()), //
+                write(ENTRY_FLD_HASH, BytesFormat.INSTANCE, header.getEntryFldHash()), //
                 write(null != entryOldHash && 0 != entryOldHash.length, //
                         write(ENTRY_OLD_HASH, BytesFormat.INSTANCE, entryOldHash) //
                 ), //
-                write(ENTRY_FLD_HASH, BytesFormat.INSTANCE, header.getEntryFldHash()), //
                 write(ENTRY_NETWORK, IntegerFormat.INSTANCE, header.getEntryNetwork()), //
                 write(signatureWriter, header) //
         ).accept(session);

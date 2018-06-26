@@ -134,13 +134,13 @@ public class TiesDBProtocolV0R0Test {
                 tiesPartSign(key, SIGNATURE, //
                         part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
                         part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
-                        //part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), //
+                        // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), //
                         part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), //
                         part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
                         part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
                 ) //
         ));
-        decodeTies(encData, MODIFICATION_ENTRY.getContext(), r -> {
+        decodeTies(encData, ENTRY.getContext(), r -> {
             Digest headerHash = DigestManager.getDigest(DEFAULT_DIGEST_NAME);
             Consumer<Byte> headerHashListener = headerHash::update;
             byte[] sigRef = null;
@@ -215,11 +215,11 @@ public class TiesDBProtocolV0R0Test {
             byte[] encData = encode(//
                     part(MODIFICATION_REQUEST, //
                             part(CONSISTENCY, BytesFormat.INSTANCE, stubData), //
-                            part(MODIFICATION_ENTRY, //
+                            part(ENTRY, //
                                     part(ENTRY_HEADER, //
                                             part(ENTRY_TABLESPACE_NAME, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_TABLE_NAME, BytesFormat.INSTANCE, stubData), //
-                                            //part(ENTRY_TYPE, BytesFormat.INSTANCE, stubData), //
+                                            // part(ENTRY_TYPE, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_VERSION, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_OLD_HASH, BytesFormat.INSTANCE, stubData), //
@@ -278,33 +278,28 @@ public class TiesDBProtocolV0R0Test {
                             assertArrayEquals(stubData, BytesFormat.INSTANCE.read(reader));
                             switch ((TiesDBType) event.get()) {
                             case ENTRY_NETWORK:
-                                assertArrayEquals(new EBMLType[] { ENTRY_NETWORK, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { ENTRY_NETWORK, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case ADDRESS:
                                 assertArrayEquals(
-                                        new EBMLType[] { ADDRESS, ADDRESS_LIST, CHEQUE, CHEQUE_LIST, MODIFICATION_ENTRY,
-                                                MODIFICATION_REQUEST }, //
+                                        new EBMLType[] { ADDRESS, ADDRESS_LIST, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_AMOUNT:
-                                assertArrayEquals(
-                                        new EBMLType[] { CHEQUE_AMOUNT, CHEQUE, CHEQUE_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { CHEQUE_AMOUNT, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_NUMBER:
-                                assertArrayEquals(
-                                        new EBMLType[] { CHEQUE_NUMBER, CHEQUE, CHEQUE_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { CHEQUE_NUMBER, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_RANGE:
-                                assertArrayEquals(
-                                        new EBMLType[] { CHEQUE_RANGE, CHEQUE, CHEQUE_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { CHEQUE_RANGE, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_TIMESTAMP:
-                                assertArrayEquals(
-                                        new EBMLType[] { CHEQUE_TIMESTAMP, CHEQUE, CHEQUE_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { CHEQUE_TIMESTAMP, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CONSISTENCY:
@@ -312,26 +307,23 @@ public class TiesDBProtocolV0R0Test {
                                         stack.toArray());
                                 break;
                             case ENTRY_FLD_HASH:
-                                assertArrayEquals(new EBMLType[] { ENTRY_FLD_HASH, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { ENTRY_FLD_HASH, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case ENTRY_OLD_HASH:
-                                assertArrayEquals(new EBMLType[] { ENTRY_OLD_HASH, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { ENTRY_OLD_HASH, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case ENTRY_TABLESPACE_NAME:
-                                assertArrayEquals(
-                                        new EBMLType[] { ENTRY_TABLESPACE_NAME, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { ENTRY_TABLESPACE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case ENTRY_TABLE_NAME:
-                                assertArrayEquals(
-                                        new EBMLType[] { ENTRY_TABLE_NAME, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { ENTRY_TABLE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case ENTRY_TIMESTAMP:
-                                assertArrayEquals(
-                                        new EBMLType[] { ENTRY_TIMESTAMP, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { ENTRY_TIMESTAMP, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             // case ENTRY_TYPE:
@@ -340,34 +332,30 @@ public class TiesDBProtocolV0R0Test {
                             // stack.toArray());
                             // break;
                             case ENTRY_VERSION:
-                                assertArrayEquals(new EBMLType[] { ENTRY_VERSION, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { ENTRY_VERSION, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case FIELD_HASH:
-                                assertArrayEquals(
-                                        new EBMLType[] { FIELD_HASH, FIELD, FIELD_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { FIELD_HASH, FIELD, FIELD_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case FIELD_NAME:
-                                assertArrayEquals(
-                                        new EBMLType[] { FIELD_NAME, FIELD, FIELD_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { FIELD_NAME, FIELD, FIELD_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case FIELD_TYPE:
-                                assertArrayEquals(
-                                        new EBMLType[] { FIELD_TYPE, FIELD, FIELD_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { FIELD_TYPE, FIELD, FIELD_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case FIELD_VALUE:
-                                assertArrayEquals(
-                                        new EBMLType[] { FIELD_VALUE, FIELD, FIELD_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { FIELD_VALUE, FIELD, FIELD_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case SIGNATURE:
                                 if (!(//
-                                Arrays.equals(new EBMLType[] { SIGNATURE, CHEQUE, CHEQUE_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                Arrays.equals(new EBMLType[] { SIGNATURE, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray()) || //
-                                Arrays.equals(new EBMLType[] { SIGNATURE, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                Arrays.equals(new EBMLType[] { SIGNATURE, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray())//
                                 )) {
                                     fail(SIGNATURE + " element missplaced");
@@ -375,9 +363,9 @@ public class TiesDBProtocolV0R0Test {
                                 break;
                             case SIGNER:
                                 if (!(//
-                                Arrays.equals(new EBMLType[] { SIGNER, CHEQUE, CHEQUE_LIST, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                Arrays.equals(new EBMLType[] { SIGNER, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray()) || //
-                                Arrays.equals(new EBMLType[] { SIGNER, ENTRY_HEADER, MODIFICATION_ENTRY, MODIFICATION_REQUEST }, //
+                                Arrays.equals(new EBMLType[] { SIGNER, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray())//
                                 )) {
                                     fail(SIGNER + " element missplaced");
@@ -388,7 +376,6 @@ public class TiesDBProtocolV0R0Test {
                             case ADDRESS_LIST:
                             case CHEQUE:
                             case CHEQUE_LIST:
-                            case MODIFICATION_ENTRY:
                             case ENTRY_HEADER:
                             case FIELD:
                             case FIELD_LIST:
@@ -415,7 +402,7 @@ public class TiesDBProtocolV0R0Test {
                             case MODIFICATION_RESPONSE:
                             case MODIFICATION_RESULT:
                             case RECOLLECTION_COMPUTE:
-                            case RECOLLECTION_ENTRY:
+                            case ENTRY:
                             case RECOLLECTION_REQUEST:
                             case RECOLLECTION_RESPONSE:
                             case RECOLLECTION_RESULT:
@@ -426,6 +413,8 @@ public class TiesDBProtocolV0R0Test {
                             case RET_COMPUTE_ALIAS:
                             case RET_COMPUTE_TYPE:
                             case RET_FIELD:
+                            case UNKNOWN_STRUCTURE:
+                            case UNKNOWN_VALUE:
                                 fail(event.get() + " not yet ready for test");
                                 break;
 

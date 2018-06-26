@@ -18,7 +18,6 @@
  */
 package com.tiesdb.protocol.v0r0.writer;
 
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_HASH;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_NAME;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_TYPE;
@@ -48,11 +47,11 @@ public class FieldWriter implements Writer<FieldWriter.Field> {
 
     public static interface Field {
 
-        interface ValueField extends Field {
+        interface ValueField<O> extends Field {
 
-            EBMLFormat<Object> getFormat();
+            EBMLFormat<O> getFormat();
 
-            Object getValue();
+            O getValue();
 
             @Override
             default <T> T accept(Visitor<T> v) {
@@ -74,7 +73,7 @@ public class FieldWriter implements Writer<FieldWriter.Field> {
 
         interface Visitor<T> {
 
-            T on(ValueField field);
+            <O> T on(ValueField<O> field);
 
             T on(HashField field);
 
@@ -104,7 +103,7 @@ public class FieldWriter implements Writer<FieldWriter.Field> {
         }
 
         @Override
-        public ConversationConsumer on(ValueField field) {
+        public <O> ConversationConsumer on(ValueField<O> field) {
             return write(FIELD_VALUE, field.getFormat(), field.getValue());
         }
 
@@ -118,7 +117,7 @@ public class FieldWriter implements Writer<FieldWriter.Field> {
 
     @Override
     public void accept(Conversation session, Field field) throws TiesDBProtocolException {
-        LOG.debug("Field {}", field);
+        LOG.debug("{} {}", fieldType, field);
         write(fieldType, //
                 write(FIELD_NAME, UTF8StringFormat.INSTANCE, field.getName()), //
                 write(FIELD_TYPE, ASCIIStringFormat.INSTANCE, field.getType()), //

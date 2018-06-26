@@ -18,6 +18,8 @@
  */
 package com.tiesdb.protocol.v0r0.writer;
 
+import java.util.Iterator;
+
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
@@ -75,9 +77,13 @@ final class WriterUtil {
     }
 
     public static <T> ConversationConsumer write(Writer<T> w, Iterable<T> it) {
+        return write(w, it.iterator());
+    }
+
+    public static <T> ConversationConsumer write(Writer<T> w, Iterator<T> it) {
         return s -> {
-            for (T t : it) {
-                write(w, t).accept(s);
+            while (it.hasNext()) {
+                write(w, it.next()).accept(s);
             }
         };
     }

@@ -47,22 +47,24 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.EventState;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBType;
 import com.tiesdb.protocol.v0r0.ebml.TiesEBMLReader;
+import com.tiesdb.protocol.v0r0.ebml.TiesEBMLReader.UnknownTiesEBMLType;
 import com.tiesdb.protocol.v0r0.ebml.TiesEBMLWriter;
 import com.tiesdb.protocol.v0r0.exception.CRCMissmatchException;
 import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 import com.tiesdb.protocol.v0r0.util.CheckedSupplier;
+import com.tiesdb.protocol.v0r0.util.EBMLHelper;
 
 import one.utopic.abio.api.input.Input;
 import one.utopic.abio.api.output.Output;
 import one.utopic.sparse.api.Event.CommonEventType;
 import one.utopic.sparse.api.Event.EventType;
+import one.utopic.sparse.ebml.EBMLCode;
 import one.utopic.sparse.ebml.EBMLEvent;
 import one.utopic.sparse.ebml.EBMLReader;
 import one.utopic.sparse.ebml.EBMLReader.EBMLReadFormat;
 import one.utopic.sparse.ebml.EBMLType;
 import one.utopic.sparse.ebml.EBMLWriter;
 import one.utopic.sparse.ebml.EBMLWriter.EBMLWriteFormat;
-import one.utopic.sparse.ebml.EBMLWriter.EBMLWriteFormat.Writable;
 
 public class TiesDBProtocolV0R0 implements TiesDBProtocol {
 
@@ -135,8 +137,15 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
         requireNonNull(input);
         requireNonNull(output);
         requireNonNull(handlerProvider);
-        Conversation session = openConversation(input, output);
-        requireNonNull(handlerProvider.getHandler(VERSION, remoteVersion, session)).handle(session);
+        try {
+            TiesDBChannelOutput bufferedOutput = new TiesDBChannelBufferedOutput(output);
+            Conversation session = openConversation(input, bufferedOutput);
+            requireNonNull(handlerProvider.getHandler(VERSION, remoteVersion, session)).handle(session);
+            bufferedOutput.flush();
+        } catch (Exception e) {
+            LOG.debug("Handle exception", e);
+            EBMLHelper.writeError(openConversation(input, output), e);
+        }
     }
 
     protected Conversation openConversation(TiesDBChannelInput input, TiesDBChannelOutput output) {
@@ -151,7 +160,20 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
             public Event get() throws TiesDBProtocolException {
                 EBMLEvent e;
                 if (reader.hasNext() && (e = reader.next()) != null) {
-                    return new Event(convertEventType(e.get()), convertEventState(e.getType()));
+                    TiesDBType eventType = convertEventType(e.get());
+                    switch (eventType) {
+                    case UNKNOWN_STRUCTURE:
+                    case UNKNOWN_VALUE:
+                        return new Event(eventType, convertEventState(e.getType())) {
+                            @Override
+                            public EBMLCode getEBMLCode() {
+                                return e.get().getEBMLCode();
+                            }
+                        };
+                    // $CASES-OMITTED$
+                    default:
+                        return new Event(eventType, convertEventState(e.getType()));
+                    }
                 }
                 return null;
             }
@@ -218,6 +240,9 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
         requireNonNull(type);
         if (type instanceof TiesDBType) {
             return (TiesDBType) type;
+        } else if (type instanceof UnknownTiesEBMLType) {
+            UnknownTiesEBMLType unknownType = ((UnknownTiesEBMLType) type);
+            return unknownType.isStructural() ? TiesDBType.UNKNOWN_STRUCTURE : TiesDBType.UNKNOWN_VALUE;
         }
         throw new TiesDBProtocolException("Unknown EBML type " + type);
     }
@@ -240,6 +265,10 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
 
             public TiesDBType getType() {
                 return type;
+            }
+
+            public EBMLCode getEBMLCode() {
+                return type.getEBMLCode();
             }
 
             public EventState getState() {

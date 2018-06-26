@@ -47,6 +47,7 @@ public class TiesEBMLReader extends EBMLReader {
     };
 
     private final WrappedInput win;
+    private boolean skipUnknownTag = false;
 
     public TiesEBMLReader(Input in, EBMLType.Context context) {
         this(new WrappedInput(in), context);
@@ -69,11 +70,19 @@ public class TiesEBMLReader extends EBMLReader {
         return this.win.listeners.remove(listener);
     }
 
+    public boolean isSkipUnknownTag() {
+        return skipUnknownTag;
+    }
+
+    public void setSkipUnknownTag(boolean skipUnknownTags) {
+        this.skipUnknownTag = skipUnknownTags;
+    }
+
     @Override
     public EBMLEvent next() {
         EBMLEvent event;
         EBMLType type;
-        while (null != (event = super.next()) && (type = event.get()) instanceof UnknownTiesEBMLType) {
+        while (null != (event = super.next()) &&  (type = event.get()) instanceof UnknownTiesEBMLType && skipUnknownTag) {
             UnknownTiesEBMLType unknownType = (UnknownTiesEBMLType) type;
             if (hasNext()) {
                 if (unknownType.isStructural()) {
@@ -126,7 +135,7 @@ public class TiesEBMLReader extends EBMLReader {
         return o;
     }
 
-    protected static class UnknownTiesEBMLType implements TiesEBMLType {
+    public static class UnknownTiesEBMLType implements TiesEBMLType {
 
         private final EBMLCode code;
         private final boolean structural;

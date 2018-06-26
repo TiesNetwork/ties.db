@@ -22,7 +22,7 @@ import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.COMPUTE_FIELD;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_LIST;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.RECOLLECTION_COMPUTE;
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.RECOLLECTION_ENTRY;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.RECOLLECTION_RESULT;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
 
@@ -42,9 +42,9 @@ public class RecollectionResultWriter implements Writer<RecollectionResultWriter
 
         EntryHeader getEntryHeader();
 
-        Iterable<Field> getEntryFields();
+        Multiple<Field> getEntryFields();
 
-        Iterable<Field> getComputedFields();
+        Multiple<Field> getComputedFields();
 
     }
 
@@ -56,14 +56,18 @@ public class RecollectionResultWriter implements Writer<RecollectionResultWriter
     public void accept(Conversation session, RecollectionResult result) throws TiesDBProtocolException {
         LOG.debug("RecollectionResult {}", result);
 
+        Multiple<Field> computedFields = result.getComputedFields();
+
         write(RECOLLECTION_RESULT, //
-                write(RECOLLECTION_ENTRY, //
+                write(ENTRY, //
                         write(entryHeaderWriter, result.getEntryHeader()), //
                         write(FIELD_LIST, //
                                 write(entryFieldWriter, result.getEntryFields()) //
                         )), //
-                write(RECOLLECTION_COMPUTE, //
-                        write(computeFieldWriter, result.getComputedFields()) //
+                write(null != computedFields && !computedFields.isEmpty(), //
+                        write(RECOLLECTION_COMPUTE, //
+                                write(computeFieldWriter, computedFields) //
+                        )//
                 )//
         ).accept(session);
     }

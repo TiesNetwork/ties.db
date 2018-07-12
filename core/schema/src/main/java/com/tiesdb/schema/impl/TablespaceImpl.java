@@ -62,4 +62,9 @@ public class TablespaceImpl extends NamedItemImpl implements Tablespace {
 		return schema;
 	}
 
+	@Override
+	public Table getTable(String name) {
+		return getTable(schema.idFromName(getName(), name));
+	}
+
 }

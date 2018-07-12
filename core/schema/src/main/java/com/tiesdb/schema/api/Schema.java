@@ -9,6 +9,7 @@ public interface Schema extends Item {
 	public LinkedHashMap<Id, Tablespace> getTablespaces();
 	public LinkedHashMap<Address, Node> getNodes();
 	public Tablespace getTablespace(Id id);
+	public Tablespace getTablespace(String name);
 	public Node getNode(Address address);
 	
 	public Id idFromName(String name);

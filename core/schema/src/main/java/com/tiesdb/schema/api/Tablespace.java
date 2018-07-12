@@ -9,6 +9,7 @@ public interface Tablespace extends NamedItem{
 	LinkedHashMap<Id, Table> getTables();
 	
 	Table getTable(Id id);
+	Table getTable(String name);
 	
 	Schema getSchema();
 }

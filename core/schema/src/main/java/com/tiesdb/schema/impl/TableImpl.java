@@ -146,4 +146,34 @@ public class TableImpl extends NamedItemImpl implements Table {
 		return nodes.get(id);
 	}
 
+	@Override
+	public boolean hasField(String name) {
+		return hasField(schema.idFromName(name));
+	}
+
+	@Override
+	public boolean hasTrigger(String name) {
+		return hasTrigger(schema.idFromName(name));
+	}
+
+	@Override
+	public boolean hasIndex(String name) {
+		return hasIndex(schema.idFromName(name));
+	}
+
+	@Override
+	public Field getField(String name) {
+		return getField(schema.idFromName(name));
+	}
+
+	@Override
+	public Trigger getTrigger(String name) {
+		return getTrigger(schema.idFromName(name));
+	}
+
+	@Override
+	public Index getIndex(String name) {
+		return getIndex(schema.idFromName(name));
+	}
+
 }

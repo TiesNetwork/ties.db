@@ -136,4 +136,10 @@ public class SchemaImpl extends ItemImpl implements Schema {
 		assert(false); //Node should be in global repository!
 		return node;
 	}
+
+	@Override
+	public Tablespace getTablespace(String name) {
+		Id id = idFromName(name);
+		return getTablespace(id);
+	}
 }

@@ -56,9 +56,10 @@ final class ReaderUtil {
             throw new TiesDBProtocolException("Illegal root event: " + rootEvent);
         }
         Event event;
-        while (null != controller && null != (event = session.get())) {
+        while (null != (event = session.get())) {
+            LOG.trace("Event {}", event);
             if (EventState.BEGIN.equals(event.getState())) {
-                if (!controller.accept(session, event, t)) {
+                if (null == controller || !controller.accept(session, event, t)) {
                     session.skip();
                     LOG.warn("{} event skipped", event.getType());
                     end(session, event);

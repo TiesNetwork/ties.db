@@ -18,6 +18,7 @@
  */
 package com.tiesdb.protocol.v0r0.reader;
 
+import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.util.function.Consumer;
@@ -64,8 +65,7 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
         this.hashListenerSupplier = hashListenerSupplier;
     }
 
-    @Override
-    public boolean accept(Conversation session, Event e, Signature signature) throws TiesDBProtocolException {
+    public boolean acceptSignature(Conversation session, Event e, Signature signature) throws TiesDBProtocolException {
         Consumer<Byte> hashListener = hashListenerSupplier.get();
         switch (e.getType()) {
         case SIGNATURE:
@@ -95,6 +95,12 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
             return false;
         // throw new TiesDBProtocolException("Illegal packet format");
         }
+    }
+
+    @Override
+    public boolean accept(Conversation session, Event e, Signature signature) throws TiesDBProtocolException {
+        acceptEach(session, e, this::acceptSignature, signature);
+        return true;
     }
 
 }

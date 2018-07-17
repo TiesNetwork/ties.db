@@ -28,7 +28,10 @@ import one.utopic.sparse.ebml.EBMLType;
 
 public enum TiesDBType implements TiesEBMLType {
 
-    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST, Context.RESPONSE), // Unsigned
+    UNKNOWN_STRUCTURE(Context.UNKNOWN_STRUCTURE), // Meta
+    UNKNOWN_VALUE(Context.VALUE, Context.UNKNOWN_STRUCTURE), // Binary
+
+    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST, Context.RESPONSE, Context.ERROR), // Unsigned
 
     CONSISTENCY(0xEE, Context.VALUE, Context.REQUEST), // Unsigned
 
@@ -38,20 +41,15 @@ public enum TiesDBType implements TiesEBMLType {
     ERROR(0x7FFF, Context.ERROR, Context.ROOT), // Meta
     ERROR_MESSAGE(0xE0, Context.VALUE, Context.ERROR), // UTF-8
 
-    MODIFICATION_REQUEST(0x1E544945, Context.MODIFICATION_REQUEST, Context.ROOT), // Meta
-
-    MODIFICATION_ENTRY(0xE1, Context.ENTRY, Context.MODIFICATION_REQUEST), // Meta
-
+    ENTRY(0xE1, Context.ENTRY, Context.ENTRY_CONTAINER), // Meta
     ENTRY_HEADER(0xE1, Context.ENTRY_HEADER, Context.ENTRY), // Meta
     ENTRY_TABLESPACE_NAME(0x80, Context.VALUE, Context.ENTRY_HEADER), // UTF-8
     ENTRY_TABLE_NAME(0x82, Context.VALUE, Context.ENTRY_HEADER), // UTF-8
-    ENTRY_TYPE(0x84, Context.VALUE, Context.ENTRY_HEADER), // Unsigned
     ENTRY_TIMESTAMP(0x86, Context.VALUE, Context.ENTRY_HEADER), // TimeStamp
     ENTRY_VERSION(0x88, Context.VALUE, Context.ENTRY_HEADER), // Unsigned
     ENTRY_OLD_HASH(0x8A, Context.VALUE, Context.ENTRY_HEADER), // Binary (Keccak-256)
     ENTRY_FLD_HASH(0x8C, Context.VALUE, Context.ENTRY_HEADER), // Binary (Tiger-192)
     ENTRY_NETWORK(0x8E, Context.VALUE, Context.ENTRY_HEADER), // Unsigned (BIP-0044/SLIP-0044)
-
     FIELD_LIST(0xD1, Context.FIELD_LIST, Context.ENTRY), // Meta
     FIELD(0xD1, Context.FIELD, Context.FIELD_LIST), // Meta
     FIELD_NAME(0x80, Context.VALUE, Context.FIELD), // UTF-8
@@ -59,31 +57,28 @@ public enum TiesDBType implements TiesEBMLType {
     FIELD_HASH(0x84, Context.VALUE, Context.FIELD), // Binary (Keccak-256)
     FIELD_VALUE(0x86, Context.VALUE, Context.FIELD), // Binary
 
-    CHEQUE_LIST(0xC1, Context.CHEQUE_LIST, Context.ENTRY), // Meta
+    CHEQUE_LIST(0xC1, Context.CHEQUE_LIST, Context.CHEQUE_LIST_CONTAINER), // Meta
     CHEQUE(0xC1, Context.CHEQUE, Context.CHEQUE_LIST), // Meta
     CHEQUE_RANGE(0x80, Context.VALUE, Context.CHEQUE), // Binary (UUID)
     CHEQUE_NUMBER(0x82, Context.VALUE, Context.CHEQUE), // Unsigned
     CHEQUE_TIMESTAMP(0x84, Context.VALUE, Context.CHEQUE), // TimeStamp
     CHEQUE_AMOUNT(0x86, Context.VALUE, Context.CHEQUE), // Unsigned
-
     ADDRESS_LIST(0xA1, Context.ADDRESS_LIST, Context.CHEQUE), // Meta
     ADDRESS(0xA0, Context.VALUE, Context.ADDRESS_LIST), // Binary
 
-    MODIFICATION_RESPONSE(0x1F544945, Context.MODIFICATION_RESPONSE, Context.ROOT), // Meta
+    MODIFICATION_REQUEST(0x1E544945, Context.MODIFICATION_REQUEST, Context.ROOT), // Meta
 
+    MODIFICATION_RESPONSE(0x1F544945, Context.MODIFICATION_RESPONSE, Context.ROOT), // Meta
     MODIFICATION_RESULT(0xE1, Context.MODIFICATION_RESULT, Context.MODIFICATION_RESPONSE), // Meta
     MODIFICATION_ERROR(0xEF, Context.MODIFICATION_ERROR, Context.MODIFICATION_RESPONSE), // Meta
     ENTRY_HASH(0x80, Context.VALUE, Context.MODIFICATION_RESULT, Context.MODIFICATION_ERROR), // Binary (Keccak-256)
 
     RECOLLECTION_REQUEST(0x11544945, Context.RECOLLECTION_REQUEST, Context.ROOT), // Meta
-
     RECOLLECTION_TABLESPACE_NAME(0x80, Context.VALUE, Context.RECOLLECTION_REQUEST), // UTF-8
     RECOLLECTION_TABLE_NAME(0x82, Context.VALUE, Context.RECOLLECTION_REQUEST), // UTF-8
 
     RETRIEVE_LIST(0x83, Context.RETRIEVE_LIST, Context.RECOLLECTION_REQUEST), // Meta
-
     RET_FIELD(0xD0, Context.VALUE, Context.RETRIEVE_LIST), // UTF-8
-
     RET_COMPUTE(0xC1, Context.RET_COMPUTE, Context.RETRIEVE_LIST), // Meta
     RET_COMPUTE_ALIAS(0xA0, Context.VALUE, Context.RET_COMPUTE), // UTF-8
     RET_COMPUTE_TYPE(0xA2, Context.VALUE, Context.RET_COMPUTE), // ASCII
@@ -102,7 +97,6 @@ public enum TiesDBType implements TiesEBMLType {
 
     RECOLLECTION_RESPONSE(0x12544945, Context.RECOLLECTION_RESPONSE, Context.ROOT), // Meta
     RECOLLECTION_RESULT(0xA1, Context.RECOLLECTION_RESULT, Context.RECOLLECTION_RESPONSE), // Meta
-    RECOLLECTION_ENTRY(0xE1, Context.ENTRY, Context.RECOLLECTION_RESULT), // Meta
     RECOLLECTION_COMPUTE(0xC1, Context.RECOLLECTION_COMPUTE, Context.RECOLLECTION_RESULT), // Meta
     COMPUTE_FIELD(0xC1, Context.FIELD, Context.RECOLLECTION_COMPUTE) // Meta
 
@@ -117,6 +111,8 @@ public enum TiesDBType implements TiesEBMLType {
             }
         }, //
 
+        UNKNOWN_STRUCTURE,
+
         ROOT, //
 
         ERROR, //
@@ -126,16 +122,19 @@ public enum TiesDBType implements TiesEBMLType {
         REQUEST, //
         RESPONSE, //
 
-        MODIFICATION_REQUEST(REQUEST), //
-        MODIFICATION_RESPONSE(RESPONSE), //
+        CHEQUE_LIST_CONTAINER, //
+        CHEQUE_LIST, //
+        CHEQUE(SIGNED), //
+        ADDRESS_LIST, //
 
-        ENTRY, //
+        ENTRY_CONTAINER, //
+        ENTRY(CHEQUE_LIST_CONTAINER), //
         ENTRY_HEADER(SIGNED), //
         FIELD_LIST, //
         FIELD, //
-        ADDRESS_LIST, //
-        CHEQUE_LIST, //
-        CHEQUE(SIGNED), //
+
+        MODIFICATION_REQUEST(REQUEST, ENTRY_CONTAINER), //
+        MODIFICATION_RESPONSE(RESPONSE), //
 
         MODIFICATION_RESULT(SIGNED), //
         MODIFICATION_ERROR(ERROR), //
@@ -152,7 +151,7 @@ public enum TiesDBType implements TiesEBMLType {
         FILTER_LIST, //
         FILTER(FUNCTION),
 
-        RECOLLECTION_RESULT(SIGNED), //
+        RECOLLECTION_RESULT(SIGNED, ENTRY_CONTAINER), //
         RECOLLECTION_ENTRY, //
         RECOLLECTION_COMPUTE, //
 
@@ -206,14 +205,27 @@ public enum TiesDBType implements TiesEBMLType {
     private final Context context;
     private final EBMLCode code;
 
+    private TiesDBType(Context context, Context... regContexts) {
+        this(0, context, regContexts);
+    }
+
     private TiesDBType(long code, Context context, Context... regContexts) {
         try {
             this.context = Objects.requireNonNull(context);
-            this.code = new EBMLCode(code > 0xFF ? longToBytes(code) : new byte[] { (byte) (0xFF & code) });
-            if (Context.VALUE.equals(context) && (code & 1) > 0) {
-                throw new IllegalArgumentException("Wrong " + this.code + " for " + this + ". Code should be even for data frames.");
-            } else if (!Context.VALUE.equals(context) && (code & 1) == 0) {
-                throw new IllegalArgumentException("Wrong " + this.code + " for " + this + ". Code should be odd for structural frames.");
+            if (this.name().startsWith("UNKNOWN_")) {
+                if (0 != code) {
+                    throw new IllegalArgumentException("Wrong code for type " + this + ". Unknown types code should not be set.");
+                }
+                this.code = null;
+            } else {
+                EBMLCode ebmlCode = new EBMLCode(code > 0xFF ? longToBytes(code) : new byte[] { (byte) (0xFF & code) });
+                if (Context.VALUE.equals(context) && (code & 1) > 0) {
+                    throw new IllegalArgumentException("Wrong " + ebmlCode + " for " + this + ". Code should be even for data frames.");
+                } else if (!Context.VALUE.equals(context) && (code & 1) == 0) {
+                    throw new IllegalArgumentException(
+                            "Wrong " + ebmlCode + " for " + this + ". Code should be odd for structural frames.");
+                }
+                this.code = ebmlCode;
             }
             for (int i = 0; i < regContexts.length; i++) {
                 regContexts[i].register(this);

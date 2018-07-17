@@ -18,6 +18,11 @@
  */
 package com.tiesdb.protocol.v0r0.writer;
 
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_HASH;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ERROR_MESSAGE;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.MODIFICATION_ERROR;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,40 +30,35 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResult;
 
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
-
 import one.utopic.sparse.ebml.format.BytesFormat;
 import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
-public class ModificationErrorWriter implements Writer<ModificationErrorWriter.ModificationErrorResult> {
+public class ModificationResultErrorWriter implements Writer<ModificationResultErrorWriter.ModificationResultError> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ModificationErrorWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ModificationResultErrorWriter.class);
 
-    public static interface ModificationErrorResult extends ModificationResult {
+    public static interface ModificationResultError extends ModificationResult {
 
         Throwable getError();
 
         byte[] getEntryHeaderHash();
 
         @Override
-        default void accept(Visitor v) throws TiesDBProtocolException {
-            v.on(this);
+        default <T> T accept(Visitor<T> v) throws TiesDBProtocolException {
+            return v.on(this);
         }
 
     }
 
     @Override
-    public void accept(Conversation session, ModificationErrorResult error) throws TiesDBProtocolException {
-        LOG.debug("ModificationErrorResult {}", error);
+    public void accept(Conversation session, ModificationResultError error) throws TiesDBProtocolException {
+        LOG.debug("ModificationResultError {}", error);
 
         write(MODIFICATION_ERROR, //
                 write(ENTRY_HASH, BytesFormat.INSTANCE, error.getEntryHeaderHash()), //
-                s -> {
-                    if (null != error.getError()) {
-                        write(ERROR_MESSAGE, UTF8StringFormat.INSTANCE, String.valueOf(error.getError().getMessage())).accept(s);
-                    }
-                } //
+                write(null != error.getError(), //
+                        write(ERROR_MESSAGE, UTF8StringFormat.INSTANCE, String.valueOf(error.getError().getMessage())) //
+                ) //
         ).accept(session);
 
     }

@@ -22,8 +22,8 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +51,8 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
 
         private String tablespaceName;
         private String tableName;
-        private final Set<Retrieve> retrieves = new HashSet<>();
-        private final Set<Filter> filters = new HashSet<>();
+        private final List<Retrieve> retrieves = new LinkedList<>();
+        private final List<Filter> filters = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -82,11 +82,11 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
             return tableName;
         }
 
-        public Set<Retrieve> getRetrieves() {
+        public List<Retrieve> getRetrieves() {
             return retrieves;
         }
 
-        public Set<Filter> getFilters() {
+        public List<Filter> getFilters() {
             return filters;
         }
 
@@ -146,7 +146,7 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
         return false;
     }
 
-    public boolean acceptRetrieveList(Conversation session, Event e, Set<Retrieve> retrieve) throws TiesDBProtocolException {
+    public boolean acceptRetrieveList(Conversation session, Event e, List<Retrieve> retrieve) throws TiesDBProtocolException {
         switch (e.getType()) {
         case RET_FIELD: {
             FieldRetrieve r = new FieldRetrieve();
@@ -173,7 +173,7 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
         return false;
     }
 
-    public boolean acceptRecollectionFilter(Conversation session, Event e, Set<Filter> filters) throws TiesDBProtocolException {
+    public boolean acceptRecollectionFilter(Conversation session, Event e, List<Filter> filters) throws TiesDBProtocolException {
         switch (e.getType()) {
         case FILTER: {
             Filter f = new Filter();

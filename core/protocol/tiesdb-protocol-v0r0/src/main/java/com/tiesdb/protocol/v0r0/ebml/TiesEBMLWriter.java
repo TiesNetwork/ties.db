@@ -47,17 +47,20 @@ public class TiesEBMLWriter extends EBMLWriter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    protected <O> Frame.Format<O> newFormatFrame(EBMLWriteFormat<O> format, O data) {
+    protected Frame.Format newFormatFrame(EBMLWriteFormat.Writable w) {
         if (formatListeners.isEmpty()) {
-            return super.newFormatFrame(format, data);
+            return super.newFormatFrame(w);
         } else {
-            return new Format<O>(format.getWritable(data),
-                    (Consumer<Byte>[]) formatListeners.toArray(new Consumer[formatListeners.size()]));
+            return new Format(w, getFormatListenersSnapshot());
         }
     }
 
-    protected class Format<O> extends Frame.Format<O> {
+    @SuppressWarnings("unchecked")
+    private Consumer<Byte>[] getFormatListenersSnapshot() {
+        return formatListeners.toArray(new Consumer[formatListeners.size()]);
+    }
+
+    protected class Format extends Frame.Format {
 
         private final Consumer<Byte>[] listeners;
 

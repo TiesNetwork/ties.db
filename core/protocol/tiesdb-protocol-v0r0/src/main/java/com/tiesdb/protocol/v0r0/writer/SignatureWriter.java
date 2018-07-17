@@ -18,41 +18,37 @@
  */
 package com.tiesdb.protocol.v0r0.writer;
 
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.SIGNATURE;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.SIGNER;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
-import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResult;
-
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import one.utopic.sparse.ebml.format.BytesFormat;
 
-public class ModificationSuccessWriter implements Writer<ModificationSuccessWriter.ModificationSuccessResult> {
+public class SignatureWriter implements Writer<SignatureWriter.Signature> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ModificationSuccessWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SignatureWriter.class);
 
-    public static interface ModificationSuccessResult extends ModificationResult {
+    public static interface Signature {
 
-        byte[] getEntryHeaderHash();
+        public byte[] getSignature();
 
-        @Override
-        default void accept(Visitor v) throws TiesDBProtocolException {
-            v.on(this);
-        }
+        public byte[] getSigner();
 
     }
 
     @Override
-    public void accept(Conversation session, ModificationSuccessResult result) throws TiesDBProtocolException {
-        LOG.debug("ModificationSuccessResult {}", result);
-
-        write(MODIFICATION_RESULT, //
-                write(ENTRY_HASH, BytesFormat.INSTANCE, result.getEntryHeaderHash()) //
+    public void accept(Conversation session, Signature signature) throws TiesDBProtocolException {
+        LOG.debug("Signature {}", signature);
+        write(//
+                write(SIGNER, BytesFormat.INSTANCE, signature.getSigner()), //
+                write(SIGNATURE, BytesFormat.INSTANCE, signature.getSignature()) //
         ).accept(session);
-
     }
 
 }

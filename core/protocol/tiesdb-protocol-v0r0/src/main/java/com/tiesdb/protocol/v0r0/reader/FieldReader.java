@@ -22,8 +22,6 @@ import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -37,8 +35,8 @@ import com.tiesdb.lib.crypto.digest.api.Digest;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
-
 import com.tiesdb.protocol.v0r0.util.FormatUtil;
+
 import one.utopic.sparse.ebml.format.ASCIIStringFormat;
 import one.utopic.sparse.ebml.format.BytesFormat;
 import one.utopic.sparse.ebml.format.UTF8StringFormat;
@@ -53,12 +51,11 @@ public class FieldReader implements Reader<FieldReader.Field> {
         private String type;
         private byte[] hash;
         private byte[] rawValue;
-        private byte[] rawBytes;
 
         @Override
         public String toString() {
             return "Field [name=" + name + ", type=" + type + ", hash=" + Arrays.toString(hash) + ", rawValue="
-                    + FormatUtil.printHex(rawValue) + ", rawBytes=" + FormatUtil.printHex(rawBytes) + "]";
+                    + FormatUtil.printHex(rawValue) + "]";
         }
 
         public String getName() {
@@ -75,10 +72,6 @@ public class FieldReader implements Reader<FieldReader.Field> {
 
         public byte[] getRawValue() {
             return rawValue;
-        }
-
-        public byte[] getRawBytes() {
-            return rawBytes;
         }
 
     }
@@ -130,37 +123,29 @@ public class FieldReader implements Reader<FieldReader.Field> {
 
     @Override
     public boolean accept(Conversation session, Event e, Field field) throws TiesDBProtocolException {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Consumer<Byte> rawBytesListener = baos::write;
-            session.addReaderListener(rawBytesListener);
-            DigestCalculator dc = getDC(true);
-            Digest fieldDigest = dc.getFieldDigest();
-            Consumer<Byte> fieldHashListener = dc.getFieldHashListener();
-            try {
-                fieldDigest.reset();
-                session.addReaderListener(fieldHashListener);
-                acceptEach(session, e, this::acceptField, field);
-                if (null == field.hash) {
-                    byte[] fieldHash = new byte[fieldDigest.getDigestSize()];
-                    if (fieldDigest.getDigestSize() == fieldDigest.doFinal(fieldHash, 0)) {
-                        LOG.debug("FIELD_HASH_CALCULATED: {}", new Object() {
-                            @Override
-                            public String toString() {
-                                return DatatypeConverter.printHexBinary(fieldHash);
-                            }
-                        });
-                        field.hash = fieldHash;
-                    } else {
-                        throw new TiesDBProtocolException("Field digest failed to compute hash");
-                    }
+        DigestCalculator dc = getDC(true);
+        Digest fieldDigest = dc.getFieldDigest();
+        Consumer<Byte> fieldHashListener = dc.getFieldHashListener();
+        try {
+            fieldDigest.reset();
+            session.addReaderListener(fieldHashListener);
+            acceptEach(session, e, this::acceptField, field);
+            if (null == field.hash) {
+                byte[] fieldHash = new byte[fieldDigest.getDigestSize()];
+                if (fieldDigest.getDigestSize() == fieldDigest.doFinal(fieldHash, 0)) {
+                    LOG.debug("FIELD_HASH_CALCULATED: {}", new Object() {
+                        @Override
+                        public String toString() {
+                            return DatatypeConverter.printHexBinary(fieldHash);
+                        }
+                    });
+                    field.hash = fieldHash;
+                } else {
+                    throw new TiesDBProtocolException("Field digest failed to compute hash");
                 }
-            } finally {
-                session.removeReaderListener(fieldHashListener);
-                session.removeReaderListener(rawBytesListener);
             }
-            field.rawBytes = baos.toByteArray();
-        } catch (IOException ex) {
-            throw new TiesDBProtocolException(ex);
+        } finally {
+            session.removeReaderListener(fieldHashListener);
         }
         return true;
     }

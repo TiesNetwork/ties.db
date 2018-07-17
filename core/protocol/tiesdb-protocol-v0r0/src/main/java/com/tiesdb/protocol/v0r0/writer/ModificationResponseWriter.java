@@ -23,8 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
-import com.tiesdb.protocol.v0r0.writer.ModificationErrorWriter.ModificationErrorResult;
-import com.tiesdb.protocol.v0r0.writer.ModificationSuccessWriter.ModificationSuccessResult;
+import com.tiesdb.protocol.v0r0.writer.ModificationResultErrorWriter.ModificationResultError;
+import com.tiesdb.protocol.v0r0.writer.ModificationResultSuccessWriter.ModificationResultSuccess;
+import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationConsumer;
 
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
@@ -35,34 +36,56 @@ public class ModificationResponseWriter implements Writer<ModificationResponseWr
 
     private static final Logger LOG = LoggerFactory.getLogger(ModificationResponseWriter.class);
 
-    private static final ModificationSuccessWriter modificationSuccessWriter = new ModificationSuccessWriter();
-
-    private static final ModificationErrorWriter modificationErrorWriter = new ModificationErrorWriter();
-
     public static interface ModificationResponse extends Writer.Response {
 
         @Override
-        public default void accept(Visitor v) throws TiesDBProtocolException {
-            v.on(this);
+        public default <T> T accept(Visitor<T> v) throws TiesDBProtocolException {
+            return v.on(this);
         }
 
-        public Iterable<ModificationResult> getResults();
+        Iterable<ModificationResult> getResults();
 
     }
 
     public static interface ModificationResult {
 
-        interface Visitor {
+        interface Visitor<T> {
 
-            void on(ModificationErrorResult result) throws TiesDBProtocolException;
+            T on(ModificationResultError result) throws TiesDBProtocolException;
 
-            void on(ModificationSuccessResult result) throws TiesDBProtocolException;
+            T on(ModificationResultSuccess result) throws TiesDBProtocolException;
 
         }
 
-        public void accept(Visitor v) throws TiesDBProtocolException;
+        public <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
 
     }
+
+    private static interface SpecificModificationResultWriter extends //
+            ModificationResult.Visitor<ConversationConsumer>, //
+            ConversationFunction<ModificationResult> {
+        @Override
+        default ConversationConsumer accept(ModificationResult r) throws TiesDBProtocolException {
+            return r.accept(this);
+        }
+    }
+
+    private final SpecificModificationResultWriter specificModificationResultWriter = new SpecificModificationResultWriter() {
+
+        private final ModificationResultSuccessWriter modificationSuccessWriter = new ModificationResultSuccessWriter();
+        private final ModificationResultErrorWriter modificationErrorWriter = new ModificationResultErrorWriter();
+
+        @Override
+        public ConversationConsumer on(ModificationResultError result) throws TiesDBProtocolException {
+            return write(modificationErrorWriter, result);
+        }
+
+        @Override
+        public ConversationConsumer on(ModificationResultSuccess result) throws TiesDBProtocolException {
+            return write(modificationSuccessWriter, result);
+        }
+
+    };
 
     @Override
     public void accept(Conversation session, ModificationResponse response) throws TiesDBProtocolException {
@@ -70,23 +93,8 @@ public class ModificationResponseWriter implements Writer<ModificationResponseWr
 
         write(MODIFICATION_RESPONSE, //
                 write(MESSAGE_ID, BigIntegerFormat.INSTANCE, response.getMessageId()), //
-                s -> {
-                    for (ModificationResult result : response.getResults()) {
-                        result.accept(new ModificationResult.Visitor() {
-
-                            @Override
-                            public void on(ModificationErrorResult result) throws TiesDBProtocolException {
-                                modificationErrorWriter.accept(s, result);
-                            }
-
-                            @Override
-                            public void on(ModificationSuccessResult result) throws TiesDBProtocolException {
-                                modificationSuccessWriter.accept(s, result);
-                            }
-
-                        });
-                    }
-                }).accept(session);
+                write(specificModificationResultWriter, response.getResults()) //
+        ).accept(session);
 
     }
 

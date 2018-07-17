@@ -46,6 +46,7 @@
 
     <modules>
         <module>protocol</module>
+        <module>schema</module>
         <module>lib</module>
     </modules>
 

@@ -101,7 +101,7 @@ class ECKeyTest {
 			byte[] keyb = new byte[32];
 			sr.nextBytes(keyb);
 			key = ECKey.fromPrivate(keyb);
-			BigInteger x = key.getPubKeyPoint().getAffineXCoord().toBigInteger();
+			BigInteger x = key.getPubKeyPoint().normalize().getAffineXCoord().toBigInteger();
 			if(x.compareTo(cap) < 0) {
 				break;
 			}

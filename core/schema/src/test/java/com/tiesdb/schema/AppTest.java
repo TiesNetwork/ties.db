@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
@@ -58,6 +59,7 @@ import com.tiesdb.web3j.SequentialFastRawTransactionManager;
 /**
  * Unit test for simple App.
  */
+@EnabledIfSystemProperty(named = "test-contracts", matches = "true")
 public class AppTest
 {
 	//Rinkeby infura
@@ -75,11 +77,17 @@ public class AppTest
 	//0xae5878eF36d90DE0700f49E5bfd9fb5A55AbB3FB
 	static Credentials readonly = Credentials.create("0x388512004ef987046875b8e612271c2572b3fcfffbf64771892205164165cae0");
 	
-	private static final String TIETOKEN = "0x256846175c238d01F4B5698222888bE0766cb393"; //Good enough, no need to change
-	private static final String NORESTRICTIONS = "0x29a60cea1aded2ef4b64ed219acdb0f351b5aded"; //Read only, no need to change
+//	private static final String TIETOKEN = "0x256846175c238d01F4B5698222888bE0766cb393"; //Good enough, no need to change
+//	private static final String NORESTRICTIONS = "0x29a60cea1aded2ef4b64ed219acdb0f351b5aded"; //Read only, no need to change
+//	
+//	private static final String REGISTRY = "0x737ba511993e3bee72919a1c55a35985997e1b0b";
+//	private static final String TIESDB = "0x22d1b55ebb5bcd17084c3c9d690056875263fec1";
 	
-	private static final String REGISTRY = "0x737ba511993e3bee72919a1c55a35985997e1b0b";
-	private static final String TIESDB = "0x22d1b55ebb5bcd17084c3c9d690056875263fec1";
+    private static final String TIETOKEN = "";
+    private static final String NORESTRICTIONS = "";
+
+    private static final String REGISTRY = "";
+    private static final String TIESDB = "";
 	
 	static String nodeUrl = "https://rinkeby.infura.io/biP9YQcNXTag7nvAELQJ";
 //	static String nodeUrl = "http://127.0.0.1:9545";

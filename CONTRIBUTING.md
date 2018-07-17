@@ -19,7 +19,7 @@ If you are reporting a bug, please include:
 
 ### Fix Bugs
 
-Look through the GitHub issues for bugs. Anything labeled with **`bug`** and **`public`** is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything labeled with **`bug`** and **`public`** is open to whoever wants to fix it.
 
 ### Request Features
 

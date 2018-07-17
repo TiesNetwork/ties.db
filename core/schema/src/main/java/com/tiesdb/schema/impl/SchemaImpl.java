@@ -1,3 +1,21 @@
+/**
+ * Copyright © 2017 Ties BV
+ *
+ * This file is part of Ties.DB project.
+ *
+ * Ties.DB project is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ties.DB project is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
+ */
 package com.tiesdb.schema.impl;
 
 import java.io.UnsupportedEncodingException;
@@ -23,123 +41,128 @@ import com.tiesdb.schema.api.type.Id;
 import com.tiesdb.schema.impl.contracts.TiesDB;
 
 public class SchemaImpl extends ItemImpl implements Schema {
-	Web3j w3j;
-	TiesDB tiesDB;
-    Credentials credentials;
-    
+    TiesDB tiesDB;
+
     LinkedHashMap<Id, Tablespace> tablespaces;
     LinkedHashMap<Address, Node> nodes;
-    
+
     private HashMap<Id, Table> tables;
 
-	public SchemaImpl(String urlRpc, Credentials credentials, String tiesDBaddress){
-		super(null);
-		schema = this;
-		w3j = Web3j.build(new HttpService(urlRpc));
-		this.credentials = credentials;
-		this.tiesDB = TiesDB.load(tiesDBaddress, w3j, credentials, ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT);
-	}
-	
-	public SchemaImpl(String urlRpc, Credentials credentials, Address tiesDBaddress){
-		this(urlRpc, credentials, tiesDBaddress.toString());
-	}
-	
-	@Override
-	protected void load() {
-		if(notLoaded()) {
-			Tuple2<List<byte[]>, List<String>> t = Utils.send(tiesDB.getStorage());
+    public SchemaImpl(String urlRpc, Credentials credentials, String tiesDBaddress) {
+        this(TiesDB.load(//
+                tiesDBaddress, //
+                Web3j.build(new HttpService(urlRpc)), //
+                credentials, //
+                ManagedTransaction.GAS_PRICE, //
+                Contract.GAS_LIMIT));
+    }
 
-			tablespaces = new LinkedHashMap<Id, Tablespace>();
-			for(Iterator<byte[]> it=t.getValue1().iterator(); it.hasNext();) {
-				Id id = new IdImpl(it.next());
-				tablespaces.put(id, new TablespaceImpl(this, id));
-			}
-			
-			nodes = new LinkedHashMap<Address, Node>();
-			for(Iterator<String> it=t.getValue2().iterator(); it.hasNext();) {
-				Address id = new AddressImpl(it.next());
-				nodes.put(id, new NodeImpl(this, id));
-			}
-			
-			tables = new HashMap<Id, Table>();
-		}
-	}
-	
-	@Override
-	public Id idFromName(String name) {
-		try {
-			return new IdImpl(Hash.sha3(name.getBytes("utf-8")));
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public SchemaImpl(String urlRpc, Credentials credentials, Address tiesDBaddress) {
+        this(urlRpc, credentials, tiesDBaddress.toString());
+    }
 
-	@Override
-	public Id idFromName(String tablespace, String table) {
-		return idFromName(tablespace + "#" + table);
-	}
+    public SchemaImpl(TiesDB tiesDB) {
+        super(null);
+        this.tiesDB = tiesDB;
+        schema = this;
+    }
 
-	@Override
-	public LinkedHashMap<Id, Tablespace> getTablespaces() {
-		load();
-		return tablespaces;
-	}
+    @Override
+    protected void load() {
+        if (notLoaded()) {
+            Tuple2<List<byte[]>, List<String>> t = Utils.send(tiesDB.getStorage());
 
-	@Override
-	public LinkedHashMap<Address, Node> getNodes() {
-		load();
-		return nodes;
-	}
+            tablespaces = new LinkedHashMap<Id, Tablespace>();
+            for (Iterator<byte[]> it = t.getValue1().iterator(); it.hasNext();) {
+                Id id = new IdImpl(it.next());
+                tablespaces.put(id, new TablespaceImpl(this, id));
+            }
 
-	@Override
-	public Tablespace getTablespace(Id id) {
-		load();
-		return tablespaces.get(id);
-	}
+            nodes = new LinkedHashMap<Address, Node>();
+            for (Iterator<String> it = t.getValue2().iterator(); it.hasNext();) {
+                Address id = new AddressImpl(it.next());
+                nodes.put(id, new NodeImpl(this, id));
+            }
 
-	@Override
-	public Node getNode(Address address) {
-		load();
-		return nodes.get(address);
-	}
+            tables = new HashMap<Id, Table>();
+        }
+    }
 
-	@Override
-	protected boolean notLoaded() {
-		return tablespaces == null;
-	}
-	
-	Table createTable(Tablespace ts, Id id) {
-		load();
-		Table tbl = tables.get(id);
-		if(tbl != null)
-			return tbl;
-		
-		if(ts == null) {
-			byte[] tsidb = Utils.send(tiesDB.tableToTablespace(id.getValue()));
-			assert(tsidb != null && tsidb.length == 32);
-			Id tsid = new IdImpl(tsidb);
-			ts = tablespaces.get(tsid);
-			assert(ts != null);
-		}
-		
-		tbl = new TableImpl(ts, id);
-		tables.put(id, tbl);
-		return tbl;
-	}
+    @Override
+    public Id idFromName(String name) {
+        try {
+            return new IdImpl(Hash.sha3(name.getBytes("utf-8")));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	Node createNode(Address address) {
-		load();
-		Node node = nodes.get(address);
-		if(node != null)
-			return node;
-		
-		assert(false); //Node should be in global repository!
-		return node;
-	}
+    @Override
+    public Id idFromName(String tablespace, String table) {
+        return idFromName(tablespace + "#" + table);
+    }
 
-	@Override
-	public Tablespace getTablespace(String name) {
-		Id id = idFromName(name);
-		return getTablespace(id);
-	}
+    @Override
+    public LinkedHashMap<Id, Tablespace> getTablespaces() {
+        load();
+        return tablespaces;
+    }
+
+    @Override
+    public LinkedHashMap<Address, Node> getNodes() {
+        load();
+        return nodes;
+    }
+
+    @Override
+    public Tablespace getTablespace(Id id) {
+        load();
+        return tablespaces.get(id);
+    }
+
+    @Override
+    public Node getNode(Address address) {
+        load();
+        return nodes.get(address);
+    }
+
+    @Override
+    protected boolean notLoaded() {
+        return tablespaces == null;
+    }
+
+    Table createTable(Tablespace ts, Id id) {
+        load();
+        Table tbl = tables.get(id);
+        if (tbl != null)
+            return tbl;
+
+        if (ts == null) {
+            byte[] tsidb = Utils.send(tiesDB.tableToTablespace(id.getValue()));
+            assert (tsidb != null && tsidb.length == 32);
+            Id tsid = new IdImpl(tsidb);
+            ts = tablespaces.get(tsid);
+            assert (ts != null);
+        }
+
+        tbl = new TableImpl(ts, id);
+        tables.put(id, tbl);
+        return tbl;
+    }
+
+    Node createNode(Address address) {
+        load();
+        Node node = nodes.get(address);
+        if (node != null)
+            return node;
+
+        assert (false); // Node should be in global repository!
+        return node;
+    }
+
+    @Override
+    public Tablespace getTablespace(String name) {
+        Id id = idFromName(name);
+        return getTablespace(id);
+    }
 }

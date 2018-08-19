@@ -44,7 +44,7 @@ public class AddressImpl extends org.web3j.abi.datatypes.Address implements Addr
 
 	@Override
 	public byte[] toBytes() {
-		return Numeric.toBytesPadded(toBigNumber(), super.LENGTH>>8);
+		return Numeric.toBytesPadded(toBigNumber(), org.web3j.abi.datatypes.Address.LENGTH>>8);
 	}
 
 	@Override

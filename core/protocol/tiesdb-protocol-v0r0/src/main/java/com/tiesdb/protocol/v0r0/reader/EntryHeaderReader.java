@@ -109,12 +109,12 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
 
     public boolean acceptEntryHeader(Conversation session, Event e, EntryHeader header) throws TiesDBProtocolException {
         switch (e.getType()) {
-        case ENTRY_TABLESPACE_NAME:
+        case TABLESPACE_NAME:
             header.tablespaceName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("ENTRY_TABLESPACE_NAME: {}", header.tablespaceName);
             end(session, e);
             break;
-        case ENTRY_TABLE_NAME:
+        case TABLE_NAME:
             header.tableName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("ENTRY_TABLE_NAME: {}", header.tableName);
             end(session, e);

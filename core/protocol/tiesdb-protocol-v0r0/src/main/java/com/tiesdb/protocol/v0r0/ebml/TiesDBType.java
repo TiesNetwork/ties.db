@@ -41,10 +41,13 @@ public enum TiesDBType implements TiesEBMLType {
     ERROR(0x7FFF, Context.ERROR, Context.ROOT), // Meta
     ERROR_MESSAGE(0xE0, Context.VALUE, Context.ERROR), // UTF-8
 
+    TABLESPACE_NAME(0x80, Context.VALUE, Context.TABLE_META), // UTF-8
+    TABLE_NAME(0x82, Context.VALUE, Context.TABLE_META), // UTF-8
+    FIELD_NAME(0x80, Context.VALUE, Context.FIELD_META), // UTF-8
+    FIELD_TYPE(0x82, Context.VALUE, Context.FIELD_META), // ASCII
+
     ENTRY(0xE1, Context.ENTRY, Context.ENTRY_CONTAINER), // Meta
     ENTRY_HEADER(0xE1, Context.ENTRY_HEADER, Context.ENTRY), // Meta
-    ENTRY_TABLESPACE_NAME(0x80, Context.VALUE, Context.ENTRY_HEADER), // UTF-8
-    ENTRY_TABLE_NAME(0x82, Context.VALUE, Context.ENTRY_HEADER), // UTF-8
     ENTRY_TIMESTAMP(0x86, Context.VALUE, Context.ENTRY_HEADER), // TimeStamp
     ENTRY_VERSION(0x88, Context.VALUE, Context.ENTRY_HEADER), // Unsigned
     ENTRY_OLD_HASH(0x8A, Context.VALUE, Context.ENTRY_HEADER), // Binary (Keccak-256)
@@ -52,8 +55,6 @@ public enum TiesDBType implements TiesEBMLType {
     ENTRY_NETWORK(0x8E, Context.VALUE, Context.ENTRY_HEADER), // Unsigned (BIP-0044/SLIP-0044)
     FIELD_LIST(0xD1, Context.FIELD_LIST, Context.ENTRY), // Meta
     FIELD(0xD1, Context.FIELD, Context.FIELD_LIST), // Meta
-    FIELD_NAME(0x80, Context.VALUE, Context.FIELD), // UTF-8
-    FIELD_TYPE(0x82, Context.VALUE, Context.FIELD), // ASCII
     FIELD_HASH(0x84, Context.VALUE, Context.FIELD), // Binary (Keccak-256)
     FIELD_VALUE(0x86, Context.VALUE, Context.FIELD), // Binary
 
@@ -74,8 +75,6 @@ public enum TiesDBType implements TiesEBMLType {
     ENTRY_HASH(0x80, Context.VALUE, Context.MODIFICATION_RESULT, Context.MODIFICATION_ERROR), // Binary (Keccak-256)
 
     RECOLLECTION_REQUEST(0x11544945, Context.RECOLLECTION_REQUEST, Context.ROOT), // Meta
-    RECOLLECTION_TABLESPACE_NAME(0x80, Context.VALUE, Context.RECOLLECTION_REQUEST), // UTF-8
-    RECOLLECTION_TABLE_NAME(0x82, Context.VALUE, Context.RECOLLECTION_REQUEST), // UTF-8
 
     RETRIEVE_LIST(0x83, Context.RETRIEVE_LIST, Context.RECOLLECTION_REQUEST), // Meta
     RET_FIELD(0xD0, Context.VALUE, Context.RETRIEVE_LIST), // UTF-8
@@ -98,7 +97,13 @@ public enum TiesDBType implements TiesEBMLType {
     RECOLLECTION_RESPONSE(0x12544945, Context.RECOLLECTION_RESPONSE, Context.ROOT), // Meta
     RECOLLECTION_RESULT(0xA1, Context.RECOLLECTION_RESULT, Context.RECOLLECTION_RESPONSE), // Meta
     RECOLLECTION_COMPUTE(0xC1, Context.RECOLLECTION_COMPUTE, Context.RECOLLECTION_RESULT), // Meta
-    COMPUTE_FIELD(0xC1, Context.FIELD, Context.RECOLLECTION_COMPUTE) // Meta
+    COMPUTE_FIELD(0xC1, Context.FIELD, Context.RECOLLECTION_COMPUTE), // Meta
+
+    SCHEMA_REQUEST(0x16544945, Context.SCHEMA_REQUEST, Context.ROOT), // Meta
+
+    SCHEMA_RESPONSE(0x15544945, Context.SCHEMA_RESPONSE, Context.ROOT), // Meta
+    SCHEMA_FIELD(0xD1, Context.SCHEMA_FIELD, Context.SCHEMA_RESPONSE), // Meta
+    SCHEMA_KEY_FIELD(0xD3, Context.SCHEMA_FIELD, Context.SCHEMA_RESPONSE), // Binary
 
     ;
 
@@ -122,6 +127,8 @@ public enum TiesDBType implements TiesEBMLType {
         REQUEST, //
         RESPONSE, //
 
+        TABLE_META, //
+
         CHEQUE_LIST_CONTAINER, //
         CHEQUE_LIST, //
         CHEQUE(SIGNED), //
@@ -129,9 +136,10 @@ public enum TiesDBType implements TiesEBMLType {
 
         ENTRY_CONTAINER, //
         ENTRY(CHEQUE_LIST_CONTAINER), //
-        ENTRY_HEADER(SIGNED), //
+        ENTRY_HEADER(TABLE_META, SIGNED), //
         FIELD_LIST, //
-        FIELD, //
+        FIELD_META, //
+        FIELD(FIELD_META), //
 
         MODIFICATION_REQUEST(REQUEST, ENTRY_CONTAINER), //
         MODIFICATION_RESPONSE(RESPONSE), //
@@ -139,7 +147,7 @@ public enum TiesDBType implements TiesEBMLType {
         MODIFICATION_RESULT(SIGNED), //
         MODIFICATION_ERROR(ERROR), //
 
-        RECOLLECTION_REQUEST(REQUEST), //
+        RECOLLECTION_REQUEST(REQUEST, TABLE_META), //
         RECOLLECTION_RESPONSE(RESPONSE), //
 
         FUNCTION, //
@@ -154,6 +162,10 @@ public enum TiesDBType implements TiesEBMLType {
         RECOLLECTION_RESULT(SIGNED, ENTRY_CONTAINER), //
         RECOLLECTION_ENTRY, //
         RECOLLECTION_COMPUTE, //
+
+        SCHEMA_REQUEST(REQUEST, TABLE_META), //
+        SCHEMA_FIELD(FIELD_META), //
+        SCHEMA_RESPONSE(RESPONSE, TABLE_META), //
 
         ;
 

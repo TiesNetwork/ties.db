@@ -24,6 +24,7 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResponse;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResponse;
+import com.tiesdb.protocol.v0r0.writer.SchemaResponseWriter.SchemaResponse;
 
 @FunctionalInterface
 public interface Writer<T> {
@@ -35,6 +36,8 @@ public interface Writer<T> {
             T on(ModificationResponse response) throws TiesDBProtocolException;
 
             T on(RecollectionResponse response) throws TiesDBProtocolException;
+
+            T on(SchemaResponse response) throws TiesDBProtocolException;
 
         }
 

@@ -22,8 +22,8 @@ import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_FLD_HASH;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_OLD_HASH;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_HEADER;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_NETWORK;
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_TABLESPACE_NAME;
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_TABLE_NAME;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.TABLESPACE_NAME;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.TABLE_NAME;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_TIMESTAMP;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_VERSION;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
@@ -73,8 +73,8 @@ public class EntryHeaderWriter implements Writer<EntryHeaderWriter.EntryHeader> 
         LOG.debug("EntryHeader {}", header);
         byte[] entryOldHash = header.getEntryOldHash();
         write(ENTRY_HEADER, //
-                write(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, header.getTablespaceName()), //
-                write(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, header.getTableName()), //
+                write(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, header.getTablespaceName()), //
+                write(TABLE_NAME, UTF8StringFormat.INSTANCE, header.getTableName()), //
                 write(ENTRY_TIMESTAMP, DateFormat.INSTANCE, header.getEntryTimestamp()), //
                 write(ENTRY_VERSION, BigIntegerFormat.INSTANCE, header.getEntryVersion()), //
                 write(ENTRY_FLD_HASH, BytesFormat.INSTANCE, header.getEntryFldHash()), //

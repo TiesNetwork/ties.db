@@ -132,8 +132,8 @@ public class TiesDBProtocolV0R0Test {
 
         byte[] encData = encodeTies(part(ENTRY_HEADER, //
                 tiesPartSign(key, SIGNATURE, //
-                        part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
-                        part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+                        part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
+                        part(TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
                         // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), //
                         part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), //
                         part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
@@ -217,8 +217,8 @@ public class TiesDBProtocolV0R0Test {
                             part(CONSISTENCY, BytesFormat.INSTANCE, stubData), //
                             part(ENTRY, //
                                     part(ENTRY_HEADER, //
-                                            part(ENTRY_TABLESPACE_NAME, BytesFormat.INSTANCE, stubData), //
-                                            part(ENTRY_TABLE_NAME, BytesFormat.INSTANCE, stubData), //
+                                            part(TABLESPACE_NAME, BytesFormat.INSTANCE, stubData), //
+                                            part(TABLE_NAME, BytesFormat.INSTANCE, stubData), //
                                             // part(ENTRY_TYPE, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
                                             part(ENTRY_VERSION, BytesFormat.INSTANCE, stubData), //
@@ -314,12 +314,12 @@ public class TiesDBProtocolV0R0Test {
                                 assertArrayEquals(new EBMLType[] { ENTRY_OLD_HASH, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
-                            case ENTRY_TABLESPACE_NAME:
-                                assertArrayEquals(new EBMLType[] { ENTRY_TABLESPACE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
+                            case TABLESPACE_NAME:
+                                assertArrayEquals(new EBMLType[] { TABLESPACE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
-                            case ENTRY_TABLE_NAME:
-                                assertArrayEquals(new EBMLType[] { ENTRY_TABLE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
+                            case TABLE_NAME:
+                                assertArrayEquals(new EBMLType[] { TABLE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case ENTRY_TIMESTAMP:
@@ -406,8 +406,6 @@ public class TiesDBProtocolV0R0Test {
                             case RECOLLECTION_REQUEST:
                             case RECOLLECTION_RESPONSE:
                             case RECOLLECTION_RESULT:
-                            case RECOLLECTION_TABLESPACE_NAME:
-                            case RECOLLECTION_TABLE_NAME:
                             case RETRIEVE_LIST:
                             case RET_COMPUTE:
                             case RET_COMPUTE_ALIAS:

@@ -135,8 +135,65 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+                                                // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
+                                                part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
+                                                part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
+                                                part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
+                                                part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
+                                                part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+                                        ) //
+                                ), //
+                                part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
+                                part(CHEQUE_LIST, //
+                                        part(CHEQUE, //
+                                                tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
+                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
+                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
+                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
+                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
+                                                        part(ADDRESS_LIST, //
+                                                                part(ADDRESS, BytesFormat.INSTANCE,
+                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
+                                                        ), //
+                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
+                                                ) //
+                                        ) //
+                                ) //
+                        ) //
+                ) //
+        );
+        System.out.println("Insert " + DatatypeConverter.printHexBinary(encData));
+    }
+
+    @Test
+    public void generateSampleEmptyInsertRequest() {
+        Date date = new Date(1522661357000L);
+        ECKey key = ECKey.fromPrivate(hs2ba("b84f0b9766fb4b7e88f11f124f98170cb437cd09515caf970da886e4ef4c5fa3"));
+
+        LinkedList<Supplier<byte[]>> fieldHashes = new LinkedList<>();
+
+        byte[] fieldsData = BytesFormat.EMPTY_BYTE_ARRAY;
+
+        byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
+            byte[] hash = s.get();
+            System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+            d.update(hash);
+        }));
+
+        System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
+
+        byte[] encData = encodeTies(//
+                part(MODIFICATION_REQUEST, //
+                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+                        part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
+                        part(ENTRY, //
+                                part(ENTRY_HEADER, //
+                                        tiesPartSign(key, SIGNATURE, //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
@@ -206,8 +263,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // from 1 to 2
@@ -361,8 +418,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // INSERT
@@ -526,8 +583,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // UPDATE
@@ -609,8 +666,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
@@ -688,8 +745,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
@@ -763,8 +820,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x0), // DELETE
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
@@ -800,6 +857,21 @@ public class TiesDBProtocolV0R0Generate {
     }
 
     @Test
+    public void generateSampleSchemaRequest() {
+
+        byte[] encData = encodeTies(//
+                part(SCHEMA_REQUEST, //
+                        part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
+                        part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
+                        part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                        part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types") //
+                )//
+        );
+
+        packetDecode(encData);
+    }
+
+    @Test
     public void generateSampleSelectRequest() {
 
         UUID uuid = UUID.fromString("7606fc02-8c19-44ee-99be-a24fc1449008");
@@ -808,8 +880,8 @@ public class TiesDBProtocolV0R0Generate {
                 part(RECOLLECTION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
                         part(MESSAGE_ID, LongFormat.INSTANCE, 777L), // ALL
-                        part(RECOLLECTION_TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                        part(RECOLLECTION_TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                        part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
+                        part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
                         part(RETRIEVE_LIST, //
                                 part(RET_FIELD, UTF8StringFormat.INSTANCE, "Id"), //
                                 part(RET_FIELD, UTF8StringFormat.INSTANCE, "fString"), //
@@ -903,9 +975,9 @@ public class TiesDBProtocolV0R0Generate {
                 // "1154494540a6ee8100ec8102808f636c69656e742d6465762e746573748289616c6c5f747970657383dcd0824964c1aaf08443415354f392f089777269746554696d65f2856654696d65f18e8086737472696e67828464617465c1aaf08443415354f392f089777269746554696d65f2856654696d65f18e8086737472696e67828464617465a3a4f1a2e0824964f082494ef1988084757569648290a202631e8c0a4aa18a94365deed757dd",
                 // "1254494541E8EC8102A141E2E141DDE140A5808F636C69656E742D6465762E746573748289616C6C5F7479706573868601643CA0AB898881018CA0052A37F8DDDA3699BBFE9F3A43112C682CCC53E1779CA6272F522573E2A745638E813CFC94AE65BAF610BAD3F0D71AA3C3A8110C2D62CBEB19FEC120967A280F8CA95261151D601AF636FC2C110CA073B2400A6B314539E1A70A595D6047BD8E60B761E66B0B54AB4A42C2C177D7630AD4AEE8092C3810D602693F25D14132D19C808249648284757569648690F86EB4CEDC5E4EB2853A6703B28BBB61D19980876642696E617279828662696E6172798686E0A61E5AD74FD196808866426F6F6C65616E8287626F6F6C65616E868100D198808866446563696D616C8287646563696D616C868396FB2DD198808766446F75626C658286646F75626C658685418B026A1AD1998089664475726174696F6E82886475726174696F6E86828C00D19A808666466C6F61748285666C6F61748689A8FF67EEAF9F90C14ED199808866496E74656765728287696E74656765728684193CF1B0D1948085664C6F6E6782846C6F6E67868540D0704FF6D1AD808766537472696E678286737472696E67869A54686973206973205554462D3820D181D182D180D0BED0BAD0B0D19480856654696D65828474696D6586858074F97775C180"
                 // + "",
-                "c001ba5e1225efff00000000000000011254494541fdec8106a141f7e141f4e140c7808f636c69656e742d6465762e746573748289616c6c5f7479706573868600818e9404fd8881038ca076b9f96ee3045d9d3d2d2efd0e559aefcce2fd58bade526ff78a8aecd7833ca28aa09bd2625bb48595d64378732dcb70f652c4986ce172a95f7c335a28856b46f23d8e813cfc94ae65baf610bad3f0d71aa3c3a8110c2d62cbeb19fec1a1c270b4c28d1d8620a5bef7c6a4f997665ca9640e8d462c54b18841b8463d5461d6ec8269fef9aa2fb4e08677d87177438332a170c50b12b22d63d7f1f5496225d14127d19c808249648284757569648690f0c48a7c817b488ab4cfbad8a8e72facd19980876642696e617279828662696e6172798686e0a61e5ad74fd196808866426f6f6c65616e8287626f6f6c65616e868100d198808866446563696d616c8287646563696d616c868396fb2dd19e808766446f75626c658286646f75626c65868b416f00db980276caea8182d1a18089664475726174696f6e82886475726174696f6e868a9a00efcee47256c00000d19b808666466c6f61748285666c6f6174868aaefdadfc5d755013dd01d199808866496e74656765728287696e74656765728684193cf1b0d1908085664c6f6e6782846c6f6e6786817cd1ad808766537472696e678286737472696e67869a54686973206973205554462d3820d181d182d180d0bed0bad0b0"
-        };
-        
+                "1554494540CEEC820309D38A82824964808475756964D19182876642696E617279808662696E617279D193828866426F6F6C65616E8087626F6F6C65616ED193828866446563696D616C8087646563696D616CD191828766446F75626C658086646F75626C65D1958289664475726174696F6E80886475726174696F6ED18F828666466C6F61748085666C6F6174D193828866496E74656765728087696E7465676572D18D8285664C6F6E6780846C6F6E67D191828766537472696E678086737472696E67D18D82856654696D65808474696D65" };
+
+        @SuppressWarnings("unused")
         String[] dataStrings2 = new String[] { //
                 "1254494541e6ec8102a141e0e141dde140a5808f636c69656e742d6465762e746573748289616c6c5f7479706573868601643cf7e7ec8881018ca091d22f6c21b70840246d0523d8d4bde25538e66e0df50c33b280fe4bf11df7428e813cfc94ae65baf610bad3f0d71aa3c3a8110c2d62cbeb19fec15de644131f243f832cd69931a3ff8248057139fec6d748e63d1f4237d04a455761804e024061883d05402656d15f1d195f6eededecaa50cc985d2d46b0bc93ca25d14132d19c80824964828475756964869021773c457282453c8daeebaf51c693eed19980876642696e617279828662696e6172798686e0a61e5ad74fd196808866426f6f6c65616e8287626f6f6c65616e868100d198808866446563696d616c8287646563696d616c868396fb2dd198808766446f75626c658286646f75626c658685418b026a1ad1998089664475726174696f6e82886475726174696f6e86828c00d19a808666466c6f61748285666c6f61748689a8ff67eeaf9f90c14ed199808866496e74656765728287696e74656765728684193cf1b0d1948085664c6f6e6782846c6f6e67868540d0704ff6d1ad808766537472696e678286737472696e67869a54686973206973205554462d3820d181d182d180d0bed0bad0b0d19480856654696d65828474696d658685807550b3c8"
                         + "",
@@ -947,8 +1019,8 @@ public class TiesDBProtocolV0R0Generate {
     {
         formatMap.put(MESSAGE_ID, BigIntegerFormat.INSTANCE);
         formatMap.put(ERROR_MESSAGE, UTF8StringFormat.INSTANCE);
-        formatMap.put(ENTRY_TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
-        formatMap.put(ENTRY_TABLE_NAME, UTF8StringFormat.INSTANCE);
+        formatMap.put(TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
+        formatMap.put(TABLE_NAME, UTF8StringFormat.INSTANCE);
         formatMap.put(FIELD_NAME, UTF8StringFormat.INSTANCE);
         formatMap.put(FIELD_TYPE, ASCIIStringFormat.INSTANCE);
         // formatMap.put(ENTRY_TYPE, IntegerFormat.INSTANCE);
@@ -960,8 +1032,8 @@ public class TiesDBProtocolV0R0Generate {
         formatMap.put(CHEQUE_NUMBER, LongFormat.INSTANCE);
         formatMap.put(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE);
 
-        formatMap.put(RECOLLECTION_TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
-        formatMap.put(RECOLLECTION_TABLE_NAME, UTF8StringFormat.INSTANCE);
+        formatMap.put(TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
+        formatMap.put(TABLE_NAME, UTF8StringFormat.INSTANCE);
         formatMap.put(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE);
         formatMap.put(RET_COMPUTE_TYPE, ASCIIStringFormat.INSTANCE);
         formatMap.put(RET_FIELD, UTF8StringFormat.INSTANCE);

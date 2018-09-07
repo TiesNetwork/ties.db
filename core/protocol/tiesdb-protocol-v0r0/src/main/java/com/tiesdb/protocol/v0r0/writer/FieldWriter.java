@@ -19,8 +19,6 @@
 package com.tiesdb.protocol.v0r0.writer;
 
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_HASH;
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_NAME;
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_TYPE;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_VALUE;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
 
@@ -30,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBType;
+import com.tiesdb.protocol.v0r0.writer.FieldMetaWriter.FieldMeta;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field.HashField;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field.ValueField;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field.Visitor;
@@ -37,15 +36,13 @@ import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationConsumer;
 import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationFunction;
 
 import one.utopic.sparse.ebml.EBMLFormat;
-import one.utopic.sparse.ebml.format.ASCIIStringFormat;
 import one.utopic.sparse.ebml.format.BytesFormat;
-import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
 public class FieldWriter implements Writer<FieldWriter.Field> {
 
     private static final Logger LOG = LoggerFactory.getLogger(FieldWriter.class);
 
-    public static interface Field {
+    public static interface Field extends FieldMeta {
 
         interface ValueField<O> extends Field {
 
@@ -81,10 +78,6 @@ public class FieldWriter implements Writer<FieldWriter.Field> {
 
         <T> T accept(Visitor<T> v);
 
-        String getName();
-
-        String getType();
-
     }
 
     private static interface SpecificFieldWriter extends Visitor<ConversationConsumer>, ConversationFunction<Field> {
@@ -94,6 +87,7 @@ public class FieldWriter implements Writer<FieldWriter.Field> {
         }
     }
 
+    private final FieldMetaWriter fieldMetaWriter = new FieldMetaWriter();
     private final SpecificFieldWriter specificFieldWriter = new SpecificFieldWriter() {
 
         @Override
@@ -119,8 +113,7 @@ public class FieldWriter implements Writer<FieldWriter.Field> {
     public void accept(Conversation session, Field field) throws TiesDBProtocolException {
         LOG.debug("{} {}", fieldType, field);
         write(fieldType, //
-                write(FIELD_NAME, UTF8StringFormat.INSTANCE, field.getName()), //
-                write(FIELD_TYPE, ASCIIStringFormat.INSTANCE, field.getType()), //
+                write(fieldMetaWriter, field), //
                 write(specificFieldWriter, field) //
         ).accept(session);
     }

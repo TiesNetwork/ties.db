@@ -25,6 +25,7 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
+import com.tiesdb.protocol.v0r0.reader.SchemaRequestReader.SchemaRequest;
 
 @FunctionalInterface
 public interface Reader<T> {
@@ -36,6 +37,8 @@ public interface Reader<T> {
             T on(ModificationRequest request) throws TiesDBProtocolException;
 
             T on(RecollectionRequest request) throws TiesDBProtocolException;
+
+            T on(SchemaRequest schemaRequest) throws TiesDBProtocolException;
 
         }
 

@@ -58,6 +58,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canCreateTablespace(String param0, String param1) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canCreateTablespace", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Address(param1)), 
@@ -66,6 +67,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canCreateIndex(String param0, String param1, String param2, String param3) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canCreateIndex", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -76,6 +78,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canCreateField(String param0, String param1, String param2, String param3) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canCreateField", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -86,6 +89,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canDeleteField(String param0, String param1, String param2, String param3) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canDeleteField", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -96,6 +100,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canDeleteIndex(String param0, String param1, String param2, String param3) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canDeleteIndex", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -106,6 +111,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canDeleteTrigger(String param0, String param1, String param2, String param3) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canDeleteTrigger", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -116,6 +122,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canCreateTrigger(String param0, String param1, String param2, String param3) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canCreateTrigger", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -126,6 +133,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canDeleteTable(String param0, String param1, String param2) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canDeleteTable", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -135,6 +143,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canCreateTable(String param0, String param1, String param2) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canCreateTable", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 
@@ -144,6 +153,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canDeleteTablespace(String param0, String param1) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canDeleteTablespace", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Address(param1)), 
@@ -152,6 +162,7 @@ public class NoRestrictions extends Contract {
     }
 
     public RemoteCall<Boolean> canDistributeRanges(String param0, String param1, String param2) {
+        @SuppressWarnings("rawtypes")
         Function function = new Function("canDistributeRanges", 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(param0), 
                 new org.web3j.abi.datatypes.Utf8String(param1), 

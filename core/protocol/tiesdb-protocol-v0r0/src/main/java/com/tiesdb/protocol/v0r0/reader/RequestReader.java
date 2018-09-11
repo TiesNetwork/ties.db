@@ -23,12 +23,14 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
+import com.tiesdb.protocol.v0r0.reader.SchemaRequestReader.SchemaRequest;
 import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 
 public class RequestReader implements Reader<CheckedConsumer<Reader.Request, TiesDBProtocolException>> {
 
     private final ModificationRequestReader modificationRequestReader = new ModificationRequestReader();
     private final RecollectionRequestReader recollectionRequestReader = new RecollectionRequestReader();
+    private final SchemaRequestReader schemaRequestReader = new SchemaRequestReader();
 
     @Override
     public boolean accept(Conversation session, Event e, CheckedConsumer<Reader.Request, TiesDBProtocolException> requestHandler)
@@ -45,6 +47,14 @@ public class RequestReader implements Reader<CheckedConsumer<Reader.Request, Tie
         case RECOLLECTION_REQUEST: {
             RecollectionRequest request = new RecollectionRequest();
             if (recollectionRequestReader.accept(session, e, request)) {
+                requestHandler.accept(request);
+                return true;
+            }
+            break;
+        }
+        case SCHEMA_REQUEST: {
+            SchemaRequest request = new SchemaRequest();
+            if (schemaRequestReader.accept(session, e, request)) {
                 requestHandler.accept(request);
                 return true;
             }

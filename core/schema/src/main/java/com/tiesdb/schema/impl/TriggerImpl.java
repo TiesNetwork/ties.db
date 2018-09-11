@@ -19,7 +19,6 @@
 package com.tiesdb.schema.impl;
 
 import org.web3j.tuples.generated.Tuple2;
-import org.web3j.tuples.generated.Tuple3;
 
 import com.tiesdb.schema.api.Table;
 import com.tiesdb.schema.api.Trigger;

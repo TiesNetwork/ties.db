@@ -42,8 +42,8 @@ import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.TransactionManager;
 
 import com.tiesdb.schema.api.Node;
-import com.tiesdb.schema.api.Range;
-import com.tiesdb.schema.api.Ranges;
+//import com.tiesdb.schema.api.Range;
+//import com.tiesdb.schema.api.Ranges;
 import com.tiesdb.schema.api.Schema;
 import com.tiesdb.schema.api.Table;
 import com.tiesdb.schema.api.Tablespace;
@@ -188,7 +188,7 @@ public class AppTest
     	schema = new SchemaImpl(nodeUrl, readonly, tiesDB.getContractAddress());
 
     	for(int i=1; i<=TBLSPC_COUNT; ++i) {
-    		byte[] tsid = schema.idFromName("ts" + i).getValue();
+    		//byte[] tsid = schema.idFromName("ts" + i).getValue();
 
         	log.info("Creating tables with fields, indexes for tablespace: ts" + i);
         	
@@ -221,7 +221,7 @@ public class AppTest
     	for(int i=1; i<=TBLSPC_COUNT; ++i) {
         	log.info("Creating triggers for tablespace: ts" + i);
         	
-    		byte[] tsid = schema.idFromName("ts" + i).getValue();
+    		//byte[] tsid = schema.idFromName("ts" + i).getValue();
     		for(int j=1; j<=i && j <= TBL_COUNT; ++j) {
         		byte[] tid = schema.idFromName("ts" + i, "table" + j).getValue();
     			futures.add(tiesDB.createTrigger(tid, "trigger" + j, ("payload" + j).getBytes("utf-8")).sendAsync());
@@ -276,7 +276,7 @@ public class AppTest
     	log.info("Distributing tables");
     	
     	for(int i=1; i<=TBLSPC_COUNT; ++i) {
-    		byte[] tsid = schema.idFromName("ts" + i).getValue();
+    		//byte[] tsid = schema.idFromName("ts" + i).getValue();
     		for(int j=1; j<=TBL_COUNT; ++j) {
     			if (j == 4 && i > 1)
     				continue; //Only ts1 has 4 tables
@@ -313,12 +313,12 @@ public class AppTest
         LinkedHashMap<Id, Table> tbls1 = ts1.getTables();
         assertEquals(4, tbls1.size(), "There should be 4 tables in Tablespace 1");
 
-        Table tbl1 = tbls1.values().iterator().next();
+        //Table tbl1 = tbls1.values().iterator().next();
         
-        Node node = nodes.values().iterator().next();
-        Ranges ranges = node.getTableRanges(tbl1.getId());
+        //Node node = nodes.values().iterator().next();
+        //Ranges ranges = node.getTableRanges(tbl1.getId());
         
-        List<Range> rs = ranges.getRanges();
+        //List<Range> rs = ranges.getRanges();
         
         Tablespace ts3 = schema.getTablespace(schema.idFromName("ts3"));
         LinkedHashMap<Id, Table> tables = ts3.getTables();

@@ -47,7 +47,8 @@ public class RangesImpl extends ItemImpl implements Ranges {
 	@Override
 	protected void load() {
 		if(notLoaded()) {
-			List<BigInteger> t = Utils.send(schema.tiesDB.getNodeTableRanges(node.id.toString(), tableId.getValue()));
+			@SuppressWarnings("unchecked")
+            List<BigInteger> t = Utils.send(schema.tiesDB.getNodeTableRanges(node.id.toString(), tableId.getValue()));
 			ranges = new LinkedList<Range>(); 
 			for(Iterator<BigInteger> it = t.iterator(); it.hasNext();) {
 				BigInteger val = it.next();

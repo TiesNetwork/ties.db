@@ -49,7 +49,7 @@ public class RecollectionResultWriter implements Writer<RecollectionResultWriter
     }
 
     private final EntryHeaderWriter entryHeaderWriter = new EntryHeaderWriter();
-    private final FieldWriter entryFieldWriter = new FieldWriter(FIELD);
+    private final FieldWriter fieldWriter = new FieldWriter(FIELD);
     private final FieldWriter computeFieldWriter = new FieldWriter(COMPUTE_FIELD);
 
     @Override
@@ -62,7 +62,7 @@ public class RecollectionResultWriter implements Writer<RecollectionResultWriter
                 write(ENTRY, //
                         write(entryHeaderWriter, result.getEntryHeader()), //
                         write(FIELD_LIST, //
-                                write(entryFieldWriter, result.getEntryFields()) //
+                                write(fieldWriter, result.getEntryFields()) //
                         )), //
                 write(null != computedFields && !computedFields.isEmpty(), //
                         write(RECOLLECTION_COMPUTE, //

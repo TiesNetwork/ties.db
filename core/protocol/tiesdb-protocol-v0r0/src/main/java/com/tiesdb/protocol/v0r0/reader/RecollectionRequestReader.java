@@ -122,12 +122,12 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
             LOG.debug("MESSAGE_ID : {}", r.messageId);
             end(session, e);
             return true;
-        case RECOLLECTION_TABLESPACE_NAME:
+        case TABLESPACE_NAME:
             r.tablespaceName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("RECOLLECTION_TABLESPACE_NAME: {}", r.tablespaceName);
             end(session, e);
             return true;
-        case RECOLLECTION_TABLE_NAME:
+        case TABLE_NAME:
             r.tableName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("RECOLLECTION_TABLE_NAME: {}", r.tableName);
             end(session, e);

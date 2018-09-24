@@ -26,22 +26,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.tiesdb</groupId>
-        <artifactId>coordinator-parent</artifactId>
+        <groupId>com.tiesdb.coordinator</groupId>
+        <artifactId>distribution</artifactId>
         <version>0.1.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>coordinator</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>distribution-common</artifactId>
 
-    <name>TiesDB Coordinator</name>
-    <inceptionYear>2017</inceptionYear>
+    <packaging>pom</packaging>
 
-    <licenses>
-        <license>
-            <name>GNU Lesser General Public License, Version 3.0</name>
-            <url>http://www.gnu.org/licenses/lgpl-3.0.txt</url>
-        </license>
-    </licenses>
+    <name>TiesDB Coordinator Common Distribution</name>
+    <description>Common distribution files of TiesDB</description>
 
 </project>

@@ -1,0 +1,17 @@
+# TiesDB config YAML
+#saveSettingsOnStop: true
+config:
+  TEST: !!ServiceTiesDB
+    schema: !!SchemaEthereum
+      endpointUrl: http://localhost:8545
+      contractAddress: 0x22D1B55eBb5BcD17084C3C9D690056875263fEc1
+    transports:
+      - !!TransportWebSocket
+        #handler: !!JsonHandler
+        #  charset: UTF-8
+        handler: !!HandlerV0R0
+        workerThreadsCount: 8
+        serviceAddress: localhost
+        servicePort: 8080
+        #security:
+        #  securedSocket: false

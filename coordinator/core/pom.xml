@@ -26,17 +26,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.tiesdb</groupId>
+        <groupId>com.tiesdb.coordinator</groupId>
         <artifactId>parent</artifactId>
         <version>0.1.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.tiesdb.coordinator</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>core</artifactId>
     <packaging>pom</packaging>
 
-    <name>TiesDB Coordinator Parent</name>
-    <inceptionYear>2017</inceptionYear>
+    <name>TiesDB Coordinator Core</name>
+    <inceptionYear>2018</inceptionYear>
 
     <licenses>
         <license>
@@ -44,10 +43,5 @@
             <url>http://www.gnu.org/licenses/lgpl-3.0.txt</url>
         </license>
     </licenses>
-
-    <modules>
-        <module>core</module>
-        <module>distribution</module>
-    </modules>
 
 </project>

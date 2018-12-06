@@ -92,7 +92,7 @@ public class TiesDBProtocolV0R0Test {
     @SuppressWarnings("unchecked")
     public void protocolHanshakeCreateTest(Version clientVersion) throws IOException {
         TiesDBProtocol p = TiesDBProtocolManager.getProtocol(VERSION);
-        protocolHanshakeTest(p, clientVersion, (in, out) -> p.createChannel(in, out, new TiesDBProtocolHandlerProvider() {
+        protocolHanshakeTest(p, clientVersion, (in, out) -> p.createChannel(out, new TiesDBProtocolHandlerProvider() {
             @Override
             public <S> TiesDBProtocolHandler<S> getHandler(Version localVersion, Version remoteVersion, S session) {
                 assertEquals(VERSION, localVersion);

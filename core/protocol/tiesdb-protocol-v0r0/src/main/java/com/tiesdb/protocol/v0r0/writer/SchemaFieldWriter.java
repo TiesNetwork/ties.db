@@ -39,16 +39,16 @@ public class SchemaFieldWriter implements Writer<SchemaFieldWriter.SchemaField> 
     }
 
     private final FieldMetaWriter fieldMetaWriter = new FieldMetaWriter();
-    private final TiesDBType fieldType;
+    private final TiesDBType fieldRank;
 
-    public SchemaFieldWriter(TiesDBType fieldType) {
-        this.fieldType = fieldType;
+    public SchemaFieldWriter(TiesDBType fieldRank) {
+        this.fieldRank = fieldRank;
     }
 
     @Override
     public void accept(Conversation session, SchemaField field) throws TiesDBProtocolException {
-        LOG.debug("{} {}", fieldType, field);
-        write(fieldType, //
+        LOG.debug("{} {}", fieldRank, field);
+        write(fieldRank, //
                 write(fieldMetaWriter, field) //
         ).accept(session);
     }

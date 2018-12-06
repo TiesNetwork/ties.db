@@ -33,9 +33,7 @@
 
     <artifactId>distribution-common</artifactId>
 
-    <packaging>pom</packaging>
-
     <name>TiesDB Coordinator Common Distribution</name>
-    <description>Common distribution files of TiesDB</description>
+    <description>Common distribution files of TiesDB Coordinator</description>
 
 </project>

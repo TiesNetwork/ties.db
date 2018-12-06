@@ -31,7 +31,7 @@ import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 
 public class ModificationEntryReader implements Reader<ModificationEntryReader.ModificationEntry> {
 
-    public static class ModificationEntry {
+    public static class ModificationEntry implements Entry {
 
         private EntryHeader header;
         private HashMap<String, Field> fields = new HashMap<>();
@@ -41,10 +41,12 @@ public class ModificationEntryReader implements Reader<ModificationEntryReader.M
             return "ModificationEntry [header=" + header + ", fields=" + fields + "]";
         }
 
+        @Override
         public EntryHeader getHeader() {
             return header;
         }
 
+        @Override
         public HashMap<String, Field> getFields() {
             return fields;
         }

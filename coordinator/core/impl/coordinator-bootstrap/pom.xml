@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2017 Ties BV
+
+    This file is part of Ties.DB project.
+
+    Ties.DB project is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Ties.DB project is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.tiesdb.coordinator</groupId>
+		<artifactId>core-impl</artifactId>
+		<version>0.1.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>coordinator-bootstrap</artifactId>
+
+	<name>TiesDB Coordinator Bootstrap</name>
+	<description>TiesDB Coordinator boot sequence for standalone execution</description>
+
+    <licenses>
+        <license>
+            <name>GNU Lesser General Public License, Version 3.0</name>
+            <url>http://www.gnu.org/licenses/lgpl-3.0.txt</url>
+        </license>
+    </licenses>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.tiesdb</groupId>
+			<artifactId>core-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+	</dependencies>
+
+</project>

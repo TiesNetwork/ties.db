@@ -167,7 +167,7 @@ public class TiesDBProtocolManagerTest {
     private static abstract class Protocol implements TiesDBProtocol {
 
         @Override
-        public void createChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
+        public void createChannel(TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
                 throws TiesDBProtocolException {
         }
 

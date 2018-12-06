@@ -74,7 +74,7 @@ public interface TiesDBProtocol {
 
     Version getVersion();
 
-    void createChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
+    void createChannel(TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
             throws TiesDBException;
 
     void acceptChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)

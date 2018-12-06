@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.ebml.TiesDBType;
 import com.tiesdb.protocol.v0r0.writer.SchemaFieldWriter.SchemaField;
 import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationConsumer;
 import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationFunction;
@@ -38,8 +39,6 @@ import one.utopic.sparse.ebml.format.BigIntegerFormat;
 public class SchemaResponseWriter implements Writer<SchemaResponseWriter.SchemaResponse> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaResponseWriter.class);
-
-    private final SpecificFieldWriter specificSchemaFieldWriter = new SpecificFieldWriter();
 
     public static interface SchemaResponse extends Writer.Response {
 
@@ -52,26 +51,19 @@ public class SchemaResponseWriter implements Writer<SchemaResponseWriter.SchemaR
 
     }
 
-    private static class SpecificFieldWriter implements ConversationFunction<SchemaField> {
+    SchemaFieldWriter schemaFieldWriter = new SchemaFieldWriter(SCHEMA_FIELD);
+    SchemaFieldWriter schemaKeyFieldWriter = new SchemaFieldWriter(SCHEMA_KEY_FIELD);
 
-        SchemaFieldWriter schemaFieldWriter = new SchemaFieldWriter(SCHEMA_FIELD);
-        SchemaFieldWriter schemaKeyFieldWriter = new SchemaFieldWriter(SCHEMA_KEY_FIELD);
-
-        @Override
-        public ConversationConsumer accept(SchemaField f) throws TiesDBProtocolException {
-            return f.isPrimary() //
-                    ? c -> schemaKeyFieldWriter.accept(c, f) //
-                    : c -> schemaFieldWriter.accept(c, f);
-        }
+    public void acceptField(Conversation session, SchemaField field) throws TiesDBProtocolException {
+        (field.isPrimary() ? schemaKeyFieldWriter : schemaFieldWriter).accept(session, field);
     }
 
     @Override
     public void accept(Conversation session, SchemaResponse response) throws TiesDBProtocolException {
         LOG.debug("SchemaResponse {}", response);
-
         write(SCHEMA_RESPONSE, //
                 write(MESSAGE_ID, BigIntegerFormat.INSTANCE, response.getMessageId()), //
-                write(specificSchemaFieldWriter, response.getFields()) //
+                write(this::acceptField, response.getFields()) //
         ).accept(session);
 
     }

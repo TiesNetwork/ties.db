@@ -53,8 +53,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.tiesdb</groupId>
-            <artifactId>service-elassandra</artifactId>
+            <groupId>com.tiesdb.coordinator</groupId>
+            <artifactId>coordinator-service</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -63,8 +63,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.tiesdb</groupId>
-            <artifactId>bootstrap-elassandra</artifactId>
+            <groupId>com.tiesdb.coordinator</groupId>
+            <artifactId>coordinator-bootstrap</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

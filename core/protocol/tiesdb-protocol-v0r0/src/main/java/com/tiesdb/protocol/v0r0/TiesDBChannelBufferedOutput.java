@@ -24,13 +24,17 @@ import java.nio.channels.ClosedChannelException;
 import java.util.Objects;
 
 import com.tiesdb.protocol.api.TiesDBProtocol.TiesDBChannelOutput;
+import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 
 public class TiesDBChannelBufferedOutput implements TiesDBChannelOutput {
 
     private final TiesDBChannelOutput upstream;
+    private final CheckedConsumer<TiesDBChannelOutput, IOException> headerWriter;
     private volatile ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    private volatile boolean headerIsWritten = false;
 
-    public TiesDBChannelBufferedOutput(TiesDBChannelOutput upstream) {
+    public TiesDBChannelBufferedOutput(TiesDBChannelOutput upstream, CheckedConsumer<TiesDBChannelOutput, IOException> headerWriter) {
+        this.headerWriter = headerWriter;
         this.upstream = Objects.requireNonNull(upstream);
     }
 
@@ -54,6 +58,10 @@ public class TiesDBChannelBufferedOutput implements TiesDBChannelOutput {
             baos.reset();
         }
         synchronized (upstream) {
+            if (!headerIsWritten && ba.length > 0) {
+                headerWriter.accept(upstream);
+                headerIsWritten = true;
+            }
             for (int i = 0; i < ba.length; i++) {
                 upstream.writeByte(ba[i]);
             }

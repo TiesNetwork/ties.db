@@ -204,6 +204,19 @@ public enum TiesDBType implements TiesEBMLType {
             return typeMap.containsValue(type) || parentContains(type);
         }
 
+        @Override
+        public boolean is(EBMLType.Context context) {
+            return equals(context) || parentIs(context);
+        }
+
+        private boolean parentIs(EBMLType.Context context) {
+            boolean is = false;
+            for (int i = 0; !is && i < parentContexts.length; i++) {
+                is |= parentContexts[i].is(context);
+            }
+            return is;
+        }
+
         private boolean parentContains(EBMLType type) {
             boolean contains = false;
             for (int i = 0; !contains && i < parentContexts.length; i++) {

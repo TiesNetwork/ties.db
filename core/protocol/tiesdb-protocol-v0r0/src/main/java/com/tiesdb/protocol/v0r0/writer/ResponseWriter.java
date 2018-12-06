@@ -70,7 +70,6 @@ public class ResponseWriter implements Writer<Writer.Response> {
     @Override
     public void accept(Conversation session, Response response) throws TiesDBProtocolException {
         LOG.debug("Response {}", response);
-
         write(specificResponseWriter, response).accept(session);
     }
 

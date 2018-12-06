@@ -24,13 +24,32 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
+import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResponse;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
+import com.tiesdb.protocol.v0r0.reader.RecollectionResponseReader.RecollectionResponse;
 import com.tiesdb.protocol.v0r0.reader.SchemaRequestReader.SchemaRequest;
+import com.tiesdb.protocol.v0r0.reader.SchemaResponseReader.SchemaResponse;
 
 @FunctionalInterface
 public interface Reader<T> {
 
-    interface Request {
+    interface Message {
+
+        interface Visitor {
+
+            void on(Request request) throws TiesDBProtocolException;
+
+            void on(Response response) throws TiesDBProtocolException;
+
+        }
+
+        void accept(Visitor v) throws TiesDBProtocolException;
+
+        BigInteger getMessageId();
+
+    }
+
+    interface Request extends Message {
 
         interface Visitor<T> {
 
@@ -42,9 +61,31 @@ public interface Reader<T> {
 
         }
 
+        default void accept(Message.Visitor v) throws TiesDBProtocolException {
+            v.on(this);
+        }
+
         <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
 
-        BigInteger getMessageId();
+    }
+
+    interface Response extends Message {
+
+        interface Visitor<T> {
+
+            T on(ModificationResponse modificationResponse) throws TiesDBProtocolException;
+
+            T on(RecollectionResponse recollectionResponse) throws TiesDBProtocolException;
+
+            T on(SchemaResponse schemaResponse) throws TiesDBProtocolException;
+
+        }
+
+        default void accept(Message.Visitor v) throws TiesDBProtocolException {
+            v.on(this);
+        }
+
+        <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
 
     }
 

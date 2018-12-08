@@ -2,6 +2,7 @@ package network.tiesdb.coordinator.service.impl.scope;
 
 import java.math.BigInteger;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +28,9 @@ public class TiesCoordinatedRequestPool<T> {
 
         boolean fail(Throwable error);
 
-        T get(int timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
+        T get(int timeout, TimeUnit unit) throws CancellationException, InterruptedException, ExecutionException, TimeoutException;
+
+        T get() throws CancellationException, InterruptedException, ExecutionException, TimeoutException;
 
     }
 
@@ -63,8 +66,13 @@ public class TiesCoordinatedRequestPool<T> {
         }
 
         @Override
-        public T get(int timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        public T get(int timeout, TimeUnit unit) throws CancellationException, InterruptedException, ExecutionException, TimeoutException {
             return futureResult.get(timeout, unit);
+        }
+
+        @Override
+        public T get() throws CancellationException, InterruptedException, ExecutionException, TimeoutException {
+            return futureResult.get(0, TimeUnit.NANOSECONDS);
         }
 
         private TiesCoordinatedRequestPool<T> getOuterType() {

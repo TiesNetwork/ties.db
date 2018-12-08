@@ -32,4 +32,9 @@ public final class Tiger extends org.bouncycastle.crypto.digests.TigerDigest imp
         update(in, inOff, in.length);
     }
 
+    @Override
+    public int doFinal(byte[] out) {
+        return doFinal(out, 0);
+    }
+
 }

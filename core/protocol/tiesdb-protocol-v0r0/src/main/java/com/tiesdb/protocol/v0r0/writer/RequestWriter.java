@@ -26,7 +26,7 @@ import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
-//import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
+import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
 //import com.tiesdb.protocol.v0r0.writer.SchemaRequestWriter.SchemaRequest;
 import com.tiesdb.protocol.v0r0.writer.Writer.Request.Visitor;
 import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationConsumer;
@@ -48,17 +48,17 @@ public class RequestWriter implements Writer<Writer.Request> {
     private final SpecificRequestWriter specificRequestWriter = new SpecificRequestWriter() {
 
         private final ModificationRequestWriter modificationRequestWriter = new ModificationRequestWriter();
-        //private final RecollectionRequestWriter recollectionRequestWriter = new RecollectionRequestWriter();
+        private final RecollectionRequestWriter recollectionRequestWriter = new RecollectionRequestWriter();
         //private final SchemaRequestWriter schemaRequestWriter = new SchemaRequestWriter();
 
-//        @Override
-//        public ConversationConsumer on(RecollectionRequest response) throws TiesDBProtocolException {
-//            return write(recollectionRequestWriter, response);
-//        }
+        @Override
+        public ConversationConsumer on(ModificationRequest request) throws TiesDBProtocolException {
+            return write(modificationRequestWriter, request);
+        }
 
         @Override
-        public ConversationConsumer on(ModificationRequest response) throws TiesDBProtocolException {
-            return write(modificationRequestWriter, response);
+        public ConversationConsumer on(RecollectionRequest request) throws TiesDBProtocolException {
+            return write(recollectionRequestWriter, request);
         }
 
 //        @Override

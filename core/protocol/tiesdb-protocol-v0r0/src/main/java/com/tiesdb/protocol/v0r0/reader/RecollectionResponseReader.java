@@ -23,6 +23,7 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class RecollectionResponseReader implements Reader<RecollectionResponseRe
 
         private BigInteger messageId;
 
-        private LinkedList<RecollectionResult> recollectionResults = new LinkedList<>();
+        private List<RecollectionResult> recollectionResults = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -54,7 +55,7 @@ public class RecollectionResponseReader implements Reader<RecollectionResponseRe
             return v.on(this);
         }
 
-        public LinkedList<RecollectionResult> getRecollectionResults() {
+        public List<RecollectionResult> getRecollectionResults() {
             return recollectionResults;
         }
 

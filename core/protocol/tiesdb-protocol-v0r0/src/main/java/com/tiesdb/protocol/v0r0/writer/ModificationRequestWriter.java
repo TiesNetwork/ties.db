@@ -30,8 +30,6 @@ import com.tiesdb.protocol.v0r0.writer.ModificationEntryWriter.ModificationEntry
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
-import java.math.BigInteger;
-
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
 public class ModificationRequestWriter implements Writer<ModificationRequestWriter.ModificationRequest> {
@@ -49,20 +47,17 @@ public class ModificationRequestWriter implements Writer<ModificationRequestWrit
 
         public Iterable<ModificationEntry> getEntries();
 
-        @Override
-        public BigInteger getMessageId();
-
     }
 
     private final ModificationEntryWriter modificationEntryWriter = new ModificationEntryWriter();
 
     @Override
-    public void accept(Conversation session, ModificationRequest modificationRequest) throws TiesDBProtocolException {
-        LOG.debug("ModificationRequest {}", modificationRequest);
+    public void accept(Conversation session, ModificationRequest request) throws TiesDBProtocolException {
+        LOG.debug("ModificationRequest {}", request);
         write(MODIFICATION_REQUEST, //
-                write(CONSISTENCY, TiesDBRequestConsistencyFormat.INSTANCE, modificationRequest.getConsistency()), //
-                write(MESSAGE_ID, BigIntegerFormat.INSTANCE, modificationRequest.getMessageId()), //
-                write(modificationEntryWriter, modificationRequest.getEntries())//
+                write(CONSISTENCY, TiesDBRequestConsistencyFormat.INSTANCE, request.getConsistency()), //
+                write(MESSAGE_ID, BigIntegerFormat.INSTANCE, request.getMessageId()), //
+                write(modificationEntryWriter, request.getEntries())//
         ).accept(session);
     }
 

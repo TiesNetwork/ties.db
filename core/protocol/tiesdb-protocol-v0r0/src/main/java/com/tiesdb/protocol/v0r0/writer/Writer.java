@@ -24,6 +24,7 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResponse;
+import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResponse;
 import com.tiesdb.protocol.v0r0.writer.SchemaResponseWriter.SchemaResponse;
 
@@ -36,11 +37,13 @@ public interface Writer<T> {
 
     }
 
-    public interface Request extends Message {
+    interface Request extends Message {
 
         interface Visitor<T> {
 
             T on(ModificationRequest modificationRequest) throws TiesDBProtocolException;
+
+            T on(RecollectionRequest recollectionRequest) throws TiesDBProtocolException;
 
         }
 

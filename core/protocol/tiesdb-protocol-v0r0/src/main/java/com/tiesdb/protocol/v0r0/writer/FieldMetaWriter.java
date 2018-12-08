@@ -47,8 +47,8 @@ public class FieldMetaWriter implements Writer<FieldMetaWriter.FieldMeta> {
     public void accept(Conversation session, FieldMeta fieldMeta) throws TiesDBProtocolException {
         LOG.trace("{}", fieldMeta);
         write( //
-                write(FIELD_TYPE, ASCIIStringFormat.INSTANCE, fieldMeta.getType()), //
-                write(FIELD_NAME, UTF8StringFormat.INSTANCE, fieldMeta.getName()) //
+                write(FIELD_NAME, UTF8StringFormat.INSTANCE, fieldMeta.getName()), //
+                write(FIELD_TYPE, ASCIIStringFormat.INSTANCE, fieldMeta.getType()) //
         ).accept(session);
     }
 

@@ -22,11 +22,13 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResponse;
+import com.tiesdb.protocol.v0r0.reader.RecollectionResponseReader.RecollectionResponse;
 import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 
 public class ResponseReader implements Reader<CheckedConsumer<Reader.Response, TiesDBProtocolException>> {
 
     private final ModificationResponseReader modificationResponseReader = new ModificationResponseReader();
+    private final RecollectionResponseReader recollectionResponseReader = new RecollectionResponseReader();
 
     @Override
     public boolean accept(Conversation session, Event e, CheckedConsumer<Reader.Response, TiesDBProtocolException> resultHandler)
@@ -35,6 +37,14 @@ public class ResponseReader implements Reader<CheckedConsumer<Reader.Response, T
         case MODIFICATION_RESPONSE: {
             ModificationResponse response = new ModificationResponse();
             if (modificationResponseReader.accept(session, e, response)) {
+                resultHandler.accept(response);
+                return true;
+            }
+            break;
+        }
+        case RECOLLECTION_RESPONSE: {
+            RecollectionResponse response = new RecollectionResponse();
+            if (recollectionResponseReader.accept(session, e, response)) {
                 resultHandler.accept(response);
                 return true;
             }

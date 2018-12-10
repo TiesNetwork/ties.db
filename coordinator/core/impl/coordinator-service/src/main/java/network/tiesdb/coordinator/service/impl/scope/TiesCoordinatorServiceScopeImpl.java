@@ -179,7 +179,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 } catch (TiesRoutingException e) {
                     LOG.warn("Route was not found for node: {}", node, e);
                     coordinatedResult.fail(e);
-                } catch (TiesException e) {
+                } catch (Throwable e) {
                     LOG.warn("Node request failed for node: {} scope {}", node, e);
                     coordinatedResult.fail(e);
                 }
@@ -246,7 +246,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
                 @Override
                 public Throwable getError() {
-                    return new TiesServiceScopeException("Write failed for nodes " + Arrays.toString(failedNodes.toArray()));
+                    return new TiesServiceScopeException("Write failed for nodes " + failedNodes);
                 }
             });
         } else {
@@ -326,7 +326,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     } catch (TiesRoutingException e) {
                         LOG.warn("Route was not found for node: {}", node, e);
                         coordinatedResult.fail(e);
-                    } catch (TiesException e) {
+                    } catch (Throwable e) {
                         LOG.warn("Node request failed for node: {} scope {}", node, e);
                         coordinatedResult.fail(e);
                     }
@@ -403,6 +403,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             } catch (CancellationException | InterruptedException | ExecutionException | TimeoutException e) {
                 throw new TiesServiceScopeException("Failed recollection result on message " + action.getMessageId(), e);
             }
+        } else {
+            throw new TiesServiceScopeException("Read failed for nodes " + segregatedResults.get(RECOLLECTION_ERROR));
         }
 
     }

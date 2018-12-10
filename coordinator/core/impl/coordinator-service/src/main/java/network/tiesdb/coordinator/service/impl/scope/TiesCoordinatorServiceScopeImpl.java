@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -31,6 +32,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -58,6 +61,7 @@ import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 import network.tiesdb.service.scope.api.TiesServiceScopeSchema;
+import network.tiesdb.service.scope.api.TiesServiceScopeSchema.FieldSchema;
 import network.tiesdb.transport.api.TiesTransportClient;
 
 public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
@@ -105,6 +109,46 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     @Override
     public void insert(TiesServiceScopeModification action) throws TiesServiceScopeException {
+        modification(action, (s, o) -> s.insert(o));
+    }
+
+    @Override
+    public void update(TiesServiceScopeModification action) throws TiesServiceScopeException {
+        modification(action, (s, o) -> s.update(o));
+    }
+
+    @Override
+    public void delete(TiesServiceScopeModification action) throws TiesServiceScopeException {
+        modification(action, (s, o) -> s.delete(o));
+    }
+
+    @FunctionalInterface
+    interface CheckedBiFunction<T, U, R, E extends Throwable> {
+
+        R apply(T t, U u) throws E;
+
+        default <V> CheckedBiFunction<T, U, V, E> andThen(Function<? super R, ? extends V> after) {
+            Objects.requireNonNull(after);
+            return (T t, U u) -> after.apply(apply(t, u));
+        }
+
+    }
+
+    @FunctionalInterface
+    interface TiesServiceOperation
+            extends CheckedBiFunction<TiesServiceScope, TiesServiceScopeModification, Void, TiesServiceScopeException> {
+
+        @Override
+        default Void apply(TiesServiceScope t, TiesServiceScopeModification u) throws TiesServiceScopeException {
+            applyVoid(t, u);
+            return null;
+        }
+
+        void applyVoid(TiesServiceScope t, TiesServiceScopeModification u) throws TiesServiceScopeException;
+
+    }
+
+    private void modification(TiesServiceScopeModification action, TiesServiceOperation operation) throws TiesServiceScopeException {
 
         Entry entry = checkEntryIsValid(action.getEntry());
         TiesEntryHeader header = entry.getHeader();
@@ -135,7 +179,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     c.request(new TiesServiceScopeConsumer() {
                         @Override
                         public void accept(TiesServiceScope s) throws TiesServiceScopeException {
-                            s.insert(new TiesServiceScopeModification() {
+                            operation.apply(s, new TiesServiceScopeModification() {
 
                                 @Override
                                 public ActionConsistency getConsistency() {
@@ -261,20 +305,6 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 }
             });
         }
-    }
-
-    @Override
-    public void update(TiesServiceScopeModification action) throws TiesServiceScopeException {
-        // Entry entry = checkEntryIsValid(action.getEntry());
-        // TODO Auto-generated method stub
-        throw new TiesServiceScopeException("Not yet implemented");
-    }
-
-    @Override
-    public void delete(TiesServiceScopeModification action) throws TiesServiceScopeException {
-        // Entry entry = checkEntryIsValid(action.getEntry());
-        // TODO Auto-generated method stub
-        throw new TiesServiceScopeException("Not yet implemented");
     }
 
     @Override
@@ -410,8 +440,43 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     @Override
     public void schema(TiesServiceScopeSchema query) throws TiesServiceScopeException {
-        // TODO Auto-generated method stub
-        throw new TiesServiceScopeException("Not yet implemented");
+        String tsn = query.getTablespaceName();
+        String tbn = query.getTableName();
+
+        TiesServiceSchema sch = service.getSchemaService();
+        Set<FieldDescription> fieldDescriptions = sch.getFields(tsn, tbn);
+
+        query.setResult(new FieldSchema() {
+
+            private final List<Field> fields;
+            {
+                fields = fieldDescriptions.stream().map(fd -> {
+                    return new FieldSchema.Field() {
+
+                        @Override
+                        public boolean isPrimary() {
+                            return fd.isPrimaryKey();
+                        }
+
+                        @Override
+                        public String getFieldType() {
+                            return fd.getType();
+                        }
+
+                        @Override
+                        public String getFieldName() {
+                            return fd.getName();
+                        }
+                    };
+                }).collect(Collectors.toList());
+            }
+
+            @Override
+            public List<Field> getFields() {
+                return fields;
+            }
+
+        });
     }
 
     @Override

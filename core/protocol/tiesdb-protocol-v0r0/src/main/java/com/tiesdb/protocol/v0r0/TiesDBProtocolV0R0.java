@@ -27,6 +27,7 @@ import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeInt16;
 import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeLong32;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -238,6 +239,11 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
                 return TiesDBProtocolV0R0.this.getVersion();
             }
 
+            @Override
+            public void close() throws IOException {
+                input.close();
+            }
+
         };
     }
 
@@ -279,7 +285,7 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
         throw new TiesDBProtocolException("Unknown EBML type " + type);
     }
 
-    public static interface Conversation {
+    public static interface Conversation extends Closeable {
 
         enum EventState {
             BEGIN, END

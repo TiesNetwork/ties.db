@@ -45,7 +45,6 @@ import network.tiesdb.coordinator.service.impl.TiesCoordinatorServiceImpl;
 import network.tiesdb.coordinator.service.impl.scope.TiesCoordinatedRequestPool.CoordinatedResult;
 import network.tiesdb.coordinator.service.schema.TiesServiceSchema;
 import network.tiesdb.coordinator.service.schema.TiesServiceSchema.FieldDescription;
-import network.tiesdb.exception.TiesException;
 import network.tiesdb.router.api.TiesRouter;
 import network.tiesdb.router.api.TiesRouter.Node;
 import network.tiesdb.router.api.TiesRoutingException;

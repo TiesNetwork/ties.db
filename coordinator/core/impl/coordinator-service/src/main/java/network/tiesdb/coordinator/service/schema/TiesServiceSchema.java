@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,7 +175,7 @@ public class TiesServiceSchema {
 
     // TODO synchronize on key to avoid whole cache locking
     private synchronized Set<Node> createNodeCache(CacheKey key) {
-        return loadSchemaNodes(key, new HashSet<>());
+        return loadSchemaNodes(key);
     }
 
     // TODO synchronize on key to avoid whole cache locking
@@ -264,29 +265,47 @@ public class TiesServiceSchema {
         return descriptions;
     }
 
-    private Set<Node> loadSchemaNodes(CacheKey key, HashSet<Node> nodeset) {
-        String sna = System.getProperty("network.tiesdb.debug.SingleNodeAddress");
-        if (null != sna) {
-            nodeset.add(new Node() {
+    private Set<Node> loadSchemaNodes(CacheKey key) {
+        { // TODO FIXME Move SingleDebugNode logic to new subclass in TEST environment
+            String sna = System.getProperty("network.tiesdb.debug.SingleNodeAddress");
+            if (null != sna) {
+                HashSet<Node> nodeset = new HashSet<>();
+                nodeset.add(new Node() {
 
-                @Override
-                public short getNodeNetwork() {
-                    return schema.getSchemaNetwork();
-                }
+                    @Override
+                    public short getNodeNetwork() {
+                        return schema.getSchemaNetwork();
+                    }
 
-                @Override
-                public String getAddressString() {
-                    return sna;
-                }
+                    @Override
+                    public String getAddressString() {
+                        return sna;
+                    }
 
-                @Override
-                public String toString() {
-                    return "SingleDebugNode(" + sna + ")";
-                }
+                    @Override
+                    public String toString() {
+                        return "SingleDebugNode(" + sna + ")";
+                    }
 
-            });
+                });
+                return nodeset;
+            }
         }
-        return nodeset;
+        Tablespace tablespace = schema.getTablespace(key.tablespace);
+        Table table = tablespace.getTable(key.table);
+        return table.getNodeAddresses().stream().map(address -> new Node() {
+
+            @Override
+            public short getNodeNetwork() {
+                return schema.getSchemaNetwork();
+            }
+
+            @Override
+            public String getAddressString() {
+                return address;
+            }
+
+        }).collect(Collectors.toSet());
     }
 
 }

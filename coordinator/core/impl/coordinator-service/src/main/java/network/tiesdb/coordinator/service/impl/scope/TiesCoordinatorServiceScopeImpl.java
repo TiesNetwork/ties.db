@@ -33,7 +33,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -59,6 +61,8 @@ import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FieldSelector;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FunctionSelector;
 import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 import network.tiesdb.service.scope.api.TiesServiceScopeSchema;
 import network.tiesdb.service.scope.api.TiesServiceScopeSchema.FieldSchema;
@@ -96,7 +100,11 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         return service.getVersion();
     }
 
-    private Entry checkEntryIsValid(Entry entry) throws TiesServiceScopeException {
+    private static <T> Predicate<T> not(Predicate<T> p) {
+        return x -> !p.test(x);
+    }
+
+    private static Entry checkEntryIsValid(Entry entry) throws TiesServiceScopeException {
         TiesEntryHeader header = entry.getHeader();
         {
             short networkId = header.getEntryNetwork();
@@ -148,7 +156,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     }
 
-    private void modification(TiesServiceScopeModification action, TiesServiceOperation operation) throws TiesServiceScopeException {
+    protected void modification(TiesServiceScopeModification action, TiesServiceOperation operation) throws TiesServiceScopeException {
 
         Entry entry = checkEntryIsValid(action.getEntry());
         TiesEntryHeader header = entry.getHeader();
@@ -158,7 +166,6 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
         TiesServiceSchema sch = service.getSchemaService();
         Set<FieldDescription> fields = sch.getFields(tsn, tbn);
-
         {
             Set<String> entryFieldNames = entry.getFieldValues().keySet();
             if (!fields.stream().filter(f -> f.isPrimaryKey()).map(f -> f.getName()).allMatch(entryFieldNames::contains)) {
@@ -167,6 +174,9 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         }
 
         Set<Node> nodes = sch.getNodes(tsn, tbn);
+        if (null == nodes || nodes.isEmpty()) {
+            throw new TiesServiceScopeException("No target nodes found for request");
+        }
 
         TiesRouter router = service.getRouterService();
         Map<Node, CompletableFuture<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters = new HashMap<>();
@@ -310,10 +320,44 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
     @Override
     public void select(TiesServiceScopeRecollection action) throws TiesServiceScopeException {
 
-        Set<Node> nodes;
+        Query query = action.getQuery();
+
+        String tsn = query.getTablespaceName();
+        String tbn = query.getTableName();
+
+        TiesServiceSchema sch = service.getSchemaService();
+        Set<FieldDescription> fields = sch.getFields(tsn, tbn);
         {
-            Query query = action.getQuery();
-            nodes = service.getSchemaService().getNodes(query.getTablespaceName(), query.getTableName());
+            Set<String> tableFields = fields.stream().map(f -> f.getName()).collect(Collectors.toSet());
+            Stream<String> queryFieldNameStream = query.getSelectors().stream().map(s -> {
+                try {
+                    return s.accept(new network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.Visitor<String>() {
+
+                        @Override
+                        public String on(FunctionSelector s) throws TiesServiceScopeException {
+                            return null;
+                        }
+
+                        @Override
+                        public String on(FieldSelector s) throws TiesServiceScopeException {
+                            return s.getFieldName();
+                        }
+
+                    });
+                } catch (TiesServiceScopeException e) {
+                    LOG.error("Failed field mapping: {}", s, e);
+                    return null;
+                }
+            }).filter(s -> null != s);
+            List<String> missingFields = queryFieldNameStream.filter(not(tableFields::contains)).collect(Collectors.toList());
+            if (!missingFields.isEmpty()) {
+                new TiesServiceScopeException("Missing required fields: " + missingFields);
+            }
+        }
+
+        Set<Node> nodes = sch.getNodes(tsn, tbn);
+        if (null == nodes || nodes.isEmpty()) {
+            throw new TiesServiceScopeException("No target nodes found for request");
         }
 
         Map<Node, CompletableFuture<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters;

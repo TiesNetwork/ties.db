@@ -24,6 +24,7 @@ import static com.tiesdb.protocol.v0r0.test.util.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.SignatureException;
@@ -77,7 +78,7 @@ public class TiesDBProtocolV0R0Test {
         byte[] protocolVersionHeader = TestUtil.getPacketHeader(protocolVersion);
         byte[] packetHeader = TestUtil.getPacketHeader(clientVersion);
 
-        byte[] encDataRequest = channel(packetHeader, c);
+        byte[] encDataRequest = Arrays.copyOfRange(channel(packetHeader, c), 0, protocolVersionHeader.length);
         if (Boolean.getBoolean("test-verbose")) {
             System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(packetHeader));
             System.out.print(" == ");
@@ -96,10 +97,11 @@ public class TiesDBProtocolV0R0Test {
             @Override
             public <S> TiesDBProtocolHandler<S> getHandler(Version localVersion, Version remoteVersion, S session) {
                 assertEquals(VERSION, localVersion);
-                assertEquals(clientVersion, remoteVersion);
+                assertEquals(localVersion, remoteVersion);
                 return (TiesDBProtocolHandler<S>) new TiesDBProtocolHandler<Conversation>() {
                     @Override
                     public void handle(Conversation c) throws TiesDBException {
+                        c.write(UTF8StringFormat.INSTANCE, "Hello");
                     }
                 };
             }
@@ -120,6 +122,7 @@ public class TiesDBProtocolV0R0Test {
                 return (TiesDBProtocolHandler<S>) new TiesDBProtocolHandler<Conversation>() {
                     @Override
                     public void handle(Conversation c) throws TiesDBException {
+                        c.write(UTF8StringFormat.INSTANCE, "Hello");
                     }
                 };
             }

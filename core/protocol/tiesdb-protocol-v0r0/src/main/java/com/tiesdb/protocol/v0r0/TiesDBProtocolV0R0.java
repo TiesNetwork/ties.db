@@ -29,7 +29,6 @@ import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeLong32;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -52,7 +51,6 @@ import com.tiesdb.protocol.v0r0.ebml.TiesEBMLReader;
 import com.tiesdb.protocol.v0r0.ebml.TiesEBMLReader.UnknownTiesEBMLType;
 import com.tiesdb.protocol.v0r0.ebml.TiesEBMLWriter;
 import com.tiesdb.protocol.v0r0.exception.CRCMissmatchException;
-import com.tiesdb.protocol.v0r0.test.util.StreamInput;
 import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 import com.tiesdb.protocol.v0r0.util.CheckedSupplier;
 import com.tiesdb.protocol.v0r0.util.EBMLHelper;
@@ -83,6 +81,35 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
     static {
         LOG.debug("Preload TiesDB EBML types: {}", Arrays.toString(TiesDBType.values()));
     }
+
+    private static TiesDBChannelInput CLOSED_INPUT = new TiesDBChannelInput() {
+
+        @Override
+        public boolean isFinished() {
+            return true;
+        }
+
+        @Override
+        public byte readByte() throws IOException {
+            throw new IOException("Channel is closed");
+        }
+
+        @Override
+        public int skip(int byteCount) throws IOException {
+            throw new IOException("Channel is closed");
+        }
+
+        @Override
+        public boolean isClosed() {
+            return true;
+        }
+
+        @Override
+        public void close() throws IOException {
+            // NOP
+        }
+
+    };
 
     @Override
     public Version getVersion() {
@@ -143,12 +170,7 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
                 writePacketHeader(VERSION, out);
                 LOG.debug("Header is written for {}", sessionConsumer);
             });
-            Conversation session = openConversation(new StreamInput(new InputStream() {
-                @Override
-                public int read() throws IOException {
-                    return -1;
-                }
-            }), bufferedOutput);
+            Conversation session = openConversation(CLOSED_INPUT, bufferedOutput);
             sessionConsumer.accept(session);
             bufferedOutput.flush();
         } catch (Exception e) {

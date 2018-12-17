@@ -52,7 +52,7 @@
     </dependencySets>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}/elassandra</directory>
+            <directory>${project.build.directory}/coordinator</directory>
             <outputDirectory>.</outputDirectory>
             <fileMode>0644</fileMode>
             <includes>
@@ -70,7 +70,7 @@
             </excludes>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/elassandra</directory>
+            <directory>${project.build.directory}/coordinator</directory>
             <outputDirectory>.</outputDirectory>
             <fileMode>0755</fileMode>
             <includes>

@@ -31,12 +31,9 @@
         <version>0.1.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.tiesdb.lib</groupId>
-    <artifactId>lib-parent</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>core-api</artifactId>
 
-    <name>TiesDB Lib Parent</name>
-    <inceptionYear>2017</inceptionYear>
+    <name>TiesDB Core API</name>
 
     <licenses>
         <license>
@@ -44,14 +41,5 @@
             <url>http://www.gnu.org/licenses/lgpl-3.0.txt</url>
         </license>
     </licenses>
-
-    <modules>
-        <module>merkletree</module>
-        <module>tiescheque</module>
-        <module>crypto</module>
-        <module>sparse</module>
-        <module>abio</module>
-        <module>swissknife</module>
-    </modules>
 
 </project>

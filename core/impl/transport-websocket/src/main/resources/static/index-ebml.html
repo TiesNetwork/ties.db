@@ -1,0 +1,97 @@
+<html>
+   <head>
+      <title>Web Socket Test</title>
+   </head>
+   <link rel=stylesheet href="codemirror/lib/codemirror.css">
+   <style type="text/css">
+      .CodeMirror { border: 1px solid black; font-size:13px }
+   </style>
+   <script src="codemirror/lib/codemirror.js"></script>
+   <script type="text/javascript">
+      function onLoad() {
+        let options = {};
+        let editor = CodeMirror.fromTextArea(document.getElementById('responseText'), options);
+        document.getElementById('responseText').editor = editor;
+        let areaEditor = CodeMirror.fromTextArea(document.getElementById('messageArea'), options);
+        document.getElementById('messageArea').editor = areaEditor;
+        areaEditor.setValue(localStorage.getItem('messageAreaTextEBML'));
+      }
+      function hex2buf(str) {
+        let arr = new Uint8Array(str.length / 2);
+        for(var i=0; i < str.length-1; i+=2){
+          arr[i/2] = parseInt(str.substr(i, 2), 16);
+        }
+        return arr.buffer;
+      }
+      function buf2hex(buf) {
+        return Array.prototype.map.call(new Uint8Array(buf), x => ('00' + x.toString(16)).slice(-2)).join('');
+      }
+      function filter(str, token) {
+        return str.replace(/[^\w\s\d\u2000-\u206F\u2E00-\u2E7F\\'!"#\$%&()*+,\-.\/:;<=>?@\[\]^_`{|}~]/gm, token);
+      }
+      function nobreak(str) {
+        return str.replace(/[\r\n]/gm, ' ');
+      }
+   </script>
+   <body onload="onLoad()">
+      <script type="text/javascript">
+         let socket;
+         let textdec = new TextDecoder("utf-8");
+         function openSocket(callback) {
+           let socket;
+           if (!window.WebSocket) {
+             window.WebSocket = window.MozWebSocket;
+           }
+           if (window.WebSocket) {
+             socket = new WebSocket("$websocketLocation$");
+             socket.binaryType = "arraybuffer";
+             socket.onmessage = function(event) {
+               var ta = document.getElementById('responseText').editor;
+               var response = buf2hex(event.data).toUpperCase();
+	           if(response.startsWith("C001BA5E")){
+	         	  response = response.replace(/^C001BA5E......................../, '');
+	           }
+               ta.setValue("/* " + new Date().toLocaleString() + " */\n" + filter(nobreak(textdec.decode(event.data)), '\ufffd') + "\n" + response + "\n" + ta.getValue());
+             };
+             socket.onopen = function(event) {
+               var ta = document.getElementById('responseText').editor;
+               ta.setValue("### Web Socket opened " + event.target.url + " ###\n" + ta.getValue());
+               if(callback !== undefined){ callback(socket); }
+             };
+             socket.onclose = function(event) {
+               var ta = document.getElementById('responseText').editor;
+               ta.setValue("### Web Socket closed [" + event.code + (event.reason ? " " + event.reason : "") + "] ###\n" + ta.getValue()); 
+             };
+             return socket;
+           } else {
+             alert("Your browser does not support Web Socket.");
+           }
+         }
+         
+         function send(message) {
+           localStorage.setItem('messageAreaTextEBML', message);
+           if (!window.WebSocket) { return; }
+           if (socket !== undefined && socket.readyState == WebSocket.OPEN) {
+             socketSend(socket, message);
+           } else {
+             socket = openSocket(function(socket) { socketSend(socket, message); });
+           }
+         }
+
+         function socketSend(socket, message) {
+           if(!message.startsWith("C001BA5E")){
+         	  message = "C001BA5E1225EFFF0000000000000001" + message;
+           }
+           socket.send(hex2buf(message.toUpperCase()));
+         }
+      </script>
+      <form onsubmit="return false;">
+         <textarea id="messageArea" name="message" style="width:100%;height:300px;"></textarea>
+         <br/>
+         <input type="button" value="Send Web Socket Data"
+            onclick="send(document.getElementById('messageArea').editor.getValue())" />
+         <h3>Output</h3>
+         <textarea id="responseText" style="width:500px;height:300px;"></textarea>
+      </form>
+   </body>
+</html>

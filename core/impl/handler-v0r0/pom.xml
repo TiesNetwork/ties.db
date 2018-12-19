@@ -25,15 +25,15 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.tiesdb.coordinator</groupId>
+		<groupId>com.tiesdb</groupId>
 		<artifactId>core-impl</artifactId>
 		<version>0.1.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>coordinator-service</artifactId>
+	<artifactId>handler-v0r0</artifactId>
 
-	<name>TiesDB Coordinator Service</name>
-	<description>TiesDB Coordinator Service implementation</description>
+	<name>TiesDB Handler Version 0 Revision 0</name>
+	<description>Packet handler for TiesDB protocol</description>
 
     <licenses>
         <license>
@@ -44,13 +44,17 @@
 
 	<dependencies>
         <dependency>
-            <groupId>com.tiesdb.lib</groupId>
-            <artifactId>crypto</artifactId>
+            <groupId>com.tiesdb.protocol</groupId>
+            <artifactId>tiesdb-protocol-v0r0</artifactId>
             <version>0.1.1-SNAPSHOT</version>
         </dependency>
 		<dependency>
 			<groupId>com.tiesdb</groupId>
 			<artifactId>core-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.tiesdb.lib</groupId>
+			<artifactId>swissknife</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

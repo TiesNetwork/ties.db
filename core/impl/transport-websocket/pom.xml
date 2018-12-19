@@ -25,15 +25,16 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.tiesdb.coordinator</groupId>
+		<groupId>com.tiesdb</groupId>
 		<artifactId>core-impl</artifactId>
 		<version>0.1.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>coordinator-service</artifactId>
+	<artifactId>transport-websocket</artifactId>
 
-	<name>TiesDB Coordinator Service</name>
-	<description>TiesDB Coordinator Service implementation</description>
+	<name>TiesDB Transport WebSocket</name>
+	<description>TiesDB websocket transport implementation</description>
+	<inceptionYear>2017</inceptionYear>
 
     <licenses>
         <license>
@@ -43,19 +44,28 @@
     </licenses>
 
 	<dependencies>
-        <dependency>
-            <groupId>com.tiesdb.lib</groupId>
-            <artifactId>crypto</artifactId>
-            <version>0.1.1-SNAPSHOT</version>
-        </dependency>
 		<dependency>
 			<groupId>com.tiesdb</groupId>
 			<artifactId>core-api</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.tiesdb.lib</groupId>
+			<artifactId>swissknife</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+		</dependency>
+        <!-- https://mvnrepository.com/artifact/org.antlr/ST4 -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>ST4</artifactId>
+            <version>4.0.8</version>
+        </dependency>
 	</dependencies>
 
 </project>

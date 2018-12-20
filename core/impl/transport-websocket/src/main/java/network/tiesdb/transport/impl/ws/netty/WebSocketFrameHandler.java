@@ -48,7 +48,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame inboundFrame) throws Exception {
         if (inboundFrame instanceof BinaryWebSocketFrame) {
             BinaryWebSocketFrame frame = (BinaryWebSocketFrame) inboundFrame;
-            logger.info("{} received {} bytes", ctx.channel(), frame.content().readableBytes());
+            logger.trace("{} received {} bytes", ctx.channel(), frame.content().readableBytes());
             try {
                 try (WebSocketInputHandler request = new WebSocketInputHandler(frame)) {
                     try (WebSocketOutputHandler response = new WebSocketOutputHandler(ctx.channel())) {

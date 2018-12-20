@@ -100,22 +100,24 @@ public class TiesInitialization implements Runnable {
     }
 
     private static String getConfigDir() {
-        String cassandra_conf = System.getenv("CASSANDRA_CONF");
-        if (null == cassandra_conf) {
-            cassandra_conf = System.getProperty("cassandra.conf", System.getProperty("path.conf", getHomeDir() + File.separator + "conf"));
+        String coordinator_conf = System.getenv("COORDINATOR_CONF");
+        if (null == coordinator_conf) {
+            coordinator_conf = System.getProperty("coordinator.conf",
+                    System.getProperty("path.conf", getHomeDir() + File.separator + "conf"));
         }
-        return cassandra_conf;
+        return coordinator_conf;
     }
 
     private static String getHomeDir() {
-        String cassandra_home = System.getenv("CASSANDRA_HOME");
-        if (null == cassandra_home) {
-            cassandra_home = System.getProperty("cassandra.home", System.getProperty("path.home"));
-            if (null == cassandra_home)
-                throw new IllegalStateException("Cannot start, environnement variable CASSANDRA_HOME and system properties cassandra.home"
-                        + " or path.home are null. Please set one of these to start properly");
+        String coordinator_home = System.getenv("COORDINATOR_HOME");
+        if (null == coordinator_home) {
+            coordinator_home = System.getProperty("coordinator.home", System.getProperty("path.home"));
+            if (null == coordinator_home)
+                throw new IllegalStateException(
+                        "Cannot start, environnement variable COORDINATOR_HOME and system properties coordinator.home"
+                                + " or path.home are null. Please set one of these to start properly");
         }
-        return cassandra_home;
+        return coordinator_home;
     }
 
 }

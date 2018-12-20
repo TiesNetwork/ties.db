@@ -153,10 +153,23 @@ public class WebSocketIndexPageHandler extends SimpleChannelInboundHandler<FullH
 
     private static String getWebSocketLocation(ChannelPipeline cp, HttpRequest req, String path) {
         String protocol = "ws";
-        if (null != cp.get(SslHandler.class)) {
+        if (null != cp.get(SslHandler.class) || checkForwardedSSLRequest(req)) {
             // SSL in use so use Secure WebSockets
             protocol = "wss";
         }
         return protocol + "://" + req.headers().get(HttpHeaders.Names.HOST) + path;
+    }
+
+    private static boolean checkForwardedSSLRequest(HttpRequest req) {
+        String protocol = req.headers().entries().stream().filter(e -> {
+            switch (e.getKey().toLowerCase()) {
+            case "x-forwarded-protocol":
+            case "x-forwarded-proto":
+                return true;
+            default:
+                return false;
+            }
+        }).map(e -> e.getValue()).findFirst().orElse(null);
+        return null != protocol && protocol.equalsIgnoreCase("https");
     }
 }

@@ -14,7 +14,7 @@
         document.getElementById('responseText').editor = editor;
         let areaEditor = CodeMirror.fromTextArea(document.getElementById('messageArea'), options);
         document.getElementById('messageArea').editor = areaEditor;
-        areaEditor.setValue(localStorage.getItem('messageAreaTextEBML'));
+        areaEditor.setValue(localStorage.getItem('messageAreaTextEBML')||'');
       }
       function hex2buf(str) {
         let arr = new Uint8Array(str.length / 2);

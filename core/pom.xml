@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.tiesdb</groupId>
         <artifactId>parent</artifactId>
-        <version>0.1.1-SNAPSHOT</version>
+        <version>0.1.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>core-parent</artifactId>
@@ -48,6 +48,8 @@
         <module>protocol</module>
         <module>schema</module>
         <module>lib</module>
+        <module>api</module>
+        <module>impl</module>
     </modules>
 
 </project>

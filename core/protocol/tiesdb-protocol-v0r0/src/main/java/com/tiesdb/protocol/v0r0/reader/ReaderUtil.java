@@ -39,7 +39,6 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.EventState;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
-import com.tiesdb.protocol.v0r0.reader.ModificationEntryReader.ModificationEntry;
 import com.tiesdb.protocol.v0r0.reader.SignatureReader.Signature;
 
 final class ReaderUtil {
@@ -95,8 +94,8 @@ final class ReaderUtil {
         }
     }
 
-    static boolean checkEntryFieldsHash(ModificationEntry modificationEntry) {
-        HashMap<String, Field> fields = modificationEntry.getFields();
+    static boolean checkEntryFieldsHash(Entry entry) {
+        HashMap<String, Field> fields = entry.getFields();
         Digest fldDigest = DigestManager.getDigest(DEFAULT_DIGEST_ALG);
         TreeSet<String> fieldNames = new TreeSet<>(fields.keySet());
         for (String fieldName : fieldNames) {
@@ -105,6 +104,6 @@ final class ReaderUtil {
         byte[] fldHash = new byte[fldDigest.getDigestSize()];
         fldDigest.doFinal(fldHash, 0);
         LOG.debug("ENTRY_FLD_HASH_CALCULATED: {}", DatatypeConverter.printHexBinary(fldHash));
-        return Arrays.equals(fldHash, modificationEntry.getHeader().getEntryFldHash());
+        return Arrays.equals(fldHash, entry.getHeader().getEntryFldHash());
     }
 }

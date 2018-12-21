@@ -1,0 +1,3 @@
+# To prevent some classes from binding you can mark them with exclamation mark like this:
+# !network.tiesdb.schema.impl.ethereum.TiesSchemaConfigImpl
+network.tiesdb.schema.impl.ethereum.TiesSchemaConfigImpl

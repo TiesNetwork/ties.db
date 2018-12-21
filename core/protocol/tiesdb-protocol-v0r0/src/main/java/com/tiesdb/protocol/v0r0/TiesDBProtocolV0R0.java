@@ -27,6 +27,7 @@ import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeInt16;
 import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeLong32;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -81,6 +82,35 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
         LOG.debug("Preload TiesDB EBML types: {}", Arrays.toString(TiesDBType.values()));
     }
 
+    private static TiesDBChannelInput CLOSED_INPUT = new TiesDBChannelInput() {
+
+        @Override
+        public boolean isFinished() {
+            return true;
+        }
+
+        @Override
+        public byte readByte() throws IOException {
+            throw new IOException("Channel is closed");
+        }
+
+        @Override
+        public int skip(int byteCount) throws IOException {
+            throw new IOException("Channel is closed");
+        }
+
+        @Override
+        public boolean isClosed() {
+            return true;
+        }
+
+        @Override
+        public void close() throws IOException {
+            // NOP
+        }
+
+    };
+
     @Override
     public Version getVersion() {
         return VERSION;
@@ -132,18 +162,38 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
         writeBytes(out, baos.toByteArray());
     }
 
-    protected void processChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider,
-            Version remoteVersion) throws TiesDBException {
+    protected void openChannel(TiesDBChannelOutput output, CheckedConsumer<Conversation, TiesDBException> sessionConsumer)
+            throws TiesDBException, IOException {
+        requireNonNull(output);
+        try {
+            TiesDBChannelOutput bufferedOutput = new TiesDBChannelBufferedOutput(output, out -> {
+                writePacketHeader(VERSION, out);
+                LOG.debug("Header is written for {}", sessionConsumer);
+            });
+            Conversation session = openConversation(CLOSED_INPUT, bufferedOutput);
+            sessionConsumer.accept(session);
+            bufferedOutput.flush();
+        } catch (Exception e) {
+            writePacketHeader(VERSION, output);
+            throw new TiesDBException("Channel open failed", e);
+        }
+    }
+
+    protected void processChannel(TiesDBChannelInput input, TiesDBChannelOutput output,
+            CheckedConsumer<Conversation, TiesDBException> sessionConsumer) throws TiesDBException, IOException {
         requireNonNull(input);
         requireNonNull(output);
-        requireNonNull(handlerProvider);
         try {
-            TiesDBChannelOutput bufferedOutput = new TiesDBChannelBufferedOutput(output);
+            TiesDBChannelOutput bufferedOutput = new TiesDBChannelBufferedOutput(output, out -> {
+                writePacketHeader(VERSION, out);
+                LOG.debug("Header is written for {}", sessionConsumer);
+            });
             Conversation session = openConversation(input, bufferedOutput);
-            requireNonNull(handlerProvider.getHandler(VERSION, remoteVersion, session)).handle(session);
+            sessionConsumer.accept(session);
             bufferedOutput.flush();
         } catch (Exception e) {
             LOG.debug("Handle exception", e);
+            writePacketHeader(VERSION, output);
             EBMLHelper.writeError(openConversation(input, output), e);
         }
     }
@@ -206,6 +256,16 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
                 writer.removeListener(listener);
             }
 
+            @Override
+            public Version getVersion() {
+                return TiesDBProtocolV0R0.this.getVersion();
+            }
+
+            @Override
+            public void close() throws IOException {
+                input.close();
+            }
+
         };
     }
 
@@ -247,7 +307,7 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
         throw new TiesDBProtocolException("Unknown EBML type " + type);
     }
 
-    public static interface Conversation {
+    public static interface Conversation extends Closeable {
 
         enum EventState {
             BEGIN, END
@@ -300,22 +360,17 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
 
         void removeWriterListener(Object listener);
 
+        Version getVersion();
+
     }
 
     @Override
-    public void createChannel(TiesDBChannelInput input, TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider)
-            throws TiesDBException {
-        requireNonNull(input);
+    public void createChannel(TiesDBChannelOutput output, TiesDBProtocolHandlerProvider handlerProvider) throws TiesDBException {
         requireNonNull(output);
         try {
-            writePacketHeader(VERSION, output);
-            Version remoteVersion = parsePacketHeader(input);
-            if (REVISION.compare(VERSION, remoteVersion) >= 0) {
-                processChannel(input, output, handlerProvider, remoteVersion);
-                return;
-            } else {
-                throw new TiesDBProtocolException("Channel protocol version missmatch on create");
-            }
+            openChannel(output, session -> {
+                handlerProvider.getHandler(VERSION, VERSION, session).handle(session);
+            });
         } catch (IOException e) {
             LOG.debug("CreateChannelHandshake failed", e);
             throw new TiesDBProtocolException("Can't create channel", e);
@@ -330,8 +385,9 @@ public class TiesDBProtocolV0R0 implements TiesDBProtocol {
         try {
             Version remoteVersion = parsePacketHeader(input);
             if (REVISION.compare(VERSION, remoteVersion) >= 0) {
-                writePacketHeader(VERSION, output);
-                processChannel(input, output, handlerProvider, remoteVersion);
+                processChannel(input, output, session -> {
+                    handlerProvider.getHandler(VERSION, remoteVersion, session).handle(session);
+                });
                 return;
             } else {
                 throw new TiesDBProtocolException("Channel protocol version missmatch on accept");

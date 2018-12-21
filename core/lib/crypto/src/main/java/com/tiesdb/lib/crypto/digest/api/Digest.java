@@ -77,6 +77,14 @@ public interface Digest {
     public int doFinal(byte[] out, int outOff);
 
     /**
+     * close the digest, producing the final digest value. The doFinal call leaves
+     * the digest reset.
+     *
+     * @param out the array the digest is to be copied into.
+     */
+    public int doFinal(byte[] out);
+
+    /**
      * reset the digest back to it's initial state.
      */
     public void reset();

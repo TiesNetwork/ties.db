@@ -38,4 +38,9 @@ public final class Keccak extends org.bouncycastle.crypto.digests.KeccakDigest i
     public void update(byte[] in, int inOff) {
         update(in, inOff, in.length);
     }
+
+    @Override
+    public int doFinal(byte[] out) {
+        return doFinal(out, 0);
+    }
 }

@@ -1,0 +1,3 @@
+# To prevent some classes from binding you can mark them with exclamation mark like this:
+# !network.tiesdb.handler.impl.v0r0.TiesHandlerConfigImpl
+network.tiesdb.handler.impl.v0r0.TiesHandlerConfigImpl

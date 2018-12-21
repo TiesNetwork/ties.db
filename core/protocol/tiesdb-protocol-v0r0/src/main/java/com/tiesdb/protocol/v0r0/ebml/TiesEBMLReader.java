@@ -165,6 +165,11 @@ public class TiesEBMLReader extends EBMLReader {
                     return structural;
                 }
 
+                @Override
+                public boolean is(Context context) {
+                    return equals(context);
+                }
+
             };
         }
 

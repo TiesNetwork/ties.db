@@ -22,28 +22,47 @@ import java.math.BigInteger;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResponse;
+import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResponse;
 import com.tiesdb.protocol.v0r0.writer.SchemaResponseWriter.SchemaResponse;
 
 @FunctionalInterface
 public interface Writer<T> {
 
-    interface Response {
+    interface Message {
+
+        BigInteger getMessageId();
+
+    }
+
+    interface Request extends Message {
 
         interface Visitor<T> {
 
-            T on(ModificationResponse response) throws TiesDBProtocolException;
+            T on(ModificationRequest modificationRequest) throws TiesDBProtocolException;
 
-            T on(RecollectionResponse response) throws TiesDBProtocolException;
-
-            T on(SchemaResponse response) throws TiesDBProtocolException;
+            T on(RecollectionRequest recollectionRequest) throws TiesDBProtocolException;
 
         }
 
         <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
+    }
 
-        BigInteger getMessageId();
+    interface Response extends Message {
+
+        interface Visitor<T> {
+
+            T on(ModificationResponse modificationResponse) throws TiesDBProtocolException;
+
+            T on(RecollectionResponse recollectionResponse) throws TiesDBProtocolException;
+
+            T on(SchemaResponse schemaResponse) throws TiesDBProtocolException;
+
+        }
+
+        <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
 
     }
 

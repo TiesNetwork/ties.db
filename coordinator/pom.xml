@@ -28,10 +28,11 @@
     <parent>
         <groupId>com.tiesdb</groupId>
         <artifactId>parent</artifactId>
-        <version>0.1.1-SNAPSHOT</version>
+        <version>0.1.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>coordinator-parent</artifactId>
+    <groupId>com.tiesdb.coordinator</groupId>
+    <artifactId>parent</artifactId>
     <packaging>pom</packaging>
 
     <name>TiesDB Coordinator Parent</name>
@@ -45,7 +46,8 @@
     </licenses>
 
     <modules>
-        <module>coordinator</module>
+        <module>core</module>
+        <module>distribution</module>
     </modules>
 
 </project>

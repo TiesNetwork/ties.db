@@ -1,0 +1,125 @@
+<!--
+
+    Copyright © 2017 Ties BV
+
+    This file is part of Ties.DB project.
+
+    Ties.DB project is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Ties.DB project is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
+
+-->
+<component>
+    <dependencySets>
+        <!-- network.ties.db group dependencies with prefix tiesdb -->
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>false</useTransitiveFiltering>
+            <useProjectArtifact>false</useProjectArtifact>
+            <outputFileNameMapping>${tiesdb.build.prefix}${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+            <includes>
+                <!-- include network.ties.db group -->
+                <include>network.ties.db:*:*</include>
+            </includes>
+            <excludes>
+              <!-- don't include POMs they are useless in runtime -->
+              <exclude>*:pom</exclude>
+            </excludes>
+        </dependencySet>
+        <!-- all other dependencies except network.ties.db group -->
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>false</useTransitiveFiltering>
+            <useProjectArtifact>false</useProjectArtifact>
+            <excludes>
+              <!-- don't include POMs they are useless in runtime -->
+              <exclude>*:pom</exclude>
+              <!-- don't include network.ties.db group we have it already -->
+              <exclude>network.ties.db:*:*</exclude>
+            </excludes>
+        </dependencySet>
+    </dependencySets>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/coordinator</directory>
+            <outputDirectory>.</outputDirectory>
+            <fileMode>0644</fileMode>
+            <includes>
+                <include>**</include>
+            </includes>
+            <useDefaultExcludes>false</useDefaultExcludes>
+            <excludes>
+              <exclude>bin/**</exclude>
+              <exclude>lib/slf4j-api-1.7.*.jar</exclude>
+              <exclude>modules/**/asm-5.0.*.jar</exclude>
+              <exclude>modules/**/asm-commons-5.0.*.jar</exclude>
+              <exclude>modules/**/asm-analysis-5.0.*.jar</exclude>
+              <exclude>modules/**/asm-tree-5.0.*.jar</exclude>
+              <exclude>modules/**/asm-util-5.0.*.jar</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/coordinator</directory>
+            <outputDirectory>.</outputDirectory>
+            <fileMode>0755</fileMode>
+            <includes>
+                <include>bin/**</include>
+            </includes>
+            <useDefaultExcludes>false</useDefaultExcludes>
+        </fileSet>
+        <!-- create required empty folders -->
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>data</outputDirectory>
+            <excludes><exclude>*/**</exclude></excludes>
+        </fileSet>
+        <!--
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>work</outputDirectory>
+            <excludes><exclude>*/**</exclude></excludes>
+        </fileSet>
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>plugins</outputDirectory>
+            <excludes><exclude>*/**</exclude></excludes>
+        </fileSet>
+        -->
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>logs</outputDirectory>
+            <excludes><exclude>*/**</exclude></excludes>
+        </fileSet>
+    </fileSets>
+    <!--
+    <files>
+        <file>
+            <source>../../CHANGES.txt</source>
+            <outputDirectory>.</outputDirectory>
+        </file>
+        <file>
+            <source>../../README.md</source>
+            <outputDirectory>.</outputDirectory>
+        </file>
+        <file>
+            <source>../../LICENSE.txt</source>
+            <outputDirectory>.</outputDirectory>
+        </file>
+        <file>
+            <source>../../NOTICE.txt</source>
+            <outputDirectory>.</outputDirectory>
+        </file>
+    </files>
+    -->
+</component>

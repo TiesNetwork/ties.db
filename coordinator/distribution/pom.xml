@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright © 2017 Ties BV This file is part of Ties.DB project. Ties.DB 
+    project is free software: you can redistribute it and/or modify it under 
+    the terms of the GNU General Public License as published by the Free Software 
+    Foundation, either version 3 of the License, or (at your option) any later 
+    version. Ties.DB project is distributed in the hope that it will be useful, 
+    but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+    or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
+    more details. You should have received a copy of the GNU General Public License 
+    along with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.tiesdb.coordinator</groupId>
+        <artifactId>parent</artifactId>
+        <version>0.1.2-SNAPSHOT</version>
+    </parent>
+
+    <packaging>pom</packaging>
+
+    <artifactId>distribution</artifactId>
+
+    <name>TiesDB Coordinator Distributions Parent POM</name>
+    <description>Different types of distributions for TiesDB project</description>
+
+    <properties>
+        <jamm.version>0.3.0</jamm.version>
+        <logback.version>1.2.3</logback.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>context-yaml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>transport-websocket</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>handler-v0r0</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb</groupId>
+            <artifactId>schema-ethereum</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb.coordinator</groupId>
+            <artifactId>coordinator-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tiesdb.coordinator</groupId>
+            <artifactId>coordinator-bootstrap</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jbellis</groupId>
+            <artifactId>jamm</artifactId>
+            <version>${jamm.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jbellis</groupId>
+            <artifactId>jamm</artifactId>
+            <version>${jamm.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Always generate a Javadoc file even if we don't have 
+                    any java source but only resources -->
+                <!-- <plugin> <groupId>org.apache.maven.plugins</groupId> 
+                    <artifactId>maven-jar-plugin</artifactId> <executions> <execution> <id>empty-javadoc-jar</id> 
+                    <phase>package</phase> <goals> <goal>jar</goal> </goals> <configuration> 
+                    <classifier>javadoc</classifier> <classesDirectory>${basedir}/src/main/resources</classesDirectory> 
+                    </configuration> </execution> </executions> </plugin> -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.6</version>
+                    <configuration>
+                        <finalName>tiesdb-coordinator-${project.version}</finalName>
+                        <appendAssemblyId>false</appendAssemblyId>
+                        <outputDirectory>${project.parent.parent.build.directory}/</outputDirectory>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                <includeScope>runtime</includeScope>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>unpack-modules</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>com.tiesdb.coordinator</groupId>
+                                        <artifactId>distribution-common</artifactId>
+                                        <version>${project.version}</version>
+                                        <overWrite>true</overWrite>
+                                        <outputDirectory>${project.build.directory}/coordinator</outputDirectory>
+                                        <excludes>META-INF/**</excludes>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.tiesdb.coordinator</groupId>
+                            <artifactId>distribution-common</artifactId>
+                            <version>${project.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <configuration>
+                        <!-- distribution modules don't provide any jar. 
+                            No need to upload empty jars to maven central -->
+                        <skipIfEmpty>true</skipIfEmpty>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <modules>
+        <module>common</module>
+        <module>zip</module>
+        <module>tar</module>
+    </modules>
+
+</project>

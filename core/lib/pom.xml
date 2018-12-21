@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.tiesdb</groupId>
         <artifactId>core-parent</artifactId>
-        <version>0.1.1-SNAPSHOT</version>
+        <version>0.1.2-SNAPSHOT</version>
     </parent>
 
     <groupId>com.tiesdb.lib</groupId>
@@ -51,6 +51,7 @@
         <module>crypto</module>
         <module>sparse</module>
         <module>abio</module>
+        <module>swissknife</module>
     </modules>
 
 </project>

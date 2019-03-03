@@ -42,7 +42,7 @@ public class TiesServiceStaticRouter implements TiesRouter {
 
         public StaticNode(short networkId, String addressString) {
             this.networkId = networkId;
-            this.addressString = addressString;
+            this.addressString = addressString.toLowerCase();
         }
 
         @Override

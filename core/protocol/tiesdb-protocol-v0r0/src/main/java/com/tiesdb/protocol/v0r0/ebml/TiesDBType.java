@@ -31,9 +31,9 @@ public enum TiesDBType implements TiesEBMLType {
     UNKNOWN_STRUCTURE(Context.UNKNOWN_STRUCTURE), // Meta
     UNKNOWN_VALUE(Context.VALUE, Context.UNKNOWN_STRUCTURE), // Binary
 
-    MESSAGE_ID(0xEC, Context.VALUE, Context.REQUEST, Context.RESPONSE, Context.ERROR), // Unsigned
+    MESSAGE_ID(0xEC, Context.VALUE, Context.IDENTIFIED), // Unsigned
 
-    CONSISTENCY(0xEE, Context.VALUE, Context.REQUEST), // Unsigned
+    CONSISTENCY(0xEE, Context.VALUE, Context.COORDINATED_REQUEST), // Unsigned
 
     SIGNATURE(0xFE, Context.VALUE, Context.SIGNED), // Binary
     SIGNER(0xFC, Context.VALUE, Context.SIGNED), // Binary
@@ -58,6 +58,8 @@ public enum TiesDBType implements TiesEBMLType {
     FIELD_HASH(0x84, Context.VALUE, Context.FIELD), // Binary (Keccak-256)
     FIELD_VALUE(0x86, Context.VALUE, Context.FIELD), // Binary
 
+    ENTRY_HASH(0x80, Context.VALUE, Context.ENTRY_REFERENCE), // Binary (Keccak-256)
+
     CHEQUE_LIST(0xC1, Context.CHEQUE_LIST, Context.CHEQUE_LIST_CONTAINER), // Meta
     CHEQUE(0xC1, Context.CHEQUE, Context.CHEQUE_LIST), // Meta
     CHEQUE_RANGE(0x80, Context.VALUE, Context.CHEQUE), // Binary (UUID)
@@ -72,7 +74,6 @@ public enum TiesDBType implements TiesEBMLType {
     MODIFICATION_RESPONSE(0x1F544945, Context.MODIFICATION_RESPONSE, Context.ROOT), // Meta
     MODIFICATION_RESULT(0xE1, Context.MODIFICATION_RESULT, Context.MODIFICATION_RESPONSE), // Meta
     MODIFICATION_ERROR(0xEF, Context.MODIFICATION_ERROR, Context.MODIFICATION_RESPONSE), // Meta
-    ENTRY_HASH(0x80, Context.VALUE, Context.MODIFICATION_RESULT, Context.MODIFICATION_ERROR), // Binary (Keccak-256)
 
     RECOLLECTION_REQUEST(0x11544945, Context.RECOLLECTION_REQUEST, Context.ROOT), // Meta
 
@@ -105,6 +106,9 @@ public enum TiesDBType implements TiesEBMLType {
     SCHEMA_FIELD(0xD1, Context.SCHEMA_FIELD, Context.SCHEMA_RESPONSE), // Meta
     SCHEMA_KEY_FIELD(0xD3, Context.SCHEMA_FIELD, Context.SCHEMA_RESPONSE), // Binary
 
+    HEALING_REQUEST(0x1C544945, Context.HEALING_REQUEST, Context.ROOT), // Meta
+    HEALING_RESPONSE(0x1D544945, Context.HEALING_RESPONSE, Context.ROOT), // Meta
+
     ;
 
     public static enum Context implements EBMLType.Context {
@@ -120,12 +124,16 @@ public enum TiesDBType implements TiesEBMLType {
 
         ROOT, //
 
-        ERROR, //
-
         SIGNED, //
 
-        REQUEST, //
-        RESPONSE, //
+        IDENTIFIED, //
+        CONSISTENT, //
+
+        ERROR(IDENTIFIED), //
+
+        REQUEST(IDENTIFIED), //
+        COORDINATED_REQUEST(CONSISTENT, REQUEST), //
+        RESPONSE(IDENTIFIED), //
 
         TABLE_META, //
 
@@ -134,20 +142,22 @@ public enum TiesDBType implements TiesEBMLType {
         CHEQUE(SIGNED), //
         ADDRESS_LIST, //
 
+        ENTRY_REFERENCE,
+
         ENTRY_CONTAINER, //
+        SIGNED_ENTRY_CONTAINER(SIGNED, ENTRY_CONTAINER), //
         ENTRY(CHEQUE_LIST_CONTAINER), //
         ENTRY_HEADER(TABLE_META, SIGNED), //
         FIELD_LIST, //
         FIELD_META, //
         FIELD(FIELD_META), //
 
-        MODIFICATION_REQUEST(REQUEST, ENTRY_CONTAINER), //
+        MODIFICATION_REQUEST(COORDINATED_REQUEST, ENTRY_CONTAINER), //
         MODIFICATION_RESPONSE(RESPONSE), //
+        MODIFICATION_RESULT(SIGNED, ENTRY_REFERENCE), //
+        MODIFICATION_ERROR(ERROR, ENTRY_REFERENCE), //
 
-        MODIFICATION_RESULT(SIGNED), //
-        MODIFICATION_ERROR(ERROR), //
-
-        RECOLLECTION_REQUEST(REQUEST, TABLE_META), //
+        RECOLLECTION_REQUEST(COORDINATED_REQUEST, TABLE_META), //
         RECOLLECTION_RESPONSE(RESPONSE), //
 
         FUNCTION, //
@@ -159,13 +169,15 @@ public enum TiesDBType implements TiesEBMLType {
         FILTER_LIST, //
         FILTER(FUNCTION),
 
-        RECOLLECTION_RESULT(SIGNED, ENTRY_CONTAINER), //
-        RECOLLECTION_ENTRY, //
+        RECOLLECTION_RESULT(SIGNED_ENTRY_CONTAINER), //
         RECOLLECTION_COMPUTE, //
 
-        SCHEMA_REQUEST(REQUEST, TABLE_META), //
+        SCHEMA_REQUEST(COORDINATED_REQUEST, TABLE_META), //
         SCHEMA_FIELD(FIELD_META), //
         SCHEMA_RESPONSE(RESPONSE, TABLE_META), //
+
+        HEALING_REQUEST(REQUEST, SIGNED_ENTRY_CONTAINER), //
+        HEALING_RESPONSE(MODIFICATION_RESPONSE), //
 
         ;
 

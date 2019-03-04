@@ -74,7 +74,10 @@ public class ConsistencyArbiter {
 
     private final ArbiterStrategy strategy;
 
-    public ConsistencyArbiter(ActionConsistency consistency, int total) {
+    public ConsistencyArbiter(ActionConsistency consistency, int replicationFactor) {
+        if (0 == replicationFactor) {
+            throw new IllegalArgumentException("Replication factor should be positive integer, got " + replicationFactor);
+        }
         this.strategy = consistency.accept(new Visitor<ArbiterStrategy>() {
 
             @Override
@@ -84,12 +87,12 @@ public class ConsistencyArbiter {
 
             @Override
             public ArbiterStrategy on(PercentConsistency percentConsistency) {
-                return new PercentStrategy(total, percentConsistency.getValue());
+                return new PercentStrategy(replicationFactor, percentConsistency.getValue());
             }
 
             @Override
             public ArbiterStrategy on(QuorumConsistency quorumConsistency) {
-                return new QuorumStrategy(total);
+                return new QuorumStrategy(replicationFactor);
             }
         });
     }

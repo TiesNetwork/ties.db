@@ -83,15 +83,17 @@ public class ModificationResponseReader implements Reader<ModificationResponseRe
     }
 
     private final ModificationResultSuccessReader modificationResultSuccessReader = new ModificationResultSuccessReader();
+    private final ModificationResultErrorReader modificationResultErrorReader = new ModificationResultErrorReader();
 
     public boolean acceptModificationResult(Conversation session, Event e, ModificationResponse r) throws TiesDBProtocolException {
         switch (e.getType()) {
-        case MESSAGE_ID:
+        case MESSAGE_ID: {
             r.messageId = session.read(BigIntegerFormat.INSTANCE);
             LOG.debug("MESSAGE_ID : {}", r.messageId);
             end(session, e);
             return true;
-        case MODIFICATION_RESULT:
+        }
+        case MODIFICATION_RESULT: {
             LOG.debug("MODIFICATION_RESULT found in message {}", r.getMessageId());
             ModificationResultSuccess modificationResultSuccess = new ModificationResultSuccess();
             boolean result = modificationResultSuccessReader.accept(session, e, modificationResultSuccess);
@@ -99,6 +101,16 @@ public class ModificationResponseReader implements Reader<ModificationResponseRe
                 r.modificationResults.add(modificationResultSuccess);
             }
             return result;
+        }
+        case MODIFICATION_ERROR: {
+            LOG.debug("MODIFICATION_ERROR found in message {}", r.getMessageId());
+            ModificationResultError modificationResultError = new ModificationResultError();
+            boolean result = modificationResultErrorReader.accept(session, e, modificationResultError);
+            if (result) {
+                r.modificationResults.add(modificationResultError);
+            }
+            return result;
+        }
         // $CASES-OMITTED$
         default:
             return false;

@@ -200,4 +200,10 @@ public class TableImpl extends NamedItemImpl implements Table {
         return replicas != 0 && ranges != 0;
     }
 
+    @Override
+    public int getReplicas() {
+        load();
+        return replicas;
+    }
+
 }

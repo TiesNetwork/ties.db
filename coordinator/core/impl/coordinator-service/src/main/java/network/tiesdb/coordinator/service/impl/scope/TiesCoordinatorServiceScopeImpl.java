@@ -59,6 +59,8 @@ import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry;
+import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldHash;
+import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldValue;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FieldSelector;
@@ -166,14 +168,17 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
         TiesServiceSchema sch = service.getSchemaService();
         Set<FieldDescription> fields = sch.getFields(tsn, tbn);
+        Set<FieldDescription> keyFields = fields.stream().filter(f -> f.isPrimaryKey()).collect(Collectors.toSet());
         {
             Set<String> entryFieldNames = entry.getFieldValues().keySet();
-            if (!fields.stream().filter(f -> f.isPrimaryKey()).map(f -> f.getName()).allMatch(entryFieldNames::contains)) {
+            if (!keyFields.stream().map(f -> f.getName()).allMatch(entryFieldNames::contains)) {
                 new TiesServiceScopeException("Missing required primary key fields");
             }
         }
 
-        Set<Node> nodes = sch.getNodes(tsn, tbn);
+        byte[] entryKeyHash = getEntryKeyHash(entry, keyFields);
+        Set<? extends Node> nodes = sch.getNodes(tsn, tbn, entryKeyHash);
+        LOG.debug("CoordinatedModification {} nodes: {}", DatatypeConverter.printHexBinary(entryKeyHash), nodes);
         if (null == nodes || nodes.isEmpty()) {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
@@ -317,6 +322,26 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         }
     }
 
+    private byte[] getEntryKeyHash(Entry entry, Set<FieldDescription> keyFields) throws TiesServiceScopeException {
+        Digest keyHashDigest = DigestManager.getDigest(DigestManager.KECCAK_256);
+        Map<String, FieldHash> fhs = entry.getFieldHashes();
+        Map<String, FieldValue> fvs = entry.getFieldValues();
+        for (FieldDescription field : keyFields) {
+            FieldHash fieldHash = fhs.get(field.getName());
+            if (null == fieldHash) {
+                fieldHash = fvs.get(field.getName());
+            }
+            if (null == fieldHash) {
+                throw new TiesServiceScopeException("Key field " + field.getName() + " was not found in entry "
+                        + DatatypeConverter.printHexBinary(entry.getHeader().getHash()));
+            }
+            keyHashDigest.update(fieldHash.getHash());
+        }
+        byte[] out = new byte[keyHashDigest.getDigestSize()];
+        keyHashDigest.doFinal(out);
+        return out;
+    }
+
     @Override
     public void select(TiesServiceScopeRecollection action) throws TiesServiceScopeException {
 
@@ -355,7 +380,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             }
         }
 
-        Set<Node> nodes = sch.getNodes(tsn, tbn);
+        Set<? extends Node> nodes = sch.getNodes(tsn, tbn);
         if (null == nodes || nodes.isEmpty()) {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
@@ -441,7 +466,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         }
         Set<String> filteredSegregations;
         {
-            filteredSegregations = new ConsistencyArbiter(action.getConsistency(), nodes.size()).getResults(segregatedResults);
+            filteredSegregations = new ConsistencyArbiter(action.getConsistency(), sch.getReplicationFactor(tsn, tbn))
+                    .getResults(segregatedResults);
         }
 
         Optional<String> firstResultHash = filteredSegregations.stream().filter(p -> RECOLLECTION_ERROR != p).findFirst();

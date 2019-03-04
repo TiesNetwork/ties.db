@@ -19,20 +19,27 @@
 package network.tiesdb.coordinator.service.schema;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toSet;
 
+import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import network.tiesdb.router.api.TiesRouter.Node;
 import network.tiesdb.schema.api.TiesSchema;
 import network.tiesdb.schema.api.TiesSchema.Field;
 import network.tiesdb.schema.api.TiesSchema.IndexType;
-import network.tiesdb.router.api.TiesRouter.Node;
 import network.tiesdb.schema.api.TiesSchema.Table;
 import network.tiesdb.schema.api.TiesSchema.Tablespace;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
@@ -85,6 +92,67 @@ public class TiesServiceSchema {
 
     public static class SchemaCache extends ConcurrentHashMap<CacheKey, Set<FieldDescription>> {
         private static final long serialVersionUID = -5958833752316194583L;
+
+        private final Function<CacheKey, Set<FieldDescription>> entryProvider;
+
+        public SchemaCache(Function<CacheKey, Set<FieldDescription>> entryProvider) {
+            this.entryProvider = entryProvider;
+        }
+
+        public Set<FieldDescription> load(String tablespaceName, String tableName) {
+            CacheKey key = new CacheKey(tablespaceName, tableName);
+            return computeIfAbsent(key, this::createSchemaCache);
+        }
+
+        // TODO synchronize on key to avoid whole cache locking
+        private synchronized Set<FieldDescription> createSchemaCache(CacheKey key) {
+            Set<FieldDescription> cacheEntry = get(key);
+            if (null == cacheEntry) {
+                cacheEntry = this.entryProvider.apply(key);
+            }
+            return cacheEntry;
+        }
+    }
+
+    public static class DistributionCache extends ConcurrentHashMap<CacheKey, DistributionCache.Entry> {
+        private static final long serialVersionUID = -5958833752316194583L;
+
+        private final Function<CacheKey, Entry> entryProvider;
+
+        public DistributionCache(Function<CacheKey, Entry> entryProvider) {
+            this.entryProvider = entryProvider;
+        }
+
+        private static class Entry {
+
+            private final Set<? extends RangedNode> nodes;
+            private final int replicationFactor;
+
+            public Entry(int replicationFactor, Set<? extends RangedNode> nodes) {
+                this.nodes = nodes;
+                this.replicationFactor = replicationFactor;
+            }
+
+            @Override
+            public String toString() {
+                return "CacheEntry [replicationFactor=" + replicationFactor + ", nodes=" + nodes + "]";
+            }
+
+        }
+
+        private Entry load(String tablespaceName, String tableName) {
+            CacheKey key = new CacheKey(tablespaceName, tableName);
+            return computeIfAbsent(key, this::createTableCache);
+        }
+
+        // TODO synchronize on key to avoid whole cache locking
+        private synchronized Entry createTableCache(CacheKey key) {
+            Entry cacheEntry = get(key);
+            if (null == cacheEntry) {
+                cacheEntry = this.entryProvider.apply(key);
+            }
+            return cacheEntry;
+        }
     }
 
     public static class FieldDescription {
@@ -143,44 +211,104 @@ public class TiesServiceSchema {
         }
     }
 
-    public static class EndpointCache extends ConcurrentHashMap<CacheKey, Set<Node>> {
-        private static final long serialVersionUID = -5958833752316194583L;
+    private static interface RangedNode extends Node {
+
+        boolean inRange(BigInteger key);
+
+    }
+
+    private static class SchemaRangedNode implements RangedNode {
+
+        private final String address;
+        private final short network;
+        private final Map<BigInteger, Set<BigInteger>> rangeMap;
+
+        public SchemaRangedNode(String address, short network, Map<BigInteger, Set<BigInteger>> rangeMap) {
+            this.address = address;
+            this.network = network;
+            this.rangeMap = rangeMap;
+        }
+
+        @Override
+        public short getNodeNetwork() {
+            return network;
+        }
+
+        @Override
+        public String getAddressString() {
+            return address;
+        }
+
+        @Override
+        public boolean inRange(BigInteger key) {
+            for (Entry<BigInteger, Set<BigInteger>> e : rangeMap.entrySet()) {
+                if (e.getValue().contains(key.remainder(e.getKey()))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((address == null) ? 0 : address.hashCode());
+            result = prime * result + network;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SchemaRangedNode other = (SchemaRangedNode) obj;
+            if (address == null) {
+                if (other.address != null)
+                    return false;
+            } else if (!address.equals(other.address))
+                return false;
+            if (network != other.network)
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "SchemaRangedNode [address=" + address + ", network=" + network + ", rangeMap=" + rangeMap + "]";
+        }
+
     }
 
     private final TiesSchema schema;
-    private final SchemaCache schemaCache = new SchemaCache();
-    private final EndpointCache endpointCache = new EndpointCache();
+    private final SchemaCache schemaCache = new SchemaCache(this::loadSchemaFields);
+    private final DistributionCache tableCache = new DistributionCache(this::loadSchemaTable);
 
     public TiesServiceSchema(TiesSchema schema) {
         this.schema = schema;
     }
 
     public Set<FieldDescription> getFields(String tablespaceName, String tableName) {
-        CacheKey key = new CacheKey(tablespaceName, tableName);
-        Set<FieldDescription> fields = schemaCache.get(key);
-        if (null == fields) {
-            fields = schemaCache.computeIfAbsent(key, this::createSchemaCache);
+        return schemaCache.load(tablespaceName, tableName);
+    }
+
+    public Set<? extends Node> getNodes(String tablespaceName, String tableName) {
+        return getNodes(tablespaceName, tableName, null);
+    }
+
+    public Set<? extends Node> getNodes(String tablespaceName, String tableName, byte[] headerHash) {
+        DistributionCache.Entry cacheEntry = tableCache.load(tablespaceName, tableName);
+        Set<? extends RangedNode> nodes = cacheEntry.nodes;
+        if (null == headerHash) {
+            return nodes;
         }
-        return fields;
-    }
-
-    public Set<Node> getNodes(String tablespaceName, String tableName) {
-        CacheKey key = new CacheKey(tablespaceName, tableName);
-        Set<Node> nodes = endpointCache.get(key);
-        if (null == nodes) {
-            nodes = endpointCache.computeIfAbsent(key, this::createNodeCache);
-        }
-        return nodes;
-    }
-
-    // TODO synchronize on key to avoid whole cache locking
-    private synchronized Set<Node> createNodeCache(CacheKey key) {
-        return loadSchemaNodes(key);
-    }
-
-    // TODO synchronize on key to avoid whole cache locking
-    private synchronized Set<FieldDescription> createSchemaCache(CacheKey key) {
-        return loadSchemaFields(key, new HashSet<>());
+        BigInteger headerHashKey = new BigInteger(1, headerHash);
+        Set<RangedNode> resultNodes = nodes.stream().filter(node -> node.inRange(headerHashKey)).collect(toSet());
+        return resultNodes;
     }
 
     private static void checkForInvalidModifications(Set<FieldDescription> refList, Set<FieldDescription> conList) {
@@ -188,15 +316,12 @@ public class TiesServiceSchema {
         Iterator<FieldDescription> conIter = conList.iterator();
         while (refIter.hasNext() && conIter.hasNext()) {
             FieldDescription ref = refIter.next();
-            FieldDescription con;
-            do {
-                con = conIter.next();
-                if (ref.equals(con) && (ref.isPrimaryKey && !con.isPrimaryKey)) {
-                    throw new IllegalStateException("Field `" + ref.getName() + "`:" + ref.getType() + " was removed from primary keys");
-                } else {
-                    continue;
-                }
-            } while (conIter.hasNext());
+            FieldDescription con = conIter.next();
+            if (ref.equals(con) && (ref.isPrimaryKey && !con.isPrimaryKey)) {
+                throw new IllegalStateException("Field `" + ref.getName() + "`:" + ref.getType() + " was removed from primary keys");
+            } else {
+                continue;
+            }
         }
         if (refIter.hasNext()) {
             FieldDescription ref = refIter.next();
@@ -214,18 +339,21 @@ public class TiesServiceSchema {
 
     void updateAllDescriptors() {
         LOG.debug("Start updating schema: {}", schema);
-        SchemaCache schemaCacheUpdated = new SchemaCache();
+        SchemaCache schemaCacheUpdated = new SchemaCache(this::loadSchemaFields);
         schemaCache.forEach((k, v) -> {
             updateSchemaCache(k, v, schemaCacheUpdated);
         });
         schemaCache.putAll(schemaCacheUpdated);
+        DistributionCache tableCacheUpdated = new DistributionCache(this::loadSchemaTable);
+        tableCache.keySet().stream().forEach(k -> tableCacheUpdated.load(k.tablespace, k.table));
+        tableCache.putAll(tableCacheUpdated);
         LOG.debug("Updating schema finished for: {}", schema);
     }
 
     private void updateSchemaCache(CacheKey cacheKey, Set<FieldDescription> cachedDescriptions, SchemaCache schemaCacheUpdated) {
         LOG.debug("Start updating: `{}`.`{}`", cacheKey.tablespace, cacheKey.table);
         try {
-            Set<FieldDescription> contractDescriptions = loadSchemaFields(cacheKey, new HashSet<>());
+            Set<FieldDescription> contractDescriptions = loadSchemaFields(cacheKey);
             try {
                 checkForInvalidModifications(cachedDescriptions, contractDescriptions);
             } catch (Throwable e) {
@@ -243,7 +371,8 @@ public class TiesServiceSchema {
         }
     }
 
-    private Set<FieldDescription> loadSchemaFields(CacheKey key, Set<FieldDescription> descriptions) {
+    private Set<FieldDescription> loadSchemaFields(CacheKey key) {
+        HashSet<FieldDescription> descriptions = new HashSet<>();
         Tablespace ts = schema.getTablespace(key.tablespace);
         requireNonNull(ts, "Tablespace not found");
         Table t = ts.getTable(key.table);
@@ -265,12 +394,12 @@ public class TiesServiceSchema {
         return descriptions;
     }
 
-    private Set<Node> loadSchemaNodes(CacheKey key) {
+    private DistributionCache.Entry loadSchemaTable(CacheKey key) {
         { // TODO FIXME Move SingleDebugNode logic to new subclass in TEST environment
             String sna = System.getProperty("network.tiesdb.debug.SingleNodeAddress");
             if (null != sna) {
-                HashSet<Node> nodeset = new HashSet<>();
-                nodeset.add(new Node() {
+                HashSet<RangedNode> nodeset = new HashSet<>();
+                nodeset.add(new RangedNode() {
 
                     @Override
                     public short getNodeNetwork() {
@@ -283,29 +412,37 @@ public class TiesServiceSchema {
                     }
 
                     @Override
+                    public boolean inRange(BigInteger key) {
+                        return true;
+                    }
+
+                    @Override
                     public String toString() {
-                        return "SingleDebugNode(" + sna + ")";
+                        return "SingleDebugNode [address=" + getAddressString() + ", network=" + getNodeNetwork() + "]";
                     }
 
                 });
-                return nodeset;
+                return new DistributionCache.Entry(1, nodeset);
             }
         }
         Tablespace tablespace = schema.getTablespace(key.tablespace);
         Table table = tablespace.getTable(key.table);
-        return table.getNodeAddresses().stream().map(address -> new Node() {
+        Set<SchemaRangedNode> nodes = table.getNodeAddresses().stream().map(address -> new SchemaRangedNode(//
+                address, //
+                schema.getSchemaNetwork(), //
+                Collections.unmodifiableMap( //
+                        table.getNodeRanges(address).stream().collect( //
+                                groupingBy(r -> BigInteger.valueOf(r.getBase()), //
+                                        mapping(r -> BigInteger.valueOf(r.getIndex()), toSet()))//
+                        ) //
+                ) //
+        )).collect(toSet());
+        return new DistributionCache.Entry(table.getReplicationFactor(), nodes);
+    }
 
-            @Override
-            public short getNodeNetwork() {
-                return schema.getSchemaNetwork();
-            }
-
-            @Override
-            public String getAddressString() {
-                return address;
-            }
-
-        }).collect(Collectors.toSet());
+    public int getReplicationFactor(String tablespaceName, String tableName) {
+        DistributionCache.Entry cacheEntry = tableCache.load(tablespaceName, tableName);
+        return cacheEntry.replicationFactor;
     }
 
 }

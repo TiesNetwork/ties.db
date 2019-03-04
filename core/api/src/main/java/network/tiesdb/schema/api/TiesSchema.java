@@ -27,6 +27,14 @@ public interface TiesSchema {
         PRIMARY, INTERNAL, EXTERNAL
     }
 
+    interface Range {
+
+        int getBase();
+        
+        int getIndex();
+
+    }
+
     interface Field {
 
         String getName();
@@ -54,8 +62,12 @@ public interface TiesSchema {
         Set<Index> getIndexes();
 
         Set<String> getNodeAddresses();
+        
+        Set<Range> getNodeRanges(String nodeAddress);
 
         boolean isDistributed();
+
+        int getReplicationFactor();
 
     }
 

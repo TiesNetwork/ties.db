@@ -25,11 +25,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -117,6 +120,31 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         return entry;
     }
 
+    private static byte[] getEntryKeyHash(Entry entry, Set<FieldDescription> keyFields) throws TiesServiceScopeException {
+        Digest keyHashDigest = DigestManager.getDigest(DigestManager.KECCAK_256);
+        Map<String, FieldHash> fhs = entry.getFieldHashes();
+        Map<String, FieldValue> fvs = entry.getFieldValues();
+        for (FieldDescription field : keyFields) {
+            FieldHash fieldHash = fhs.get(field.getName());
+            if (null == fieldHash) {
+                fieldHash = fvs.get(field.getName());
+            }
+            if (null == fieldHash) {
+                throw new TiesServiceScopeException("Key field " + field.getName() + " was not found in entry "
+                        + DatatypeConverter.printHexBinary(entry.getHeader().getHash()));
+            }
+            keyHashDigest.update(fieldHash.getHash());
+        }
+        byte[] out = new byte[keyHashDigest.getDigestSize()];
+        keyHashDigest.doFinal(out);
+        return out;
+    }
+
+    private static <T> Predicate<T> distinct(Function<? super T, ?> extractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(extractor.apply(t));
+    }
+
     @Override
     public void insert(TiesServiceScopeModification action) throws TiesServiceScopeException {
         modification(action, (s, o) -> s.insert(o));
@@ -183,98 +211,108 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
 
-        TiesRouter router = service.getRouterService();
-        Map<Node, CompletableFuture<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters = new HashMap<>();
+        Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters;
+        CompletionService<CoordinatedResult<TiesServiceScopeResult.Result>> completionService = new ExecutorCompletionService<>(
+                ForkJoinPool.commonPool()); // TODO FIXME Change executor!!!
+        {
+            resultWaiters = new HashMap<>();
+            TiesRouter router = service.getRouterService();
+            for (Node node : nodes) {
+                resultWaiters.put(node, completionService.submit(() -> {
+                    CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
+                    try {
+                        TiesTransportClient c = router.getClient(node);
+                        c.request(new TiesServiceScopeConsumer() {
+                            @Override
+                            public void accept(TiesServiceScope s) throws TiesServiceScopeException {
+                                operation.apply(s, new TiesServiceScopeModification() {
 
-        for (Node node : nodes) {
-            resultWaiters.put(node, CompletableFuture.supplyAsync(() -> {
-                CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
-                try {
-                    TiesTransportClient c = router.getClient(node);
-                    c.request(new TiesServiceScopeConsumer() {
-                        @Override
-                        public void accept(TiesServiceScope s) throws TiesServiceScopeException {
-                            operation.apply(s, new TiesServiceScopeModification() {
+                                    @Override
+                                    public ActionConsistency getConsistency() {
+                                        return action.getConsistency();
+                                    }
 
-                                @Override
-                                public ActionConsistency getConsistency() {
-                                    return action.getConsistency();
-                                }
+                                    @Override
+                                    public BigInteger getMessageId() {
+                                        return coordinatedResult.getId();
+                                    }
 
-                                @Override
-                                public BigInteger getMessageId() {
-                                    return coordinatedResult.getId();
-                                }
+                                    @Override
+                                    public Entry getEntry() {
+                                        return action.getEntry();
+                                    }
 
-                                @Override
-                                public Entry getEntry() {
-                                    return action.getEntry();
-                                }
+                                    @Override
+                                    public void setResult(Result result) throws TiesServiceScopeException {
+                                        result.accept(new TiesServiceScopeModification.Result.Visitor<Void>() {
 
-                                @Override
-                                public void setResult(Result result) throws TiesServiceScopeException {
-                                    result.accept(new TiesServiceScopeModification.Result.Visitor<Void>() {
+                                            @Override
+                                            public Void on(TiesServiceScopeModification.Result.Success success)
+                                                    throws TiesServiceScopeException {
+                                                LOG.trace("Node request sent successfully for: {} messageId {}", node);
+                                                return null;
+                                            }
 
-                                        @Override
-                                        public Void on(TiesServiceScopeModification.Result.Success success)
-                                                throws TiesServiceScopeException {
-                                            LOG.trace("Node request sent successfully for: {} messageId {}", node);
-                                            return null;
-                                        }
+                                            @Override
+                                            public Void on(TiesServiceScopeModification.Result.Error error)
+                                                    throws TiesServiceScopeException {
+                                                LOG.trace("Node request sent failed for: {} messageId {}", node, error.getError());
+                                                coordinatedResult.fail(error.getError());
+                                                return null;
+                                            }
+                                        });
+                                    }
 
-                                        @Override
-                                        public Void on(TiesServiceScopeModification.Result.Error error) throws TiesServiceScopeException {
-                                            LOG.trace("Node request sent failed for: {} messageId {}", node, error.getError());
-                                            coordinatedResult.fail(error.getError());
-                                            return null;
-                                        }
-                                    });
-                                }
+                                });
+                            }
+                        });
+                    } catch (TiesRoutingException e) {
+                        LOG.warn("Route was not found for node: {}", node, e);
+                        coordinatedResult.fail(e);
+                    } catch (Throwable e) {
+                        LOG.warn("Node request failed for node: {} scope {}", node, e);
+                        coordinatedResult.fail(e);
+                    }
+                    return coordinatedResult;
+                }));
+            }
+        }
+        ConsistencyArbiter arbiter = new ConsistencyArbiter(action.getConsistency(), sch.getReplicationFactor(tsn, tbn));
 
-                            });
-                        }
-                    });
-                } catch (TiesRoutingException e) {
-                    LOG.warn("Route was not found for node: {}", node, e);
-                    coordinatedResult.fail(e);
-                } catch (Throwable e) {
-                    LOG.warn("Node request failed for node: {} scope {}", node, e);
-                    coordinatedResult.fail(e);
-                }
-                return coordinatedResult;
-            }/* , executor */)); // TODO FIXME Add executor!!!
+        for (Future<CoordinatedResult<TiesServiceScopeResult.Result>> result : resultWaiters.values()) {
+            try {
+                result.get().get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
+            } catch (Throwable e) {
+                LOG.error("Node request failed", e);
+            }
         }
 
-        CompletableFuture<Void> allResultsFuture = CompletableFuture
-                .allOf(resultWaiters.values().toArray(new CompletableFuture[resultWaiters.size()]));
-        allResultsFuture.join();
+        Map<ModificationResultType, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, new HashMap<>(),
+                futureResult -> {
+                    try {
+                        CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = futureResult.get();
+                        TiesServiceScopeResult.Result result = coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
+                        return result.accept(new TiesServiceScopeResult.Result.Visitor<ModificationResultType>() {
 
-        ConsistencyArbiter arbiter = new ConsistencyArbiter(action.getConsistency(), nodes.size());
+                            @Override
+                            public ModificationResultType on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                                return Arrays.equals(result.getHeaderHash(), header.getHash()) //
+                                        ? ModificationResultType.SUCCESS
+                                        : ModificationResultType.MISS;
+                            }
 
-        Map<ModificationResultType, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, futureResult -> {
-            try {
-                CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = futureResult.get();
-                TiesServiceScopeResult.Result result = coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
-                return result.accept(new TiesServiceScopeResult.Result.Visitor<ModificationResultType>() {
-
-                    @Override
-                    public ModificationResultType on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
-                        return Arrays.equals(result.getHeaderHash(), header.getHash()) //
-                                ? ModificationResultType.SUCCESS
-                                : ModificationResultType.MISS;
-                    }
-
-                    @Override
-                    public ModificationResultType on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
+                            @Override
+                            public ModificationResultType on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
+                                return ModificationResultType.FAILURE;
+                            }
+                        });
+                    } catch (Throwable e) {
+                        LOG.error("Result filtering failure", e);
                         return ModificationResultType.FAILURE;
                     }
                 });
-            } catch (Throwable e) {
-                return ModificationResultType.FAILURE;
-            }
-        });
 
-        Set<ModificationResultType> results = arbiter.getResults(segregatedResults);
+        Set<ModificationResultType> results = arbiter.results(segregatedResults).collect(Collectors.toSet());
         if (results.contains(ModificationResultType.SUCCESS)) {
             action.setResult(new TiesServiceScopeModification.Result.Success() {
                 @Override
@@ -283,6 +321,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 }
             });
         } else if (results.contains(ModificationResultType.MISS)) {
+            Set<Node> missedNodes = segregatedResults.get(ModificationResultType.FAILURE);
             action.setResult(new TiesServiceScopeModification.Result.Error() {
                 @Override
                 public byte[] getHeaderHash() {
@@ -291,7 +330,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
                 @Override
                 public Throwable getError() {
-                    return new TiesServiceScopeException("Write missed for newer record");
+                    return new TiesServiceScopeException("Write missed for newer record " + missedNodes);
                 }
             });
         } else if (results.contains(ModificationResultType.FAILURE)) {
@@ -322,30 +361,10 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         }
     }
 
-    private byte[] getEntryKeyHash(Entry entry, Set<FieldDescription> keyFields) throws TiesServiceScopeException {
-        Digest keyHashDigest = DigestManager.getDigest(DigestManager.KECCAK_256);
-        Map<String, FieldHash> fhs = entry.getFieldHashes();
-        Map<String, FieldValue> fvs = entry.getFieldValues();
-        for (FieldDescription field : keyFields) {
-            FieldHash fieldHash = fhs.get(field.getName());
-            if (null == fieldHash) {
-                fieldHash = fvs.get(field.getName());
-            }
-            if (null == fieldHash) {
-                throw new TiesServiceScopeException("Key field " + field.getName() + " was not found in entry "
-                        + DatatypeConverter.printHexBinary(entry.getHeader().getHash()));
-            }
-            keyHashDigest.update(fieldHash.getHash());
-        }
-        byte[] out = new byte[keyHashDigest.getDigestSize()];
-        keyHashDigest.doFinal(out);
-        return out;
-    }
-
     @Override
-    public void select(TiesServiceScopeRecollection action) throws TiesServiceScopeException {
+    public void select(TiesServiceScopeRecollection recollectionRequest) throws TiesServiceScopeException {
 
-        Query query = action.getQuery();
+        Query query = recollectionRequest.getQuery();
 
         String tsn = query.getTablespaceName();
         String tbn = query.getTableName();
@@ -385,12 +404,14 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
 
-        Map<Node, CompletableFuture<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters;
+        Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters;
+        CompletionService<CoordinatedResult<TiesServiceScopeResult.Result>> completionService = new ExecutorCompletionService<>(
+                ForkJoinPool.commonPool()); // TODO FIXME Change executor!!!
         {
             resultWaiters = new HashMap<>();
             TiesRouter router = service.getRouterService();
             for (Node node : nodes) {
-                resultWaiters.put(node, CompletableFuture.supplyAsync(() -> {
+                resultWaiters.put(node, completionService.submit(() -> {
                     CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
                     try {
                         TiesTransportClient c = router.getClient(node);
@@ -401,7 +422,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
                                     @Override
                                     public ActionConsistency getConsistency() {
-                                        return action.getConsistency();
+                                        return recollectionRequest.getConsistency();
                                     }
 
                                     @Override
@@ -411,7 +432,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
                                     @Override
                                     public Query getQuery() {
-                                        return action.getQuery();
+                                        return recollectionRequest.getQuery();
                                     }
 
                                     @Override
@@ -429,79 +450,85 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                         coordinatedResult.fail(e);
                     }
                     return coordinatedResult;
-                }/* , executor */)); // TODO FIXME Add executor!!!
+                }));
             }
-            CompletableFuture<Void> allResultsFuture = CompletableFuture
-                    .allOf(resultWaiters.values().toArray(new CompletableFuture[resultWaiters.size()]));
-            allResultsFuture.join();
-        }
-
-        Map<String, Set<Node>> segregatedResults;
-        {
-            Digest digest = DigestManager.getDigest(DigestManager.KECCAK_256);
-            segregatedResults = ConsistencyArbiter.segregate(resultWaiters, futureResult -> {
+            for (Future<CoordinatedResult<TiesServiceScopeResult.Result>> result : resultWaiters.values()) {
                 try {
-                    CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = futureResult.get();
-                    TiesServiceScopeResult.Result result = coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
-                    return result.accept(new TiesServiceScopeResult.Result.Visitor<String>() {
-
-                        @Override
-                        public String on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
-                            return RECOLLECTION_ERROR;
-                        }
-
-                        @Override
-                        public String on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
-                            digest.reset();
-                            result.getEntries().stream().map(e -> e.getEntryHeader().getHash()).forEach(digest::update);
-                            byte[] out = new byte[digest.getDigestSize()];
-                            digest.doFinal(out);
-                            return DatatypeConverter.printHexBinary(out);
-                        }
-                    });
+                    result.get().get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
                 } catch (Throwable e) {
-                    return RECOLLECTION_ERROR;
+                    LOG.error("Node request failed", e);
                 }
-            });
-        }
-        Set<String> filteredSegregations;
-        {
-            filteredSegregations = new ConsistencyArbiter(action.getConsistency(), sch.getReplicationFactor(tsn, tbn))
-                    .getResults(segregatedResults);
-        }
-
-        Optional<String> firstResultHash = filteredSegregations.stream().filter(p -> RECOLLECTION_ERROR != p).findFirst();
-
-        if (firstResultHash.isPresent()) {
-            Set<Node> filteredNodes = segregatedResults.get(firstResultHash.get());
-            try {
-                TiesServiceScopeRecollection.Result result = resultWaiters.get(filteredNodes.stream().findFirst().get()).get().get()
-                        .accept(new TiesServiceScopeResult.Result.Visitor<TiesServiceScopeRecollection.Result>() {
-
-                            @Override
-                            public TiesServiceScopeRecollection.Result on(TiesServiceScopeModification.Result result)
-                                    throws TiesServiceScopeException {
-                                throw new TiesServiceScopeException("Wrong result of recollection request");
-                            }
-
-                            @Override
-                            public TiesServiceScopeRecollection.Result on(TiesServiceScopeRecollection.Result result)
-                                    throws TiesServiceScopeException {
-                                return result;
-                            }
-
-                        });
-                action.setResult(new TiesServiceScopeRecollection.Result() {
-
-                    @Override
-                    public List<Entry> getEntries() {
-                        return result.getEntries();
-                    }
-
-                });
-            } catch (CancellationException | InterruptedException | ExecutionException | TimeoutException e) {
-                throw new TiesServiceScopeException("Failed recollection result on message " + action.getMessageId(), e);
             }
+        }
+
+        ConsistencyArbiter arbiter = new ConsistencyArbiter(recollectionRequest.getConsistency(), sch.getReplicationFactor(tsn, tbn));
+
+        Map<String, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, new HashMap<>(),
+                e -> DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()), result -> {
+                    try {
+                        return result.get().get()
+                                .accept(new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
+
+                                    @Override
+                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(TiesServiceScopeModification.Result result)
+                                            throws TiesServiceScopeException {
+                                        LOG.error("Illegal result for recollection response: {}", result);
+                                        return Stream.empty();
+                                    }
+
+                                    @Override
+                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(TiesServiceScopeRecollection.Result result)
+                                            throws TiesServiceScopeException {
+                                        return result.getEntries().parallelStream();
+                                    }
+                                });
+                    } catch (CancellationException | TiesServiceScopeException | InterruptedException | ExecutionException
+                            | TimeoutException e) {
+                        LOG.debug("Failed recollection result on message: {}", recollectionRequest.getMessageId(), e);
+                        return Stream.empty();
+                    }
+                });
+
+        Set<String> arbiterEntryHashes = arbiter.results(segregatedResults).filter(p -> RECOLLECTION_ERROR != p)
+                .collect(Collectors.toSet());
+
+        if (!arbiterEntryHashes.isEmpty()) {
+            List<TiesServiceScopeRecollection.Result.Entry> arbiterEntries = resultWaiters.values().parallelStream() //
+                    .flatMap(result -> {
+                        try {
+                            return result.get().get()
+                                    .accept(new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
+
+                                        @Override
+                                        public Stream<TiesServiceScopeRecollection.Result.Entry> on(
+                                                TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                                            return Stream.empty();
+                                        }
+
+                                        @Override
+                                        public Stream<TiesServiceScopeRecollection.Result.Entry> on(
+                                                TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
+                                            return result.getEntries().parallelStream();
+                                        }
+                                    });
+                        } catch (CancellationException | TiesServiceScopeException | InterruptedException | ExecutionException
+                                | TimeoutException e) {
+                        }
+                        return Stream.empty();
+                    }) //
+                    .filter(e -> arbiterEntryHashes.contains(DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
+                    .filter(distinct(e -> DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
+                    .collect(Collectors.toList());
+
+            recollectionRequest.setResult(new TiesServiceScopeRecollection.Result() {
+
+                @Override
+                public List<Entry> getEntries() {
+                    return arbiterEntries;
+                }
+
+            });
+
         } else {
             throw new TiesServiceScopeException("Read failed for nodes " + segregatedResults.get(RECOLLECTION_ERROR));
         }
@@ -509,14 +536,14 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
     }
 
     @Override
-    public void schema(TiesServiceScopeSchema query) throws TiesServiceScopeException {
-        String tsn = query.getTablespaceName();
-        String tbn = query.getTableName();
+    public void schema(TiesServiceScopeSchema schemaRequest) throws TiesServiceScopeException {
+        String tsn = schemaRequest.getTablespaceName();
+        String tbn = schemaRequest.getTableName();
 
         TiesServiceSchema sch = service.getSchemaService();
         Set<FieldDescription> fieldDescriptions = sch.getFields(tsn, tbn);
 
-        query.setResult(new FieldSchema() {
+        schemaRequest.setResult(new FieldSchema() {
 
             private final List<Field> fields;
             {

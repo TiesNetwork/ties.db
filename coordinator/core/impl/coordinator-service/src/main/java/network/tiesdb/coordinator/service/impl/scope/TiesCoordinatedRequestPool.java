@@ -90,7 +90,7 @@ public class TiesCoordinatedRequestPool<T> {
 
         @Override
         public T get() throws CancellationException, InterruptedException, ExecutionException, TimeoutException {
-            return futureResult.get(0, TimeUnit.NANOSECONDS);
+            return futureResult.get(0, TimeUnit.MILLISECONDS);
         }
 
         private TiesCoordinatedRequestPool<T> getOuterType() {

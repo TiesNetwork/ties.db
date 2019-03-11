@@ -59,8 +59,8 @@ public class TiesSchemaEthereum implements TiesSchema {
             String code = Numeric.cleanHexPrefix(ethGetCode.getCode()).toUpperCase();
             String contractCode = Numeric.cleanHexPrefix(contract.getContractBinary()).toUpperCase();
             throw new TiesConfigurationException("Invalid contract address: contract binary missmatch\n" //
-                    + "    Code: " + code + "\n" //
-                    + "    Was not found in: " + contractCode );
+                    + "    Code: " + contractCode + "\n" //
+                    + "    Was not found in: " + code );
         }
 
         this.contract = contract;

@@ -23,10 +23,12 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.tiesdb.schema.api.Table;
+import com.tiesdb.schema.impl.AddressImpl;
 
 import network.tiesdb.schema.api.TiesSchema;
 import network.tiesdb.schema.api.TiesSchema.Field;
 import network.tiesdb.schema.api.TiesSchema.Index;
+import network.tiesdb.schema.api.TiesSchema.Range;
 
 public class TableImpl implements TiesSchema.Table {
 
@@ -68,6 +70,28 @@ public class TableImpl implements TiesSchema.Table {
     @Override
     public Set<String> getNodeAddresses() {
         return t.getNodes().keySet().stream().map(a -> a.toChecksumedString()).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Range> getNodeRanges(String nodeAddress) {
+        return t.getNode(new AddressImpl(nodeAddress)).getTableRanges(t.getId()).getRanges().stream().map(r -> new Range() {
+
+            @Override
+            public int getBase() {
+                return r.getDivider();
+            }
+
+            @Override
+            public int getIndex() {
+                return r.getRemainder();
+            }
+            
+        }).collect(Collectors.toSet());
+    }
+
+    @Override
+    public int getReplicationFactor() {
+        return t.getReplicas();
     }
 
 }

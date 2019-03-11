@@ -249,6 +249,7 @@ public class ResponseHandler implements Response.Visitor<Void> {
             public byte[] getEntryFldHash() {
                 return header.getEntryFldHash();
             }
+
         };
     }
 

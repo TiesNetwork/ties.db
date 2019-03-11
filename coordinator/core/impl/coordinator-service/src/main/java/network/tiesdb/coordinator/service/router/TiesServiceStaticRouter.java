@@ -21,7 +21,6 @@ package network.tiesdb.coordinator.service.router;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,7 @@ public class TiesServiceStaticRouter implements TiesRouter {
 
         public StaticNode(short networkId, String addressString) {
             this.networkId = networkId;
-            this.addressString = addressString;
+            this.addressString = addressString.toLowerCase();
         }
 
         @Override

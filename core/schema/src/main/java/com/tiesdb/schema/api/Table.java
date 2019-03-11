@@ -46,4 +46,5 @@ public interface Table extends NamedItem {
 	
 	Tablespace getTablespace();
     boolean isDistributed();
+    int getReplicas();
 }

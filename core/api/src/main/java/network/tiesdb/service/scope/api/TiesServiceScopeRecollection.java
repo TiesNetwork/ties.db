@@ -205,6 +205,7 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
             List<Field> getEntryFields();
 
             List<Field> getComputedFields();
+
         }
 
         default <T> T accept(TiesServiceScopeResult.Result.Visitor<T> v) throws TiesServiceScopeException {

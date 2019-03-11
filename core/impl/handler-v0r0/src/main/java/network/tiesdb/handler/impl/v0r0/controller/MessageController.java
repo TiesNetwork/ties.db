@@ -168,6 +168,7 @@ public class MessageController {
                 public byte[] getEntryOldHash() {
                     return header.getEntryOldHash();
                 }
+
             };
         }
     }

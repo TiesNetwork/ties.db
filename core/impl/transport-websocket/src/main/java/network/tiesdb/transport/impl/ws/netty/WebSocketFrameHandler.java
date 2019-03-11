@@ -23,6 +23,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import network.tiesdb.exception.TiesException;
 import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
@@ -46,9 +48,12 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame inboundFrame) throws Exception {
-        if (inboundFrame instanceof BinaryWebSocketFrame) {
+        if (inboundFrame instanceof PingWebSocketFrame) {
+            logger.debug("{} pinged {} bytes", ctx.channel(), inboundFrame.content().readableBytes());
+            ctx.channel().writeAndFlush(new PongWebSocketFrame(inboundFrame.content()));
+        } else if (inboundFrame instanceof BinaryWebSocketFrame) {
+            logger.trace("{} received {} bytes", ctx.channel(), inboundFrame.content().readableBytes());
             BinaryWebSocketFrame frame = (BinaryWebSocketFrame) inboundFrame;
-            logger.trace("{} received {} bytes", ctx.channel(), frame.content().readableBytes());
             try {
                 try (WebSocketInputHandler request = new WebSocketInputHandler(frame)) {
                     try (WebSocketOutputHandler response = new WebSocketOutputHandler(ctx.channel())) {

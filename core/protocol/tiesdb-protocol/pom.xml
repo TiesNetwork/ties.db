@@ -36,7 +36,7 @@
     <parent>
         <groupId>com.tiesdb.protocol</groupId>
         <artifactId>protocol-parent</artifactId>
-        <version>0.1.3-SNAPSHOT</version>
+        <version>0.1.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>tiesdb-protocol</artifactId>

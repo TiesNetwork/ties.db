@@ -43,6 +43,12 @@
     </licenses>
 
 	<dependencies>
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20180813</version>
+        </dependency>
         <dependency>
             <groupId>com.tiesdb.lib</groupId>
             <artifactId>crypto</artifactId>

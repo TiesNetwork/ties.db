@@ -62,12 +62,23 @@ public class TiesServiceStaticRouterConfigImpl implements TiesRouterConfig {
         return nodeAddresses;
     }
 
+    protected final void updateNodesURIMap(Map<StaticNode, URI> nodes) {
+        if(this.nodeAddresses != null && !this.nodeAddresses.isEmpty()) {
+            nodes.putAll(this.nodeAddresses);
+        }
+    }
+
+    protected final void setNodesURIMap(Map<StaticNode, URI> nodes) {
+        this.nodeAddresses = Collections.unmodifiableMap(nodes);
+    }
+
     public void setNodes(Map<String, String> nodes) {
         Map<StaticNode, URI> newNodes = new HashMap<>(nodes.size());
+        updateNodesURIMap(newNodes);
         nodes.forEach((k, v) -> {
             newNodes.put(StaticNode.fromString(k), URI.create(v));
         });
-        this.nodeAddresses = Collections.unmodifiableMap(newNodes);
+        setNodesURIMap(newNodes);
     }
 
     public Map<String, TiesTransportFactory> getTransportFactoriesMap() {

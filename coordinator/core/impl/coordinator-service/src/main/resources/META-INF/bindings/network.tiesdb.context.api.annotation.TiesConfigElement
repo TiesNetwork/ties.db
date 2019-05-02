@@ -2,3 +2,4 @@
 # !network.tiesdb.service.impl.elassandra.TiesServiceConfigImpl
 network.tiesdb.coordinator.service.impl.TiesCoordinatorServiceConfigImpl
 network.tiesdb.coordinator.service.router.TiesServiceStaticRouterConfigImpl
+network.tiesdb.coordinator.service.router.TiesServiceStaticURLRouterConfigImpl

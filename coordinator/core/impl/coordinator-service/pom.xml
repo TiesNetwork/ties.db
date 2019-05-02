@@ -27,7 +27,7 @@
 	<parent>
 		<groupId>com.tiesdb.coordinator</groupId>
 		<artifactId>core-impl</artifactId>
-		<version>0.1.3-SNAPSHOT</version>
+		<version>0.1.4-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>coordinator-service</artifactId>
@@ -43,10 +43,16 @@
     </licenses>
 
 	<dependencies>
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20180813</version>
+        </dependency>
         <dependency>
             <groupId>com.tiesdb.lib</groupId>
             <artifactId>crypto</artifactId>
-            <version>0.1.3-SNAPSHOT</version>
+            <version>0.1.4-SNAPSHOT</version>
         </dependency>
 		<dependency>
 			<groupId>com.tiesdb</groupId>

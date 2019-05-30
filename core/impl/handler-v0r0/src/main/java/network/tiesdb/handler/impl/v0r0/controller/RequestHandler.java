@@ -21,12 +21,14 @@ package network.tiesdb.handler.impl.v0r0.controller;
 import static java.util.Objects.requireNonNull;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -235,8 +237,7 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                         @Override
                         public String toString() {
-                            return "HashField [name=" + getName() + ", type=" + getType() + ", hash="
-                                    + DatatypeConverter.printHexBinary(getHash()) + "]";
+                            return "HashField [name=" + getName() + ", type=" + getType() + ", hash" + printHex(getHash()) + "]";
                         }
 
                     };
@@ -272,7 +273,8 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                         @Override
                         public String toString() {
-                            return "ValueField [name=" + getName() + ", type=" + getType() + ", value=" + getValue() + "]";
+                            return "ValueField [name=" + getName() + ", type=" + getType() + ", value=" + printValue(getType(), getValue())
+                                    + "]";
                         }
 
                     };
@@ -305,7 +307,8 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                         @Override
                         public String toString() {
-                            return "ValueField [name=" + getName() + ", type=" + getType() + ", value=" + getValue() + "]";
+                            return "ValueField [name=" + getName() + ", type=" + getType() + ", value" + printValue(getType(), getValue())
+                                    + "]";
                         }
 
                     };
@@ -336,12 +339,39 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                 @Override
                 public String toString() {
-                    return "HashField [name=" + getName() + ", type=" + getType() + ", hash=" + DatatypeConverter.printHexBinary(getHash())
-                            + "]";
+                    return "HashField [name=" + getName() + ", type=" + getType() + ", hash" + printHex(getHash()) + "]";
                 }
 
             };
         }
+    }
+
+    protected static String printValue(String type, Object value) {
+        if (null == value) {
+            return " is null";
+        }
+        if (value instanceof byte[]) {
+            if (null == type) {
+                return printHex((byte[]) value);
+            }
+            switch (type) {
+            case "uuid":
+                ByteBuffer uuidBuf = ByteBuffer.allocate(2 * Long.BYTES);
+                uuidBuf.put((byte[]) value).flip();
+                return "=" + new UUID(uuidBuf.getLong(), uuidBuf.getLong()).toString();
+
+            default:
+                return printHex((byte[]) value);
+            }
+        }
+        return value.toString();
+    }
+
+    protected static String printHex(byte[] value) {
+        if (null == value) {
+            return " is null";
+        }
+        return "=0x" + DatatypeConverter.printHexBinary((byte[]) value);
     }
 
     protected static void convertArguments(List<FunctionArgument> from, Consumer<Query.Function.Argument> c) {

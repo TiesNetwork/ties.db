@@ -33,6 +33,7 @@ import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
 import network.tiesdb.transport.impl.ws.TiesTransportImpl;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,13 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
             } catch (TiesException e) {
                 logger.error("Channel error: {}", e.getMessage(), e);
                 ctx.channel().writeAndFlush(new CloseWebSocketFrame(1008, e.getMessage()));
+            }
+        } else if (inboundFrame instanceof CloseWebSocketFrame) {
+            logger.trace("{} close requested by client", ctx.channel());
+            try {
+                ctx.close().await(30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.error("Channel close error: {}", e.getMessage(), e);
             }
         } else {
             logger.error("Unsupported frame type: {}", inboundFrame.getClass().getName());

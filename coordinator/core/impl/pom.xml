@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.tiesdb.coordinator</groupId>
         <artifactId>core</artifactId>
-        <version>0.1.4-SNAPSHOT</version>
+        <version>0.1.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>core-impl</artifactId>

@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.tiesdb.lib.crypto.digest.DigestManager;
+import com.tiesdb.lib.crypto.digest.api.Digest;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.exception.TiesDBProtocolMessageException;
@@ -50,7 +52,6 @@ import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field;
 import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 
 public class ResponseHandler implements Response.Visitor<Void> {
@@ -145,15 +146,15 @@ public class ResponseHandler implements Response.Visitor<Void> {
         try {
             TiesServiceScopeResult.Result result = new TiesServiceScopeRecollection.Result() {
 
-                private final List<Entry> entries;
+                private final List<TiesServiceScopeRecollection.Result.Entry> entries;
                 {
                     CompletableFuture<List<Entry>> entriesFuture = CompletableFuture.supplyAsync(() -> {
                         return recollectionResponse.getRecollectionResults().parallelStream().map(r -> {
-                            return new Entry() {
+                            return new TiesServiceScopeRecollection.Result.Entry() {
 
                                 private final TiesEntryHeader header = convertHeader(r.getHeader());
-                                private final List<Field> entryFields = convertFields(r.getFields().values());
-                                private final List<Field> computedFields = convertFields(r.getComputeFields());
+                                private final List<TiesServiceScopeRecollection.Result.Field> entryFields = convertFields(r.getFields().values());
+                                private final List<TiesServiceScopeRecollection.Result.Field> computedFields = convertFields(r.getComputeFields());
 
                                 @Override
                                 public TiesEntryHeader getEntryHeader() {
@@ -161,12 +162,12 @@ public class ResponseHandler implements Response.Visitor<Void> {
                                 }
 
                                 @Override
-                                public List<Field> getEntryFields() {
+                                public List<TiesServiceScopeRecollection.Result.Field> getEntryFields() {
                                     return entryFields;
                                 }
 
                                 @Override
-                                public List<Field> getComputedFields() {
+                                public List<TiesServiceScopeRecollection.Result.Field> getComputedFields() {
                                     return computedFields;
                                 }
 
@@ -254,7 +255,7 @@ public class ResponseHandler implements Response.Visitor<Void> {
     }
 
     private List<TiesServiceScopeRecollection.Result.Field> convertFields(Collection<FieldReader.Field> fields) {
-        List<Field> result = fields.parallelStream().map(field -> {
+        List<TiesServiceScopeRecollection.Result.Field> result = fields.parallelStream().map(field -> {
             byte[] raw = field.getRawValue();
             if (null != raw) {
                 return new TiesServiceScopeRecollection.Result.Field.RawField() {
@@ -272,6 +273,20 @@ public class ResponseHandler implements Response.Visitor<Void> {
                     @Override
                     public byte[] getRawValue() {
                         return raw;
+                    }
+
+                    @Override
+                    public byte[] getValue() {
+                        return getRawValue();
+                    }
+
+                    @Override
+                    public byte[] getHash() {
+                        Digest hash = DigestManager.getDigest(DigestManager.KECCAK_256);
+                        hash.update(getHash());
+                        byte[] out = new byte[hash.getDigestSize()];
+                        hash.doFinal(out);
+                        return out;
                     }
                 };
             } else {

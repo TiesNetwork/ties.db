@@ -21,16 +21,20 @@ package network.tiesdb.coordinator.service.impl.scope;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +60,7 @@ import network.tiesdb.coordinator.service.schema.TiesServiceSchema.FieldDescript
 import network.tiesdb.router.api.TiesRouter;
 import network.tiesdb.router.api.TiesRouter.Node;
 import network.tiesdb.router.api.TiesRoutingException;
+import network.tiesdb.service.scope.api.TiesEntry;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
@@ -68,6 +73,9 @@ import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FieldSelector;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FunctionSelector;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field.HashField;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field.RawField;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field.ValueField;
 import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 import network.tiesdb.service.scope.api.TiesServiceScopeSchema;
 import network.tiesdb.service.scope.api.TiesServiceScopeSchema.FieldSchema;
@@ -90,6 +98,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     private final TiesCoordinatorServiceImpl service;
 
+    private final ExecutorService healingExecutor = ForkJoinPool.commonPool(); // TODO FIXME Change executor!!!
+
     public TiesCoordinatorServiceScopeImpl(TiesCoordinatorServiceImpl service) {
         this.service = service;
         LOG.debug(this + " is opened");
@@ -97,6 +107,13 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     @Override
     public void close() throws IOException {
+        healingExecutor.shutdown();
+        try {
+            healingExecutor.awaitTermination(60, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            LOG.error("Failed to shut down healing process", e);
+            healingExecutor.shutdownNow();
+        }
         LOG.debug(this + " is closed");
     }
 
@@ -120,20 +137,16 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         return entry;
     }
 
-    private static byte[] getEntryKeyHash(Entry entry, Set<FieldDescription> keyFields) throws TiesServiceScopeException {
+    private static byte[] getFieldsHash(byte[] entryHash, Set<String> fieldNames, Function<String, byte[]> mapper)
+            throws TiesServiceScopeException {
         Digest keyHashDigest = DigestManager.getDigest(DigestManager.KECCAK_256);
-        Map<String, FieldHash> fhs = entry.getFieldHashes();
-        Map<String, FieldValue> fvs = entry.getFieldValues();
-        for (FieldDescription field : keyFields) {
-            FieldHash fieldHash = fhs.get(field.getName());
+        for (String fieldName : fieldNames) {
+            byte[] fieldHash = mapper.apply(fieldName);
             if (null == fieldHash) {
-                fieldHash = fvs.get(field.getName());
+                throw new TiesServiceScopeException(
+                        "Field " + fieldName + " was not found in entry " + DatatypeConverter.printHexBinary(entryHash));
             }
-            if (null == fieldHash) {
-                throw new TiesServiceScopeException("Key field " + field.getName() + " was not found in entry "
-                        + DatatypeConverter.printHexBinary(entry.getHeader().getHash()));
-            }
-            keyHashDigest.update(fieldHash.getHash());
+            keyHashDigest.update(fieldHash);
         }
         byte[] out = new byte[keyHashDigest.getDigestSize()];
         keyHashDigest.doFinal(out);
@@ -204,7 +217,22 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             }
         }
 
-        byte[] entryKeyHash = getEntryKeyHash(entry, keyFields);
+        byte[] entryKeyHash;
+        {
+            Map<String, FieldHash> fhs = entry.getFieldHashes();
+            Map<String, FieldValue> fvs = entry.getFieldValues();
+            entryKeyHash = getFieldsHash(entry.getHeader().getHash(), keyFields.stream().map(f -> f.getName()).collect(Collectors.toSet()),
+                    fieldName -> {
+                        byte[] hash;
+                        FieldHash fh = fhs.get(fieldName);
+                        hash = null == fh ? null : fh.getHash();
+                        if (null == hash) {
+                            FieldValue fv = fvs.get(fieldName);
+                            hash = null == fv ? null : fv.getHash();
+                        }
+                        return hash;
+                    });
+        }
         Set<? extends Node> nodes = sch.getNodes(tsn, tbn, entryKeyHash);
         LOG.debug("CoordinatedModification {} nodes: {}", DatatypeConverter.printHexBinary(entryKeyHash), nodes);
         if (null == nodes || nodes.isEmpty()) {
@@ -359,6 +387,17 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 }
             });
         }
+
+        healingExecutor.execute(() -> {
+
+            Set<String> pkFieldNames = fields.parallelStream().filter(f -> f.isPrimaryKey()).map(f -> f.getName())
+                    .collect(Collectors.toSet());
+            try {
+                healing(pkFieldNames, pkHash -> sch.getNodes(tsn, tbn, pkHash), resultWaiters);
+            } catch (TiesServiceScopeException ex) {
+                LOG.error("Healing failed for modification request {}", action.getMessageId(), ex);
+            }
+        });
     }
 
     @Override
@@ -416,6 +455,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     try {
                         TiesTransportClient c = router.getClient(node);
                         c.request(new TiesServiceScopeConsumer() {
+
                             @Override
                             public void accept(TiesServiceScope s) throws TiesServiceScopeException {
                                 s.select(new TiesServiceScopeRecollection() {
@@ -492,46 +532,211 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         Set<String> arbiterEntryHashes = arbiter.results(segregatedResults).filter(p -> RECOLLECTION_ERROR != p)
                 .collect(Collectors.toSet());
 
-        if (!arbiterEntryHashes.isEmpty()) {
-            List<TiesServiceScopeRecollection.Result.Entry> arbiterEntries = resultWaiters.values().parallelStream() //
-                    .flatMap(result -> {
-                        try {
-                            return result.get().get()
-                                    .accept(new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
+        try {
+            if (!arbiterEntryHashes.isEmpty()) {
+                List<TiesServiceScopeRecollection.Result.Entry> arbiterEntries = resultWaiters.values().parallelStream() //
+                        .flatMap(result -> {
+                            try {
+                                return result.get().get().accept(
+                                        new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
 
-                                        @Override
-                                        public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
-                                            return Stream.empty();
-                                        }
+                                            @Override
+                                            public Stream<TiesServiceScopeRecollection.Result.Entry> on(
+                                                    TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                                                return Stream.empty();
+                                            }
 
-                                        @Override
-                                        public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
-                                            return result.getEntries().parallelStream();
-                                        }
-                                    });
-                        } catch (CancellationException | TiesServiceScopeException | InterruptedException | ExecutionException
-                                | TimeoutException e) {
-                        }
-                        return Stream.empty();
-                    }) //
-                    .filter(e -> arbiterEntryHashes.contains(DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
-                    .filter(distinct(e -> DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
-                    .collect(Collectors.toList());
+                                            @Override
+                                            public Stream<TiesServiceScopeRecollection.Result.Entry> on(
+                                                    TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
+                                                return result.getEntries().parallelStream();
+                                            }
+                                        });
+                            } catch (CancellationException | TiesServiceScopeException | InterruptedException | ExecutionException
+                                    | TimeoutException e) {
+                            }
+                            return Stream.empty();
+                        }) //
+                        .filter(e -> arbiterEntryHashes.contains(DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
+                        .filter(distinct(e -> DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
+                        .collect(Collectors.toList());
 
-            recollectionRequest.setResult(new TiesServiceScopeRecollection.Result() {
+                recollectionRequest.setResult(//
+                        new TiesServiceScopeRecollection.Result() {
+                            @Override
+                            public List<Entry> getEntries() {
+                                return arbiterEntries;
+                            }
+                        });
 
-                @Override
-                public List<Entry> getEntries() {
-                    return arbiterEntries;
+            } else {
+                Set<Node> failedNodes = segregatedResults.get(RECOLLECTION_ERROR);
+                if (null != failedNodes && !failedNodes.isEmpty()) {
+                    throw new TiesServiceScopeException("Read failed for nodes " + failedNodes);
+                } else {
+                    recollectionRequest.setResult(//
+                            new TiesServiceScopeRecollection.Result() {
+                                @Override
+                                public List<Entry> getEntries() {
+                                    return Collections.emptyList();
+                                }
+                            });
+                }
+            }
+        } finally {
+            healingExecutor.execute(() -> {
+
+                Set<String> pkFieldNames = fields.parallelStream().filter(f -> f.isPrimaryKey()).map(f -> f.getName())
+                        .collect(Collectors.toSet());
+                try {
+                    healing(pkFieldNames, pkHash -> sch.getNodes(tsn, tbn, pkHash), resultWaiters);
+                } catch (TiesServiceScopeException ex) {
+                    LOG.error("Healing failed for recollection request {}", recollectionRequest.getMessageId(), ex);
+                }
+            });
+        }
+    }
+
+    private static class HealingMappingEntry<K, V> {
+
+        private final String keyHash;
+        private final String entryHash;
+
+        private final K key;
+        private final V value;
+
+        private HealingMappingEntry(String keyHash, String entryHash, K key, V value) {
+            this.keyHash = keyHash;
+            this.entryHash = entryHash;
+            this.key = key;
+            this.value = value;
+        }
+
+    }
+
+    public void healing(Set<String> primaryKeyFieldNames, Function<byte[], Set<? extends Node>> nodesMapper,
+            Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters) throws TiesServiceScopeException {
+
+        Map<String, Map<String, Map<Node, TiesEntry>>> healingExpectantMap = resultWaiters.entrySet().parallelStream().flatMap(e -> {
+            try {
+                TiesServiceScopeResult.Result result = e.getValue().get().get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
+                return result.accept(new TiesServiceScopeResult.Result.Visitor<Stream<HealingMappingEntry<Node, TiesEntry>>>() {
+
+                    @Override
+                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeModification.Result result)
+                            throws TiesServiceScopeException {
+                        // TODO Auto-generated method stub
+                        LOG.warn("Modification healing unimplemented", new RuntimeException("not yet implemented"));
+                        return Stream.<HealingMappingEntry<Node, TiesEntry>>empty();
+                    }
+
+                    @Override
+                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeRecollection.Result recollectionResult)
+                            throws TiesServiceScopeException {
+                        return recollectionResult.getEntries().parallelStream().map(entry -> {
+                            try {
+                                byte[] entryHash = entry.getEntryHeader().getHash();
+                                Map<String, byte[]> fhs = entry.getEntryFields().parallelStream()
+                                        .filter(f -> primaryKeyFieldNames.contains(f.getName()))
+                                        .collect(Collectors.groupingBy(f -> f.getName(), Collectors.mapping(f -> {
+                                            try {
+                                                return f.accept(new TiesServiceScopeRecollection.Result.Field.Visitor<byte[]>() {
+
+                                                    @Override
+                                                    public byte[] on(HashField field) throws TiesServiceScopeException {
+                                                        return field.getHash();
+                                                    }
+
+                                                    @Override
+                                                    public byte[] on(RawField field) throws TiesServiceScopeException {
+                                                        Digest keyHashDigest = DigestManager.getDigest(DigestManager.KECCAK_256);
+                                                        keyHashDigest.update(field.getRawValue());
+                                                        byte[] out = new byte[keyHashDigest.getDigestSize()];
+                                                        keyHashDigest.doFinal(out);
+                                                        return out;
+                                                    }
+
+                                                    @Override
+                                                    public byte[] on(ValueField field) throws TiesServiceScopeException {
+                                                        throw new TiesServiceScopeException(
+                                                                "No TiesDB ValueFields should appear on Coordinator!");
+                                                    }
+                                                });
+                                            } catch (TiesServiceScopeException ex) {
+                                                LOG.error("Can't get field hash for field: " + f.getName(), ex);
+                                                return null;
+                                            }
+                                        }, Collectors.collectingAndThen(Collectors.toList(), list -> {
+                                            return null == list || list.isEmpty() ? null : list.get(0);
+                                        }))));
+                                byte[] fieldsHash = getFieldsHash(entryHash, primaryKeyFieldNames, fieldName -> {
+                                    return fhs.get(fieldName);
+                                });
+                                return new HealingMappingEntry<Node, TiesEntry>( //
+                                        DatatypeConverter.printHexBinary(fieldsHash), //
+                                        DatatypeConverter.printHexBinary(entryHash), //
+                                        e.getKey(), //
+                                        entry);
+                            } catch (TiesServiceScopeException ex) {
+                                LOG.error("Result filtering failure", ex);
+                                return null;
+                            }
+                        }).filter(m -> null != m);
+                    }
+
+                });
+            } catch (Throwable th) {
+                LOG.error("Result healing mapping failure", th);
+                return Stream.<HealingMappingEntry<Node, TiesEntry>>empty();
+            }
+        })//
+                .collect(//
+                        Collectors.groupingBy(e -> e.keyHash, //
+                                Collectors.groupingBy(e -> e.entryHash, //
+                                        Collectors.toMap(e -> e.key, e -> e.value))));
+
+        LOG.debug("Healing map: {}", healingExpectantMap);
+
+        healingExpectantMap.entrySet().parallelStream().forEach(pke -> {
+            String pkHashStr = pke.getKey();
+            Map<String, Map<Node, TiesEntry>> entryMap = pke.getValue();
+            if (entryMap.size() > 1) {
+                // Multiple versions
+                Map<String, BigInteger> versionMap = entryMap.entrySet().parallelStream().collect(//
+                        Collectors.groupingBy(e -> e.getKey(), //
+                                Collectors.mapping(
+                                        e -> e.getValue().values().parallelStream().limit(1).map(te -> te.getHeader().getEntryVersion())
+                                                .collect(//
+                                                        Collectors.collectingAndThen(Collectors.maxBy((o1, o2) -> o1.compareTo(o2)),
+                                                                (Optional<BigInteger> opt) -> opt.orElse(BigInteger.ONE.negate()))),
+                                        Collectors.collectingAndThen(Collectors.maxBy((o1, o2) -> o1.compareTo(o2)),
+                                                (Optional<BigInteger> opt) -> opt.orElse(BigInteger.ONE.negate())))));
+
+                LOG.debug("Version map: {}", versionMap);
+
+                Set<BigInteger> latest = new HashSet<>(versionMap.values());
+                if (latest.containsAll(versionMap.values())) {
+                    entryMap.keySet().retainAll(versionMap.keySet());
+                } else {
+                    // Conflicting versions
+                    // FIXME TODO Implement conflict resolving logic
+                    entryMap.clear();
                 }
 
+            }
+            Set<? extends Node> nodes = nodesMapper.apply(DatatypeConverter.parseHexBinary(pkHashStr));
+            entryMap.entrySet().parallelStream().forEach(ene -> {
+                String enHashStr = ene.getKey();
+                Map<Node, TiesEntry> nodesEntryMap = ene.getValue();
+                if (!nodesEntryMap.keySet().containsAll(nodes)) {
+                    Set<Node> nodesForHealing = new HashSet<>(nodes);
+                    nodesForHealing.removeAll(nodesEntryMap.keySet());
+                    LOG.debug("Entry {} should be healed\n\t   to nodes: {}\n\t from nodes: {}", //
+                            enHashStr, nodesForHealing, nodesEntryMap.keySet());
+                }
             });
 
-        } else {
-            throw new TiesServiceScopeException("Read failed for nodes " + segregatedResults.get(RECOLLECTION_ERROR));
-        }
+        });
 
     }
 

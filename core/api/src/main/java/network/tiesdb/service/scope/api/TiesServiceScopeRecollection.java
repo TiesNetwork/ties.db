@@ -145,12 +145,12 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
     public interface Result extends TiesServiceScopeResult.Result {
 
-        interface Field {
+        interface Field extends TiesEntry.Field {
 
-            interface HashField extends Field {
+            interface HashField extends Result.Field, TiesEntry.HashField {
 
                 @Override
-                default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
@@ -158,25 +158,35 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
             }
 
-            interface ValueField extends Field {
+            interface ValueField extends Result.Field {
 
                 @Override
-                default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
-                Object getValue();
+                @Override
+                default <T> T accept(TiesEntry.Field.Visitor<T> v) throws TiesServiceScopeException {
+                    throw new TiesServiceScopeException("Internal field representation could not be used as TiesEntry.Field, please use RawField instead");
+                }
+
+                Object getFieldValue();
 
             }
 
-            interface RawField extends Field {
+            interface RawField extends Result.Field, TiesEntry.ValueField {
 
                 @Override
-                default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
                 byte[] getRawValue();
+
+                @Override
+                default byte[] getValue() {
+                    return getRawValue();
+                }
 
             }
 
@@ -190,7 +200,7 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
             }
 
-            <T> T accept(Visitor<T> v) throws TiesServiceScopeException;
+            <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException;
 
             String getName();
 
@@ -198,13 +208,23 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
         }
 
-        interface Entry {
+        interface Entry extends TiesEntry {
 
             TiesEntryHeader getEntryHeader();
 
-            List<Field> getEntryFields();
+            List<Result.Field> getEntryFields();
 
-            List<Field> getComputedFields();
+            List<Result.Field> getComputedFields();
+
+            @Override
+            default TiesEntryHeader getHeader() {
+                return getEntryHeader();
+            }
+
+            @Override
+            default List<? extends Field> getFields() {
+                return getEntryFields();
+            }
 
         }
 

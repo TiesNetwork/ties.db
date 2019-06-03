@@ -32,7 +32,7 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.EventState;
 import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
-import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
+import com.tiesdb.protocol.v0r0.reader.FieldReader;
 import com.tiesdb.protocol.v0r0.reader.MessageReader;
 import com.tiesdb.protocol.v0r0.reader.ModificationEntryReader.ModificationEntry;
 import com.tiesdb.protocol.v0r0.reader.Reader;
@@ -58,8 +58,8 @@ public class MessageController {
             this.modificationEntry = modificationEntry;
             Map<String, Entry.FieldValue> fieldValues = new HashMap<>();
             Map<String, Entry.FieldHash> fieldHashes = new HashMap<>();
-            for (Map.Entry<String, Field> e : modificationEntry.getFields().entrySet()) {
-                Field field = e.getValue();
+            for (Map.Entry<String, FieldReader.Field> e : modificationEntry.getFields().entrySet()) {
+                FieldReader.Field field = e.getValue();
                 if (null != field.getRawValue()) {
                     Object fieldValue = deserialize(field);
                     fieldValues.put(e.getKey(), new Entry.FieldValue() {
@@ -173,7 +173,7 @@ public class MessageController {
         }
     }
 
-    static Object deserialize(Field field) throws TiesServiceScopeException {
+    static Object deserialize(FieldReader.Field field) throws TiesServiceScopeException {
         return ControllerUtil.readerForType(field.getType()).apply(field.getRawValue());
     }
 

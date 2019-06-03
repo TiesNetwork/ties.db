@@ -268,7 +268,7 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                         @Override
                         public Object getValue() {
-                            return wc.convert(field.getValue());
+                            return wc.convert(field.getFieldValue());
                         }
 
                         @Override

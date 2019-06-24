@@ -83,7 +83,7 @@ import network.tiesdb.transport.api.TiesTransportClient;
 
 public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
-    private static final String RECOLLECTION_ERROR = "ERROR";
+    private static final String SEGREGATION_ERROR = "ERROR";
 
     private static final Logger LOG = LoggerFactory.getLogger(TiesCoordinatorServiceScopeImpl.class);
 
@@ -315,30 +315,29 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             }
         }
 
-        Map<ModificationResultType, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, new HashMap<>(),
-                futureResult -> {
-                    try {
-                        CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = futureResult.get();
-                        TiesServiceScopeResult.Result result = coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
-                        return result.accept(new TiesServiceScopeResult.Result.Visitor<ModificationResultType>() {
+        Map<ModificationResultType, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, futureResult -> {
+            try {
+                CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = futureResult.get();
+                TiesServiceScopeResult.Result result = coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
+                return result.accept(new TiesServiceScopeResult.Result.Visitor<ModificationResultType>() {
 
-                            @Override
-                            public ModificationResultType on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
-                                return Arrays.equals(result.getHeaderHash(), header.getHash()) //
-                                        ? ModificationResultType.SUCCESS
-                                        : ModificationResultType.MISS;
-                            }
+                    @Override
+                    public ModificationResultType on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                        return Arrays.equals(result.getHeaderHash(), header.getHash()) //
+                                ? ModificationResultType.SUCCESS
+                                : ModificationResultType.MISS;
+                    }
 
-                            @Override
-                            public ModificationResultType on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
-                                return ModificationResultType.FAILURE;
-                            }
-                        });
-                    } catch (Throwable e) {
-                        LOG.error("Result filtering failure", e);
+                    @Override
+                    public ModificationResultType on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
                         return ModificationResultType.FAILURE;
                     }
                 });
+            } catch (Throwable e) {
+                LOG.error("Result filtering failure", e);
+                return ModificationResultType.FAILURE;
+            }
+        });
 
         Set<ModificationResultType> results = arbiter.results(segregatedResults).collect(Collectors.toSet());
         if (results.contains(ModificationResultType.SUCCESS)) {
@@ -503,7 +502,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
         ConsistencyArbiter arbiter = new ConsistencyArbiter(recollectionRequest.getConsistency(), sch.getReplicationFactor(tsn, tbn));
 
-        Map<String, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, new HashMap<>(),
+        Map<String, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters,
                 e -> DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()), result -> {
                     try {
                         return result.get().get()
@@ -529,9 +528,11 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     }
                 });
 
-        Set<String> arbiterEntryHashes = arbiter.results(segregatedResults).filter(p -> RECOLLECTION_ERROR != p)
-                .collect(Collectors.toSet());
+        LOG.debug("SegregatedResults: {}", segregatedResults);
 
+        Set<String> arbiterEntryHashes = arbiter.results(segregatedResults).filter(p -> SEGREGATION_ERROR != p).collect(Collectors.toSet());
+
+        LOG.debug("ArbiterEntryHashes: {}", arbiterEntryHashes);
         try {
             if (!arbiterEntryHashes.isEmpty()) {
                 List<TiesServiceScopeRecollection.Result.Entry> arbiterEntries = resultWaiters.values().parallelStream() //
@@ -570,7 +571,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                         });
 
             } else {
-                Set<Node> failedNodes = segregatedResults.get(RECOLLECTION_ERROR);
+                Set<Node> failedNodes = segregatedResults.get(SEGREGATION_ERROR);
                 if (null != failedNodes && !failedNodes.isEmpty()) {
                     throw new TiesServiceScopeException("Read failed for nodes " + failedNodes);
                 } else {
@@ -614,7 +615,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     }
 
-    public void healing(Set<String> primaryKeyFieldNames, Function<byte[], Set<? extends Node>> nodesMapper,
+    private void healing(Set<String> primaryKeyFieldNames, Function<byte[], Set<? extends Node>> nodesMapper,
             Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters) throws TiesServiceScopeException {
 
         Map<String, Map<String, Map<Node, TiesEntry>>> healingExpectantMap = resultWaiters.entrySet().parallelStream().flatMap(e -> {
@@ -626,7 +627,9 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeModification.Result result)
                             throws TiesServiceScopeException {
                         // TODO Auto-generated method stub
-                        LOG.warn("Modification healing unimplemented", new RuntimeException("not yet implemented"));
+                        RuntimeException err = new RuntimeException("not yet implemented");
+                        err.setStackTrace(new StackTraceElement[] { err.getStackTrace()[0] });
+                        LOG.debug("Modification healing unimplemented", err);
                         return Stream.<HealingMappingEntry<Node, TiesEntry>>empty();
                     }
 
@@ -689,11 +692,10 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 LOG.error("Result healing mapping failure", th);
                 return Stream.<HealingMappingEntry<Node, TiesEntry>>empty();
             }
-        })//
-                .collect(//
-                        Collectors.groupingBy(e -> e.keyHash, //
-                                Collectors.groupingBy(e -> e.entryHash, //
-                                        Collectors.toMap(e -> e.key, e -> e.value))));
+        }).collect(//
+                Collectors.groupingBy(e -> e.keyHash, //
+                        Collectors.groupingBy(e -> e.entryHash, //
+                                Collectors.toMap(e -> e.key, e -> e.value))));
 
         LOG.debug("Healing map: {}", healingExpectantMap);
 
@@ -703,7 +705,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             if (entryMap.size() > 1) {
                 // Multiple versions
                 Map<String, BigInteger> versionMap = entryMap.entrySet().parallelStream().collect(//
-                        Collectors.groupingBy(e -> e.getKey(), //
+                        Collectors.groupingByConcurrent(e -> e.getKey(), //
                                 Collectors.mapping(
                                         e -> e.getValue().values().parallelStream().limit(1).map(te -> te.getHeader().getEntryVersion())
                                                 .collect(//

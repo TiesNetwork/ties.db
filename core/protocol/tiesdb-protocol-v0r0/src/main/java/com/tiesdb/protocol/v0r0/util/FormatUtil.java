@@ -18,6 +18,8 @@
  */
 package com.tiesdb.protocol.v0r0.util;
 
+import java.util.Arrays;
+
 import javax.xml.bind.DatatypeConverter;
 
 public final class FormatUtil {
@@ -25,7 +27,20 @@ public final class FormatUtil {
     private FormatUtil() {
     }
 
-    public static String printHex(byte[] bytes) {
+    public static String printPartialHex(byte[] bytes) {
+        if (null == bytes) {
+            return "";
+        }
+        if (bytes.length <= 64) {
+            return DatatypeConverter.printHexBinary(bytes);
+        } else {
+            return DatatypeConverter.printHexBinary(Arrays.copyOfRange(bytes, 0, 32)) + "..." //
+                    + DatatypeConverter.printHexBinary(Arrays.copyOfRange(bytes, bytes.length - 32, bytes.length)) //
+                    + "(" + bytes.length + ")";
+        }
+    }
+
+    public static String printFullHex(byte[] bytes) {
         return null == bytes ? null : DatatypeConverter.printHexBinary(bytes);
     }
 }

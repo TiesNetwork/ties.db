@@ -41,7 +41,7 @@ public class ModificationResultSuccessReader implements Reader<ModificationResul
 
         @Override
         public String toString() {
-            return "ModificationResultSuccess [entryHeaderHash=" + FormatUtil.printHex(entryHeaderHash) + "]";
+            return "ModificationResultSuccess [entryHeaderHash=" + FormatUtil.printPartialHex(entryHeaderHash) + "]";
         }
 
         @Override

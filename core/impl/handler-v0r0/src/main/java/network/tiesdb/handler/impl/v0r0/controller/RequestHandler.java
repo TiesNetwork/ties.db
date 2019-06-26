@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,7 +238,7 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                         @Override
                         public String toString() {
-                            return "HashField [name=" + getName() + ", type=" + getType() + ", hash" + printHex(getHash()) + "]";
+                            return "HashField [name=" + getName() + ", type=" + getType() + ", hash" + printHexValue(getHash()) + "]";
                         }
 
                     };
@@ -273,7 +274,7 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                         @Override
                         public String toString() {
-                            return "ValueField [name=" + getName() + ", type=" + getType() + ", value=" + printValue(getType(), getValue())
+                            return "ValueField [name=" + getName() + ", type=" + getType() + ", value" + printValue(getType(), getValue())
                                     + "]";
                         }
 
@@ -339,7 +340,7 @@ public class RequestHandler implements Request.Visitor<Response> {
 
                 @Override
                 public String toString() {
-                    return "HashField [name=" + getName() + ", type=" + getType() + ", hash" + printHex(getHash()) + "]";
+                    return "HashField [name=" + getName() + ", type=" + getType() + ", hash" + printHexValue(getHash()) + "]";
                 }
 
             };
@@ -351,27 +352,32 @@ public class RequestHandler implements Request.Visitor<Response> {
             return " is null";
         }
         if (value instanceof byte[]) {
-            if (null == type) {
-                return printHex((byte[]) value);
+            if (null != type) {
+                switch (type) {
+                case "uuid":
+                    ByteBuffer uuidBuf = ByteBuffer.allocate(2 * Long.BYTES);
+                    uuidBuf.put((byte[]) value).flip();
+                    return "=" + new UUID(uuidBuf.getLong(), uuidBuf.getLong()).toString();
+                default:
+                    // NOP
+                }
             }
-            switch (type) {
-            case "uuid":
-                ByteBuffer uuidBuf = ByteBuffer.allocate(2 * Long.BYTES);
-                uuidBuf.put((byte[]) value).flip();
-                return "=" + new UUID(uuidBuf.getLong(), uuidBuf.getLong()).toString();
-
-            default:
-                return printHex((byte[]) value);
-            }
+            return printHexValue((byte[]) value);
         }
         return value.toString();
     }
 
-    protected static String printHex(byte[] value) {
+    protected static String printHexValue(byte[] value) {
         if (null == value) {
             return " is null";
         }
-        return "=0x" + DatatypeConverter.printHexBinary((byte[]) value);
+        if (value.length <= 64) {
+            return "=0x" + DatatypeConverter.printHexBinary(value);
+        } else {
+            return "=0x" + DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
+                    + DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
+                    + "(" + value.length + ")";
+        }
     }
 
     protected static void convertArguments(List<FunctionArgument> from, Consumer<Query.Function.Argument> c) {

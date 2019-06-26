@@ -87,7 +87,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
 
         @Override
         public String toString() {
-            return "ArgumentStatic [type=" + type + ", rawValue=" + FormatUtil.printHex(rawValue) + "]";
+            return "ArgumentStatic [type=" + type + ", rawValue=" + FormatUtil.printPartialHex(rawValue) + "]";
         }
 
         public String getType() {

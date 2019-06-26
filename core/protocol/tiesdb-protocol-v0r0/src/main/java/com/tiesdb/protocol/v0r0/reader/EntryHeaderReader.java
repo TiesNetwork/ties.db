@@ -66,8 +66,8 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
         public String toString() {
             return "EntryHeader [tablespaceName=" + tablespaceName + ", tableName=" + tableName /* + ", entryType=" + entryType */
                     + ", entryTimestamp=" + entryTimestamp + ", entryVersion=" + entryVersion + ", entryNetwork=" + entryNetwork
-                    + ", entryOldHash=" + FormatUtil.printHex(entryOldHash) + ", entryFldHash=" + FormatUtil.printHex(entryFldHash)
-                    + ", hash=" + FormatUtil.printHex(hash) + ", signature=" + super.toString() + "]";
+                    + ", entryOldHash=" + FormatUtil.printPartialHex(entryOldHash) + ", entryFldHash=" + FormatUtil.printPartialHex(entryFldHash)
+                    + ", hash=" + FormatUtil.printPartialHex(hash) + ", signature=" + super.toString() + "]";
         }
 
         public String getTablespaceName() {

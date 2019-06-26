@@ -87,6 +87,10 @@ public class WebSocketServerInitializer extends ChannelInitializer<SocketChannel
             super(websocketPath, subprotocols, allowExtensions);
         }
 
+        public ConfigurableWebSocketServerProtocolHandler(String websocketPath, String subprotocols, boolean allowExtensions, int maxFrameSize) {
+            super(websocketPath, subprotocols, allowExtensions, maxFrameSize);
+        }
+
         @Override
         protected void decode(ChannelHandlerContext ctx, WebSocketFrame frame, List<Object> out) throws Exception {
             out.add(frame.retain());
@@ -112,8 +116,8 @@ public class WebSocketServerInitializer extends ChannelInitializer<SocketChannel
             pipeline.addLast(sslCtx.newHandler(ch.alloc()));
         }
         pipeline.addLast(new HttpServerCodec());
-        pipeline.addLast(new HttpObjectAggregator(65536));
-        pipeline.addLast(new ConfigurableWebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
+        pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
+        pipeline.addLast(new ConfigurableWebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true, Integer.MAX_VALUE));
         pipeline.addLast(new WebSocketIndexPageHandler(WEBSOCKET_PATH));
         pipeline.addLast(new WebSocketFrameHandler(transport));
         config2ndStage(ch);

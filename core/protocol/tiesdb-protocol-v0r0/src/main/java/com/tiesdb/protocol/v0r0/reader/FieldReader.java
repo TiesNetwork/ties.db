@@ -55,7 +55,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
         @Override
         public String toString() {
             return "Field [name=" + name + ", type=" + type + ", hash=" + Arrays.toString(hash) + ", rawValue="
-                    + FormatUtil.printHex(rawValue) + "]";
+                    + FormatUtil.printPartialHex(rawValue) + "]";
         }
 
         public String getName() {
@@ -110,7 +110,14 @@ public class FieldReader implements Reader<FieldReader.Field> {
             LOG.debug("FIELD_VALUE: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(field.rawValue);
+                    byte[] value = field.rawValue;
+                    if (value.length <= 64) {
+                        return DatatypeConverter.printHexBinary(value);
+                    } else {
+                        return DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
+                                + DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
+                                + "(" + value.length + ")";
+                    }
                 }
             });
             end(session, e);

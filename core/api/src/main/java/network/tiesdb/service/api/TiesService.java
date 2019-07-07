@@ -20,6 +20,7 @@ package network.tiesdb.service.api;
 
 import network.tiesdb.api.TiesVersion;
 import network.tiesdb.service.scope.api.TiesServiceScope;
+import network.tiesdb.service.scope.api.TiesServiceScopeException;
 
 /**
  * TiesDB service API.
@@ -33,6 +34,6 @@ public interface TiesService {
 
     TiesVersion getVersion();
 
-    TiesServiceScope newServiceScope();
+    TiesServiceScope newServiceScope() throws TiesServiceScopeException;
 
 }

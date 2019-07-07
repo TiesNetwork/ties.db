@@ -18,26 +18,16 @@
  */
 package network.tiesdb.service.scope.api;
 
-import java.io.Closeable;
+public interface TiesServiceScopeHealing extends TiesServiceScopeAction {
 
-import network.tiesdb.api.TiesVersion;
+    public interface Result extends TiesServiceScopeResult.Result {
 
-public interface TiesServiceScope extends Closeable {
+        default <T> T accept(TiesServiceScopeResult.Result.Visitor<T> v) throws TiesServiceScopeException {
+            return v.on(this);
+        }
 
-    TiesVersion getServiceVersion();
+    }
 
-    void insert(TiesServiceScopeModification action) throws TiesServiceScopeException;
-
-    void update(TiesServiceScopeModification action) throws TiesServiceScopeException;
-
-    void delete(TiesServiceScopeModification action) throws TiesServiceScopeException;
-
-    void select(TiesServiceScopeRecollection action) throws TiesServiceScopeException;
-
-    void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException;
-
-    void schema(TiesServiceScopeSchema action) throws TiesServiceScopeException;
-
-    void result(TiesServiceScopeResult action) throws TiesServiceScopeException;
+    void setResult(Result result) throws TiesServiceScopeException;
 
 }

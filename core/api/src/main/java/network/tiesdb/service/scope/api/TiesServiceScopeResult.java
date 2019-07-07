@@ -28,6 +28,8 @@ public interface TiesServiceScopeResult extends TiesServiceScopeAction {
 
             T on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException;
 
+            T on(TiesServiceScopeHealing.Result result) throws TiesServiceScopeException;
+
         }
 
         <T> T accept(Result.Visitor<T> v) throws TiesServiceScopeException;

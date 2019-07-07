@@ -23,6 +23,8 @@ import java.math.BigInteger;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
+import com.tiesdb.protocol.v0r0.reader.HealingRequestReader.HealingRequest;
+import com.tiesdb.protocol.v0r0.reader.HealingResponseReader.HealingResponse;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResponse;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
@@ -59,6 +61,8 @@ public interface Reader<T> {
 
             T on(SchemaRequest schemaRequest) throws TiesDBProtocolException;
 
+            T on(HealingRequest healingRequest) throws TiesDBProtocolException;
+
         }
 
         default void accept(Message.Visitor v) throws TiesDBProtocolException {
@@ -78,6 +82,8 @@ public interface Reader<T> {
             T on(RecollectionResponse recollectionResponse) throws TiesDBProtocolException;
 
             T on(SchemaResponse schemaResponse) throws TiesDBProtocolException;
+
+            T on(HealingResponse healingResponse) throws TiesDBProtocolException;
 
         }
 

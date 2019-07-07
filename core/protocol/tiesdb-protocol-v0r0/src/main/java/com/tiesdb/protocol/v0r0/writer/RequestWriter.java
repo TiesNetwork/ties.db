@@ -25,6 +25,7 @@ import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.writer.HealingRequestWriter.HealingRequest;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
 import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
 //import com.tiesdb.protocol.v0r0.writer.SchemaRequestWriter.SchemaRequest;
@@ -49,6 +50,7 @@ public class RequestWriter implements Writer<Writer.Request> {
 
         private final ModificationRequestWriter modificationRequestWriter = new ModificationRequestWriter();
         private final RecollectionRequestWriter recollectionRequestWriter = new RecollectionRequestWriter();
+        private final HealingRequestWriter healingRequestWriter = new HealingRequestWriter();
         //private final SchemaRequestWriter schemaRequestWriter = new SchemaRequestWriter();
 
         @Override
@@ -59,6 +61,11 @@ public class RequestWriter implements Writer<Writer.Request> {
         @Override
         public ConversationConsumer on(RecollectionRequest request) throws TiesDBProtocolException {
             return write(recollectionRequestWriter, request);
+        }
+
+        @Override
+        public ConversationConsumer on(HealingRequest request) throws TiesDBProtocolException {
+            return write(healingRequestWriter, request);
         }
 
 //        @Override

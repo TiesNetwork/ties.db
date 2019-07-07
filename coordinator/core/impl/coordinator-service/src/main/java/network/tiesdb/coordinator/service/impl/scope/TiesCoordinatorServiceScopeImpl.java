@@ -65,6 +65,7 @@ import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldHash;
@@ -332,6 +333,11 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     public ModificationResultType on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
                         return ModificationResultType.FAILURE;
                     }
+
+                    @Override
+                    public ModificationResultType on(TiesServiceScopeHealing.Result result) throws TiesServiceScopeException {
+                        return ModificationResultType.FAILURE;
+                    }
                 });
             } catch (Throwable e) {
                 LOG.error("Result filtering failure", e);
@@ -392,7 +398,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             Set<String> pkFieldNames = fields.parallelStream().filter(f -> f.isPrimaryKey()).map(f -> f.getName())
                     .collect(Collectors.toSet());
             try {
-                healing(pkFieldNames, pkHash -> sch.getNodes(tsn, tbn, pkHash), resultWaiters);
+                healingDetection(pkFieldNames, pkHash -> sch.getNodes(tsn, tbn, pkHash), resultWaiters);
             } catch (TiesServiceScopeException ex) {
                 LOG.error("Healing failed for modification request {}", action.getMessageId(), ex);
             }
@@ -520,6 +526,13 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                             throws TiesServiceScopeException {
                                         return result.getEntries().parallelStream();
                                     }
+
+                                    @Override
+                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(TiesServiceScopeHealing.Result result)
+                                            throws TiesServiceScopeException {
+                                        LOG.error("Illegal result for recollection response: {}", result);
+                                        return Stream.empty();
+                                    }
                                 });
                     } catch (CancellationException | TiesServiceScopeException | InterruptedException | ExecutionException
                             | TimeoutException e) {
@@ -544,6 +557,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                             @Override
                                             public Stream<TiesServiceScopeRecollection.Result.Entry> on(
                                                     TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                                                LOG.error("Illegal result for recollection: {}", result);
                                                 return Stream.empty();
                                             }
 
@@ -551,6 +565,13 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                             public Stream<TiesServiceScopeRecollection.Result.Entry> on(
                                                     TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
                                                 return result.getEntries().parallelStream();
+                                            }
+
+                                            @Override
+                                            public Stream<TiesServiceScopeRecollection.Result.Entry> on(
+                                                    TiesServiceScopeHealing.Result result) throws TiesServiceScopeException {
+                                                LOG.error("Illegal result for recollection: {}", result);
+                                                return Stream.empty();
                                             }
                                         });
                             } catch (CancellationException | TiesServiceScopeException | InterruptedException | ExecutionException
@@ -590,7 +611,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 Set<String> pkFieldNames = fields.parallelStream().filter(f -> f.isPrimaryKey()).map(f -> f.getName())
                         .collect(Collectors.toSet());
                 try {
-                    healing(pkFieldNames, pkHash -> sch.getNodes(tsn, tbn, pkHash), resultWaiters);
+                    healingDetection(pkFieldNames, pkHash -> sch.getNodes(tsn, tbn, pkHash), resultWaiters);
                 } catch (TiesServiceScopeException ex) {
                     LOG.error("Healing failed for recollection request {}", recollectionRequest.getMessageId(), ex);
                 }
@@ -615,7 +636,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     }
 
-    private void healing(Set<String> primaryKeyFieldNames, Function<byte[], Set<? extends Node>> nodesMapper,
+    private void healingDetection(Set<String> primaryKeyFieldNames, Function<byte[], Set<? extends Node>> nodesMapper,
             Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters) throws TiesServiceScopeException {
 
         Map<String, Map<String, Map<Node, TiesEntry>>> healingExpectantMap = resultWaiters.entrySet().parallelStream().flatMap(e -> {
@@ -687,6 +708,12 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                         }).filter(m -> null != m);
                     }
 
+                    @Override
+                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeHealing.Result result)
+                            throws TiesServiceScopeException {
+                        throw new TiesServiceScopeException("Double healing prohibited");
+                    }
+
                 });
             } catch (Throwable th) {
                 LOG.error("Result healing mapping failure", th);
@@ -698,6 +725,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                 Collectors.toMap(e -> e.key, e -> e.value))));
 
         LOG.debug("Healing map: {}", healingExpectantMap);
+
+        TiesRouter router = service.getRouterService();
 
         healingExpectantMap.entrySet().parallelStream().forEach(pke -> {
             String pkHashStr = pke.getKey();
@@ -726,6 +755,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 }
 
             }
+
             Set<? extends Node> nodes = nodesMapper.apply(DatatypeConverter.parseHexBinary(pkHashStr));
             entryMap.entrySet().parallelStream().forEach(ene -> {
                 String enHashStr = ene.getKey();
@@ -735,11 +765,52 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     nodesForHealing.removeAll(nodesEntryMap.keySet());
                     LOG.debug("Entry {} should be healed\n\t   to nodes: {}\n\t from nodes: {}", //
                             enHashStr, nodesForHealing, nodesEntryMap.keySet());
+                    healingPropagation(router, nodesForHealing);
                 }
             });
 
         });
 
+    }
+
+    private void healingPropagation(TiesRouter router, Set<Node> nodes) {
+
+        nodes.forEach(node -> {
+            CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
+            try {
+                TiesTransportClient c = router.getClient(node);
+                c.request(new TiesServiceScopeConsumer() {
+
+                    @Override
+                    public void accept(TiesServiceScope s) throws TiesServiceScopeException {
+                        s.heal(new TiesServiceScopeHealing() {
+
+                            @Override
+                            public BigInteger getMessageId() {
+                                return coordinatedResult.getId();
+                            }
+
+                            @Override
+                            public void setResult(Result result) throws TiesServiceScopeException {
+                                throw new TiesServiceScopeException("Coordinator should not handle ClientScope results");
+                            }
+                        });
+                    }
+                });
+            } catch (TiesRoutingException e) {
+                LOG.warn("Route was not found for node: {}", node, e);
+                coordinatedResult.fail(e);
+            } catch (Throwable e) {
+                LOG.warn("Node request failed for node: {} scope {}", node, e);
+                coordinatedResult.fail(e);
+            }
+        });
+    }
+
+    @Override
+    public void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException {
+        // TODO Auto-generated method stub
+        throw new TiesServiceScopeException("Healing delegation not implemented yet");
     }
 
     @Override

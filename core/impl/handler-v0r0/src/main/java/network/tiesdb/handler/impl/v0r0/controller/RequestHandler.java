@@ -50,6 +50,7 @@ import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentFunction;
 import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentReference;
 import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentStatic;
 import com.tiesdb.protocol.v0r0.reader.FunctionReader.FunctionArgument;
+import com.tiesdb.protocol.v0r0.reader.HealingRequestReader.HealingRequest;
 import com.tiesdb.protocol.v0r0.reader.ModificationEntryReader.ModificationEntry;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.Reader.Request;
@@ -60,6 +61,7 @@ import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field.HashField;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field.ValueField;
+import com.tiesdb.protocol.v0r0.writer.HealingResponseWriter.HealingResponse;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResponse;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResult;
 import com.tiesdb.protocol.v0r0.writer.ModificationResultErrorWriter.ModificationResultError;
@@ -82,6 +84,7 @@ import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.Actio
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.PercentConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.QuorumConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Result.Error;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Result.Success;
@@ -480,7 +483,13 @@ public class RequestHandler implements Request.Visitor<Response> {
             throw new TiesDBProtocolMessageException(messageId, e);
         }
 
-        TiesServiceScope serviceScope = service.newServiceScope();
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            LOG.error("Error handling ModificationRequest {}", request, e);
+            throw new TiesDBProtocolMessageException(messageId, "Error handling ModificationRequest", e);
+        }
         LinkedList<TiesServiceScopeModification.Result> results = new LinkedList<>();
         for (ModificationEntry modificationEntry : request.getEntries()) {
             EntryHeaderReader.EntryHeader header = modificationEntry.getHeader();
@@ -672,7 +681,13 @@ public class RequestHandler implements Request.Visitor<Response> {
             throw new TiesDBProtocolMessageException(messageId, e);
         }
 
-        TiesServiceScope serviceScope = service.newServiceScope();
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            LOG.error("Error handling RecollectionRequest {}", request, e);
+            throw new TiesDBProtocolMessageException(messageId, "Error handling RecollectionRequest", e);
+        }
         List<RecollectionResult> results = new LinkedList<>();
         try {
             serviceScope.select(new TiesServiceScopeRecollection() {
@@ -819,6 +834,48 @@ public class RequestHandler implements Request.Visitor<Response> {
     }
 
     @Override
+    public Response on(HealingRequest request) throws TiesDBProtocolException {
+        BigInteger messageId = request.getMessageId();
+        LOG.debug("MessageID: {}", messageId);
+
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            LOG.error("Error handling HealingRequest {}", request, e);
+            throw new TiesDBProtocolMessageException(messageId, "Error handling HealingRequest", e);
+        }
+
+        try {
+            serviceScope.heal(new TiesServiceScopeHealing() {
+
+                @Override
+                public BigInteger getMessageId() {
+                    return messageId;
+                }
+
+                @Override
+                public void setResult(Result result) throws TiesServiceScopeException {
+                    throw new TiesServiceScopeException("Healing result handling not implemented yet");
+                }
+
+            });
+        } catch (TiesServiceScopeException e) {
+            LOG.error("Error handling HealingRequest {}", request, e);
+            throw new TiesDBProtocolMessageException(messageId, "Error handling HealingRequest", e);
+        }
+
+        return new HealingResponse() {
+
+            @Override
+            public BigInteger getMessageId() {
+                return messageId;
+            }
+
+        };
+    }
+
+    @Override
     public Response on(SchemaRequest request) throws TiesDBProtocolException {
         requireNonNull(request);
 
@@ -832,9 +889,9 @@ public class RequestHandler implements Request.Visitor<Response> {
         // throw new TiesDBProtocolMessageException(messageId, e);
         // }
 
-        TiesServiceScope serviceScope = service.newServiceScope();
         LinkedList<SchemaField> schemaFields = new LinkedList<>();
         try {
+            TiesServiceScope serviceScope = service.newServiceScope();
             serviceScope.schema(new TiesServiceScopeSchema() {
 
                 @Override
@@ -918,4 +975,5 @@ public class RequestHandler implements Request.Visitor<Response> {
             throw new TiesDBProtocolMessageException(request.getMessageId(), e);
         }
     }
+
 }

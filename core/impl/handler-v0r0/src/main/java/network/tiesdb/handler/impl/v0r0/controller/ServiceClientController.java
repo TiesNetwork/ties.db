@@ -37,6 +37,7 @@ import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency.ConsistencyType;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
+import com.tiesdb.protocol.v0r0.writer.HealingRequestWriter.HealingRequest;
 import com.tiesdb.protocol.v0r0.writer.ModificationEntryWriter.ModificationEntry;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
 import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
@@ -54,6 +55,7 @@ import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.Actio
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.QuorumConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldHash;
@@ -490,6 +492,22 @@ public class ServiceClientController implements TiesServiceScope {
             return DEFAULT_CONSISTENCY;
         }
         return consistency.accept(CONSISTENCY_SELECTOR);
+    }
+
+    @Override
+    public void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException {
+        try {
+            REQUEST_WRITER_INSTANCE.accept(session, new HealingRequest() {
+
+                @Override
+                public BigInteger getMessageId() {
+                    return action.getMessageId();
+                }
+
+            });
+        } catch (TiesDBProtocolException e) {
+            throw new TiesServiceScopeException("Node modification request failed", e);
+        }
     }
 
 }

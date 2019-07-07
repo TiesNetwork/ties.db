@@ -36,6 +36,7 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.exception.TiesDBProtocolMessageException;
 import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
 import com.tiesdb.protocol.v0r0.reader.FieldReader;
+import com.tiesdb.protocol.v0r0.reader.HealingResponseReader.HealingResponse;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResponse;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResult;
@@ -50,6 +51,7 @@ import network.tiesdb.service.api.TiesService;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeResult;
@@ -86,7 +88,12 @@ public class ResponseHandler implements Response.Visitor<Void> {
 
         BigInteger messageId = modificationResponse.getMessageId();
 
-        TiesServiceScope serviceScope = service.newServiceScope();
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            throw new TiesDBProtocolException("Response could not be handled", e);
+        }
         for (ModificationResult modificationResult : modificationResponse.getModificationResults()) {
             try {
                 TiesServiceScopeResult.Result result = modificationResult
@@ -142,7 +149,12 @@ public class ResponseHandler implements Response.Visitor<Void> {
 
         BigInteger messageId = recollectionResponse.getMessageId();
 
-        TiesServiceScope serviceScope = service.newServiceScope();
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            throw new TiesDBProtocolException("Response could not be handled", e);
+        }
         try {
             TiesServiceScopeResult.Result result = new TiesServiceScopeRecollection.Result() {
 
@@ -153,8 +165,10 @@ public class ResponseHandler implements Response.Visitor<Void> {
                             return new TiesServiceScopeRecollection.Result.Entry() {
 
                                 private final TiesEntryHeader header = convertHeader(r.getHeader());
-                                private final List<TiesServiceScopeRecollection.Result.Field> entryFields = convertFields(r.getFields().values());
-                                private final List<TiesServiceScopeRecollection.Result.Field> computedFields = convertFields(r.getComputeFields());
+                                private final List<TiesServiceScopeRecollection.Result.Field> entryFields = convertFields(
+                                        r.getFields().values());
+                                private final List<TiesServiceScopeRecollection.Result.Field> computedFields = convertFields(
+                                        r.getComputeFields());
 
                                 @Override
                                 public TiesEntryHeader getEntryHeader() {
@@ -203,9 +217,42 @@ public class ResponseHandler implements Response.Visitor<Void> {
     }
 
     @Override
+    public Void on(HealingResponse healingResponse) throws TiesDBProtocolException {
+
+        BigInteger messageId = healingResponse.getMessageId();
+
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            throw new TiesDBProtocolException("Response could not be handled", e);
+        }
+        try {
+            TiesServiceScopeResult.Result result = new TiesServiceScopeHealing.Result() {
+
+            };
+            serviceScope.result(new TiesServiceScopeResult() {
+
+                @Override
+                public BigInteger getMessageId() {
+                    return messageId;
+                }
+
+                @Override
+                public Result getResult() {
+                    return result;
+                }
+
+            });
+        } catch (TiesServiceScopeException e) {
+            throw new TiesDBProtocolException("Response handling failed", e);
+        }
+        return null;
+    }
+
+    @Override
     public Void on(SchemaResponse schemaResponse) throws TiesDBProtocolException {
-        // TODO Auto-generated method stub
-        throw new TiesDBProtocolException("Not implemented");
+        throw new TiesDBProtocolException("Schema delegation is prohibited");
     }
 
     private static TiesEntryHeader convertHeader(EntryHeader header) {

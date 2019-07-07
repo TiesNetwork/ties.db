@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.tiesdb.coordinator</groupId>
         <artifactId>distribution</artifactId>
-        <version>0.1.5-SNAPSHOT</version>
+        <version>0.1.6-ALPHA</version>
     </parent>
 
     <artifactId>distribution-common</artifactId>

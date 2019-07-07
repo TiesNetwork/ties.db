@@ -27,7 +27,7 @@
 	<parent>
 		<groupId>com.tiesdb.lib</groupId>
 		<artifactId>lib-parent</artifactId>
-		<version>0.1.5-SNAPSHOT</version>
+		<version>0.1.6-ALPHA</version>
 	</parent>
 
 	<artifactId>crypto</artifactId>

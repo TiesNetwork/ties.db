@@ -25,7 +25,7 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.format.TiesDBRequestConsistencyFormat;
-import com.tiesdb.protocol.v0r0.writer.ModificationEntryWriter.ModificationEntry;
+import com.tiesdb.protocol.v0r0.writer.EntryWriter.Entry;
 
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
@@ -45,11 +45,11 @@ public class ModificationRequestWriter implements Writer<ModificationRequestWrit
 
         public TiesDBRequestConsistency getConsistency();
 
-        public Iterable<ModificationEntry> getEntries();
+        public Iterable<Entry> getEntries();
 
     }
 
-    private final ModificationEntryWriter modificationEntryWriter = new ModificationEntryWriter();
+    private final EntryWriter modificationEntryWriter = new EntryWriter();
 
     @Override
     public void accept(Conversation session, ModificationRequest request) throws TiesDBProtocolException {

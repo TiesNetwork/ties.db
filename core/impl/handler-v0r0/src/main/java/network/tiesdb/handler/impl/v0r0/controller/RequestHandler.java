@@ -51,7 +51,7 @@ import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentReference;
 import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentStatic;
 import com.tiesdb.protocol.v0r0.reader.FunctionReader.FunctionArgument;
 import com.tiesdb.protocol.v0r0.reader.HealingRequestReader.HealingRequest;
-import com.tiesdb.protocol.v0r0.reader.ModificationEntryReader.ModificationEntry;
+import com.tiesdb.protocol.v0r0.reader.EntryReader;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.Reader.Request;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
@@ -62,6 +62,9 @@ import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field.HashField;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field.ValueField;
 import com.tiesdb.protocol.v0r0.writer.HealingResponseWriter.HealingResponse;
+import com.tiesdb.protocol.v0r0.writer.HealingResponseWriter.HealingResult;
+import com.tiesdb.protocol.v0r0.writer.HealingResultErrorWriter.HealingResultError;
+import com.tiesdb.protocol.v0r0.writer.HealingResultSuccessWriter.HealingResultSuccess;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResponse;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResult;
 import com.tiesdb.protocol.v0r0.writer.ModificationResultErrorWriter.ModificationResultError;
@@ -77,6 +80,7 @@ import com.tiesdb.protocol.v0r0.writer.Writer.Response;
 import network.tiesdb.handler.impl.v0r0.controller.ControllerUtil.WriteConverter;
 import network.tiesdb.handler.impl.v0r0.controller.MessageController.EntryImpl;
 import network.tiesdb.service.api.TiesService;
+import network.tiesdb.service.scope.api.TiesEntryExtended;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency;
@@ -86,8 +90,6 @@ import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.Actio
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
 import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Result.Error;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Result.Success;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result;
@@ -491,7 +493,7 @@ public class RequestHandler implements Request.Visitor<Response> {
             throw new TiesDBProtocolMessageException(messageId, "Error handling ModificationRequest", e);
         }
         LinkedList<TiesServiceScopeModification.Result> results = new LinkedList<>();
-        for (ModificationEntry modificationEntry : request.getEntries()) {
+        for (EntryReader.Entry modificationEntry : request.getEntries()) {
             EntryHeaderReader.EntryHeader header = modificationEntry.getHeader();
             if (null == header) {
                 IllegalArgumentException e = new IllegalArgumentException("No header");
@@ -518,7 +520,7 @@ public class RequestHandler implements Request.Visitor<Response> {
                         private final EntryImpl entry = new EntryImpl(modificationEntry, true);
 
                         @Override
-                        public Entry getEntry() {
+                        public TiesEntryExtended getEntry() {
                             return entry;
                         }
 
@@ -544,7 +546,7 @@ public class RequestHandler implements Request.Visitor<Response> {
                         private final EntryImpl entry = new EntryImpl(modificationEntry, false);
 
                         @Override
-                        public Entry getEntry() {
+                        public TiesEntryExtended getEntry() {
                             return entry;
                         }
 
@@ -570,7 +572,7 @@ public class RequestHandler implements Request.Visitor<Response> {
                         private final EntryImpl entry = new EntryImpl(modificationEntry, false);
 
                         @Override
-                        public Entry getEntry() {
+                        public TiesEntryExtended getEntry() {
                             return entry;
                         }
 
@@ -614,7 +616,7 @@ public class RequestHandler implements Request.Visitor<Response> {
             try {
                 return r.accept(new TiesServiceScopeModification.Result.Visitor<ModificationResult>() {
                     @Override
-                    public ModificationResult on(Success success) throws TiesServiceScopeException {
+                    public ModificationResult on(TiesServiceScopeModification.Result.Success success) throws TiesServiceScopeException {
                         return new ModificationResultSuccess() {
                             @Override
                             public byte[] getEntryHeaderHash() {
@@ -624,7 +626,7 @@ public class RequestHandler implements Request.Visitor<Response> {
                     }
 
                     @Override
-                    public ModificationResult on(Error error) throws TiesServiceScopeException {
+                    public ModificationResult on(TiesServiceScopeModification.Result.Error error) throws TiesServiceScopeException {
                         return new ModificationResultError() {
                             @Override
                             public byte[] getEntryHeaderHash() {
@@ -835,6 +837,9 @@ public class RequestHandler implements Request.Visitor<Response> {
 
     @Override
     public Response on(HealingRequest request) throws TiesDBProtocolException {
+
+        requireNonNull(request);
+
         BigInteger messageId = request.getMessageId();
         LOG.debug("MessageID: {}", messageId);
 
@@ -845,31 +850,117 @@ public class RequestHandler implements Request.Visitor<Response> {
             LOG.error("Error handling HealingRequest {}", request, e);
             throw new TiesDBProtocolMessageException(messageId, "Error handling HealingRequest", e);
         }
+        LinkedList<TiesServiceScopeHealing.Result> results = new LinkedList<>();
+        for (EntryReader.Entry healingEntry : request.getEntries()) {
+            EntryHeaderReader.EntryHeader header = healingEntry.getHeader();
+            if (null == header) {
+                IllegalArgumentException e = new IllegalArgumentException("No header");
+                LOG.error("Error handling HealingRequest.Entry {}", healingEntry, e);
+                results.add(new TiesServiceScopeHealing.Result.Error() {
 
-        try {
-            serviceScope.heal(new TiesServiceScopeHealing() {
+                    @Override
+                    public Throwable getError() {
+                        return e;
+                    }
 
-                @Override
-                public BigInteger getMessageId() {
-                    return messageId;
-                }
+                    @Override
+                    public byte[] getHeaderHash() {
+                        return EMPTY_ARRAY;
+                    }
 
-                @Override
-                public void setResult(Result result) throws TiesServiceScopeException {
-                    throw new TiesServiceScopeException("Healing result handling not implemented yet");
-                }
+                });
+                continue;
+            }
+            try {
+                serviceScope.heal(new TiesServiceScopeHealing() {
 
-            });
-        } catch (TiesServiceScopeException e) {
-            LOG.error("Error handling HealingRequest {}", request, e);
-            throw new TiesDBProtocolMessageException(messageId, "Error handling HealingRequest", e);
+                    private final EntryImpl entry = new EntryImpl(healingEntry, true);
+
+                    @Override
+                    public TiesEntryExtended getEntry() {
+                        return entry;
+                    }
+
+                    @Override
+                    public BigInteger getMessageId() {
+                        return messageId;
+                    }
+
+                    @Override
+                    public void setResult(Result result) throws TiesServiceScopeException {
+                        results.add(result);
+                    }
+
+                });
+            } catch (TiesServiceScopeException e) {
+                LOG.error("Error handling HealingRequest.Entry {}", healingEntry, e);
+                results.add(new TiesServiceScopeHealing.Result.Error() {
+
+                    @Override
+                    public Throwable getError() {
+                        return e;
+                    }
+
+                    @Override
+                    public byte[] getHeaderHash() {
+                        return healingEntry.getHeader().getHash();
+                    }
+                });
+                continue;
+            }
         }
+        final List<HealingResult> resultList = Collections.unmodifiableList(results.stream().map(r -> {
+            try {
+                return r.accept(new TiesServiceScopeHealing.Result.Visitor<HealingResult>() {
+                    @Override
+                    public HealingResult on(TiesServiceScopeHealing.Result.Success success) throws TiesServiceScopeException {
+                        return new HealingResultSuccess() {
+                            @Override
+                            public byte[] getEntryHeaderHash() {
+                                return success.getHeaderHash();
+                            }
+                        };
+                    }
 
+                    @Override
+                    public HealingResult on(TiesServiceScopeHealing.Result.Error error) throws TiesServiceScopeException {
+                        return new HealingResultError() {
+                            @Override
+                            public byte[] getEntryHeaderHash() {
+                                return error.getHeaderHash();
+                            }
+
+                            @Override
+                            public Throwable getError() {
+                                return error.getError();
+                            }
+                        };
+                    }
+                });
+            } catch (TiesServiceScopeException e) {
+                return new HealingResultError() {
+                    @Override
+                    public byte[] getEntryHeaderHash() {
+                        return EMPTY_ARRAY;
+                    }
+
+                    @Override
+                    public Throwable getError() {
+                        return e;
+                    }
+                };
+            }
+        }).collect(Collectors.toList()));
         return new HealingResponse() {
 
             @Override
             public BigInteger getMessageId() {
                 return messageId;
+            }
+
+            @Override
+            public Iterable<HealingResult> getResults() {
+                return resultList;
             }
 
         };

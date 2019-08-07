@@ -18,76 +18,7 @@
  */
 package network.tiesdb.service.scope.api;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public interface TiesServiceScopeModification extends TiesServiceScopeAction, TiesServiceScopeAction.Distributed {
-
-    interface Entry extends TiesEntry {
-
-        interface FieldHash {
-
-            byte[] getHash();
-
-            String getType();
-
-        }
-
-        interface FieldValue extends FieldHash {
-
-            Object get();
-
-            byte[] getBytes();
-
-        }
-
-        String getTablespaceName();
-
-        String getTableName();
-
-        TiesEntryHeader getHeader();
-
-        Map<String, FieldHash> getFieldHashes();
-
-        Map<String, FieldValue> getFieldValues();
-
-        @Override
-        default List<? extends Field> getFields() {
-            return Stream.concat(getFieldHashes().entrySet().stream().map(e -> new TiesEntry.HashField() {
-
-                @Override
-                public String getName() {
-                    return e.getKey();
-                }
-
-                @Override
-                public byte[] getHash() {
-                    return e.getValue().getHash();
-                }
-
-            }), getFieldValues().entrySet().stream().map(e -> new TiesEntry.ValueField() {
-
-                @Override
-                public String getName() {
-                    return e.getKey();
-                }
-
-                @Override
-                public byte[] getHash() {
-                    return e.getValue().getHash();
-                }
-
-                @Override
-                public byte[] getValue() {
-                    return e.getValue().getBytes();
-                }
-
-            })).collect(Collectors.toList());
-        }
-
-    }
 
     interface Result extends TiesServiceScopeResult.Result {
 
@@ -129,7 +60,7 @@ public interface TiesServiceScopeModification extends TiesServiceScopeAction, Ti
 
     }
 
-    Entry getEntry();
+    TiesEntryExtended getEntry();
 
     void setResult(Result result) throws TiesServiceScopeException;
 

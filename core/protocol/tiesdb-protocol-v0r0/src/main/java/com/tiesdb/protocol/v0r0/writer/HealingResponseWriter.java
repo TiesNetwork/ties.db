@@ -18,15 +18,17 @@
  */
 package com.tiesdb.protocol.v0r0.writer;
 
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.MESSAGE_ID;
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.HEALING_RESPONSE;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.writer.HealingResultErrorWriter.HealingResultError;
+import com.tiesdb.protocol.v0r0.writer.HealingResultSuccessWriter.HealingResultSuccess;
+import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationConsumer;
+
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
@@ -41,14 +43,57 @@ public class HealingResponseWriter implements Writer<HealingResponseWriter.Heali
             return v.on(this);
         }
 
+        Iterable<HealingResult> getResults();
+
     }
+
+    public static interface HealingResult {
+
+        interface Visitor<T> {
+
+            T on(HealingResultError result) throws TiesDBProtocolException;
+
+            T on(HealingResultSuccess result) throws TiesDBProtocolException;
+
+        }
+
+        public <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
+
+    }
+
+    private static interface SpecificHealingResultWriter extends //
+            HealingResult.Visitor<ConversationConsumer>, //
+            ConversationFunction<HealingResult> {
+        @Override
+        default ConversationConsumer accept(HealingResult r) throws TiesDBProtocolException {
+            return r.accept(this);
+        }
+    }
+
+    private final SpecificHealingResultWriter specificHealingResultWriter = new SpecificHealingResultWriter() {
+
+        private final HealingResultSuccessWriter healingSuccessWriter = new HealingResultSuccessWriter();
+        private final HealingResultErrorWriter healingErrorWriter = new HealingResultErrorWriter();
+
+        @Override
+        public ConversationConsumer on(HealingResultError result) throws TiesDBProtocolException {
+            return write(healingErrorWriter, result);
+        }
+
+        @Override
+        public ConversationConsumer on(HealingResultSuccess result) throws TiesDBProtocolException {
+            return write(healingSuccessWriter, result);
+        }
+
+    };
 
     @Override
     public void accept(Conversation session, HealingResponse response) throws TiesDBProtocolException {
         LOG.debug("HealingResponse {}", response);
 
         write(HEALING_RESPONSE, //
-                write(MESSAGE_ID, BigIntegerFormat.INSTANCE, response.getMessageId()) //
+                write(MESSAGE_ID, BigIntegerFormat.INSTANCE, response.getMessageId()), //
+                write(specificHealingResultWriter, response.getResults()) //
         ).accept(session);
 
     }

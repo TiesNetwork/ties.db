@@ -32,18 +32,18 @@ import com.tiesdb.protocol.v0r0.util.FormatUtil;
 import one.utopic.sparse.ebml.format.BytesFormat;
 import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
-public class ModificationResultErrorReader implements Reader<ModificationResultErrorReader.ModificationResultError> {
+public class HealingResultErrorReader implements Reader<HealingResultErrorReader.HealingResultError> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ModificationResultErrorReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HealingResultErrorReader.class);
 
-    public static class ModificationResultError implements ModificationResponseReader.ModificationResult {
+    public static class HealingResultError implements HealingResponseReader.HealingResult {
 
         private byte[] entryHeaderHash;
         private String message;
 
         @Override
         public String toString() {
-            return "ModificationResultError [entryHeaderHash=" + FormatUtil.printPartialHex(entryHeaderHash) + ", message=" + message + "]";
+            return "HealingResultError [entryHeaderHash=" + FormatUtil.printPartialHex(entryHeaderHash) + ", message=" + message + "]";
         }
 
         @Override
@@ -62,7 +62,7 @@ public class ModificationResultErrorReader implements Reader<ModificationResultE
 
     }
 
-    public boolean acceptResultSuccess(Conversation session, Event e, ModificationResultError r) throws TiesDBProtocolException {
+    public boolean acceptResultSuccess(Conversation session, Event e, HealingResultError r) throws TiesDBProtocolException {
         switch (e.getType()) {
         case ERROR_MESSAGE:
             r.message = session.read(UTF8StringFormat.INSTANCE);
@@ -81,7 +81,7 @@ public class ModificationResultErrorReader implements Reader<ModificationResultE
     }
 
     @Override
-    public boolean accept(Conversation session, Event e, ModificationResultError r) throws TiesDBProtocolException {
+    public boolean accept(Conversation session, Event e, HealingResultError r) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptResultSuccess, r);
         return true;
     }

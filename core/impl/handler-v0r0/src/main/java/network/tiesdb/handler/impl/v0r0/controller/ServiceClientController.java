@@ -38,7 +38,7 @@ import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency.ConsistencyType;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 import com.tiesdb.protocol.v0r0.writer.HealingRequestWriter.HealingRequest;
-import com.tiesdb.protocol.v0r0.writer.ModificationEntryWriter.ModificationEntry;
+import com.tiesdb.protocol.v0r0.writer.EntryWriter.Entry;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
 import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
 import com.tiesdb.protocol.v0r0.writer.RequestWriter;
@@ -47,6 +47,9 @@ import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function.Argument;
 
 import network.tiesdb.api.TiesVersion;
 import network.tiesdb.service.api.TiesService;
+import network.tiesdb.service.scope.api.TiesEntryExtended;
+import network.tiesdb.service.scope.api.TiesEntryExtended.TypedHashField;
+import network.tiesdb.service.scope.api.TiesEntryExtended.TypedValueField;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency;
@@ -57,9 +60,6 @@ import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
 import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldHash;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldValue;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Function.Argument.FieldArgument;
@@ -126,7 +126,7 @@ public class ServiceClientController implements TiesServiceScope {
 
     private void modify(TiesServiceScopeModification action) throws TiesServiceScopeException {
         try {
-            Entry entry = action.getEntry();
+            TiesEntryExtended entry = action.getEntry();
             if (null == entry) {
                 throw new TiesServiceScopeException("No entry found in modification request");
             }
@@ -142,20 +142,20 @@ public class ServiceClientController implements TiesServiceScope {
                 }
 
                 @Override
-                public Iterable<ModificationEntry> getEntries() {
-                    return Arrays.asList(new ModificationEntry() {
+                public Iterable<Entry> getEntries() {
+                    return Arrays.asList(new Entry() {
 
                         private final Iterable<Field> fields;
                         {
-                            Map<String, FieldHash> fieldHashes = entry.getFieldHashes();
-                            Map<String, FieldValue> fieldValues = entry.getFieldValues();
+                            Map<String, TypedHashField> fieldHashes = entry.getFieldHashes();
+                            Map<String, TypedValueField> fieldValues = entry.getFieldValues();
                             HashSet<String> fieldNames = new HashSet<>(fieldHashes.size() + fieldValues.size());
                             fieldNames.addAll(fieldHashes.keySet());
                             fieldNames.addAll(fieldValues.keySet());
                             LinkedList<Field> fieldsCache = new LinkedList<>();
                             for (final String name : fieldNames) {
                                 {
-                                    FieldValue field = fieldValues.get(name);
+                                    TypedValueField field = fieldValues.get(name);
                                     if (null != field) {
                                         fieldsCache.add(new Field.ValueField<byte[]>() {
 
@@ -176,14 +176,14 @@ public class ServiceClientController implements TiesServiceScope {
 
                                             @Override
                                             public byte[] getValue() {
-                                                return field.getBytes();
+                                                return field.getValue();
                                             }
                                         });
                                         continue;
                                     }
                                 }
                                 {
-                                    FieldHash field = fieldHashes.get(name);
+                                    TypedHashField field = fieldHashes.get(name);
                                     if (null != field) {
                                         fieldsCache.add(new Field.HashField() {
 
@@ -419,8 +419,7 @@ public class ServiceClientController implements TiesServiceScope {
 
     @Override
     public void schema(TiesServiceScopeSchema query) throws TiesServiceScopeException {
-        // TODO Auto-generated method stub
-        throw new TiesServiceScopeException("Not implemented");
+        throw new TiesServiceScopeException("Client should not handle schema request");
     }
 
     @Override
@@ -497,6 +496,14 @@ public class ServiceClientController implements TiesServiceScope {
     @Override
     public void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException {
         try {
+            TiesEntryExtended entry = action.getEntry();
+            if (null == entry) {
+                throw new TiesServiceScopeException("No entry found in modification request");
+            }
+            TiesEntryHeader entryHeader = entry.getHeader();
+            if (null == entryHeader) {
+                throw new TiesServiceScopeException("No header found in modification request entry");
+            }
             REQUEST_WRITER_INSTANCE.accept(session, new HealingRequest() {
 
                 @Override
@@ -504,6 +511,137 @@ public class ServiceClientController implements TiesServiceScope {
                     return action.getMessageId();
                 }
 
+                @Override
+                public Iterable<Entry> getEntries() {
+                    return Arrays.asList(new Entry() {
+
+                        private final Iterable<Field> fields;
+                        {
+                            fields = Collections.unmodifiableList(entry.getFields().stream().map((field) -> {
+                                try {
+                                    return field.accept(new TiesEntryExtended.TypedFiled.Visitor<Field>() {
+
+                                        @Override
+                                        public Field on(TypedHashField hashField) throws TiesServiceScopeException {
+                                            return new Field.HashField() {
+
+                                                @Override
+                                                public String getName() {
+                                                    return hashField.getName();
+                                                }
+
+                                                @Override
+                                                public byte[] getHash() {
+                                                    return hashField.getHash();
+                                                }
+
+                                                @Override
+                                                public String getType() {
+                                                    return hashField.getType();
+                                                }
+
+                                            };
+                                        }
+
+                                        @Override
+                                        public Field on(TypedValueField valueField) throws TiesServiceScopeException {
+                                            return new Field.ValueField<byte[]>() {
+
+                                                @Override
+                                                public String getName() {
+                                                    return valueField.getName();
+                                                }
+
+                                                @Override
+                                                public String getType() {
+                                                    return valueField.getType();
+                                                }
+
+                                                @Override
+                                                public EBMLFormat<byte[]> getFormat() {
+                                                    return BytesFormat.INSTANCE;
+                                                }
+
+                                                @Override
+                                                public byte[] getValue() {
+                                                    return valueField.getValue();
+                                                }
+                                            };
+                                        }
+                                    });
+                                } catch (TiesServiceScopeException e) {
+                                    throw new IllegalArgumentException(e);
+                                }
+                            }).collect(Collectors.toList()));
+                        }
+
+                        @Override
+                        public Iterable<Field> getFields() {
+                            return fields;
+                        }
+
+                        @Override
+                        public EntryHeader getHeader() {
+                            return new EntryHeader() {
+
+                                TiesEntryHeader header = entry.getHeader();
+
+                                @Override
+                                public byte[] getSigner() {
+                                    return header.getSigner();
+                                }
+
+                                @Override
+                                public byte[] getSignature() {
+                                    return header.getSignature();
+                                }
+
+                                @Override
+                                public String getTablespaceName() {
+                                    return entry.getTablespaceName();
+                                }
+
+                                @Override
+                                public String getTableName() {
+                                    return entry.getTableName();
+                                }
+
+                                @Override
+                                public BigInteger getEntryVersion() {
+                                    return header.getEntryVersion();
+                                }
+
+                                @Override
+                                public Date getEntryTimestamp() {
+                                    return header.getEntryTimestamp();
+                                }
+
+                                @Override
+                                public byte[] getEntryOldHash() {
+                                    return header.getEntryOldHash();
+                                }
+
+                                @Override
+                                public Integer getEntryNetwork() {
+                                    return Short.toUnsignedInt(header.getEntryNetwork());
+                                }
+
+                                @Override
+                                public byte[] getEntryFldHash() {
+                                    return header.getEntryFldHash();
+                                }
+                            };
+                        }
+
+                    });
+                }
+
+            });
+            action.setResult(new TiesServiceScopeHealing.Result.Success() {
+                @Override
+                public byte[] getHeaderHash() {
+                    return entryHeader.getHash();
+                }
             });
         } catch (TiesDBProtocolException e) {
             throw new TiesServiceScopeException("Node modification request failed", e);

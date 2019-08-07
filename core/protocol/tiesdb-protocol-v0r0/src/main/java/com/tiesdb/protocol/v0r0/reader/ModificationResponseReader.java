@@ -23,6 +23,7 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class ModificationResponseReader implements Reader<ModificationResponseRe
             return v.on(this);
         }
 
-        public LinkedList<ModificationResult> getModificationResults() {
+        public List<ModificationResult> getModificationResults() {
             return modificationResults;
         }
 

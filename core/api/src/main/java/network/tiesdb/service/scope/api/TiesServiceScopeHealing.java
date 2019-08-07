@@ -20,13 +20,47 @@ package network.tiesdb.service.scope.api;
 
 public interface TiesServiceScopeHealing extends TiesServiceScopeAction {
 
-    public interface Result extends TiesServiceScopeResult.Result {
+    interface Result extends TiesServiceScopeResult.Result {
+
+        interface Visitor<T> {
+
+            T on(Success success) throws TiesServiceScopeException;
+
+            T on(Error error) throws TiesServiceScopeException;
+
+        }
+
+        interface Success extends Result {
+
+            @Override
+            default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                return v.on(this);
+            }
+
+        }
+
+        interface Error extends Result {
+
+            @Override
+            default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                return v.on(this);
+            }
+
+            Throwable getError();
+
+        }
 
         default <T> T accept(TiesServiceScopeResult.Result.Visitor<T> v) throws TiesServiceScopeException {
             return v.on(this);
         }
 
+        <T> T accept(Visitor<T> v) throws TiesServiceScopeException;
+
+        byte[] getHeaderHash();
+
     }
+
+    TiesEntryExtended getEntry();
 
     void setResult(Result result) throws TiesServiceScopeException;
 

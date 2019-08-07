@@ -32,7 +32,7 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.format.TiesDBRequestConsistencyFormat;
-import com.tiesdb.protocol.v0r0.reader.ModificationEntryReader.ModificationEntry;
+import com.tiesdb.protocol.v0r0.reader.EntryReader.Entry;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
@@ -45,7 +45,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
         private BigInteger messageId;
         private TiesDBRequestConsistency consistency;
 
-        private LinkedList<ModificationEntry> modificationEntries = new LinkedList<>();
+        private LinkedList<Entry> modificationEntries = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -62,7 +62,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
             return consistency;
         }
 
-        public LinkedList<ModificationEntry> getEntries() {
+        public LinkedList<Entry> getEntries() {
             return modificationEntries;
         }
 
@@ -73,7 +73,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
 
     }
 
-    private final ModificationEntryReader modificationEntryReader = new ModificationEntryReader();
+    private final EntryReader modificationEntryReader = new EntryReader();
 
     public boolean acceptModificationRequest(Conversation session, Event e, ModificationRequest r) throws TiesDBProtocolException {
         switch (e.getType()) {
@@ -88,7 +88,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
             end(session, e);
             return true;
         case ENTRY:
-            ModificationEntry modificationEntry = new ModificationEntry();
+            Entry modificationEntry = new Entry();
             boolean result = modificationEntryReader.accept(session, e, modificationEntry);
             if (result) {
                 r.modificationEntries.add(modificationEntry);

@@ -36,7 +36,11 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.exception.TiesDBProtocolMessageException;
 import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
 import com.tiesdb.protocol.v0r0.reader.FieldReader;
+import com.tiesdb.protocol.v0r0.reader.HealingResponseReader;
 import com.tiesdb.protocol.v0r0.reader.HealingResponseReader.HealingResponse;
+import com.tiesdb.protocol.v0r0.reader.HealingResponseReader.HealingResult;
+import com.tiesdb.protocol.v0r0.reader.HealingResultErrorReader.HealingResultError;
+import com.tiesdb.protocol.v0r0.reader.HealingResultSuccessReader.HealingResultSuccess;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResponse;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResult;
@@ -227,25 +231,52 @@ public class ResponseHandler implements Response.Visitor<Void> {
         } catch (TiesServiceScopeException e) {
             throw new TiesDBProtocolException("Response could not be handled", e);
         }
-        try {
-            TiesServiceScopeResult.Result result = new TiesServiceScopeHealing.Result() {
+        for (HealingResult healingResult : healingResponse.getHealingResults()) {
+            try {
+                TiesServiceScopeResult.Result result = healingResult
+                        .accept(new HealingResponseReader.HealingResult.Visitor<TiesServiceScopeResult.Result>() {
+                            @Override
+                            public TiesServiceScopeResult.Result on(HealingResultSuccess healingResultSuccess) {
+                                return new TiesServiceScopeHealing.Result.Success() {
+                                    @Override
+                                    public byte[] getHeaderHash() {
+                                        return healingResultSuccess.getEntryHeaderHash();
+                                    }
+                                };
+                            }
 
-            };
-            serviceScope.result(new TiesServiceScopeResult() {
+                            @Override
+                            public TiesServiceScopeResult.Result on(HealingResultError healingResultError) {
+                                return new TiesServiceScopeHealing.Result.Error() {
 
-                @Override
-                public BigInteger getMessageId() {
-                    return messageId;
-                }
+                                    @Override
+                                    public byte[] getHeaderHash() {
+                                        return healingResultError.getEntryHeaderHash();
+                                    }
 
-                @Override
-                public Result getResult() {
-                    return result;
-                }
+                                    @Override
+                                    public Throwable getError() {
+                                        return new TiesException(healingResultError.getMessage());
+                                    }
+                                };
+                            }
+                        });
+                serviceScope.result(new TiesServiceScopeResult() {
 
-            });
-        } catch (TiesServiceScopeException e) {
-            throw new TiesDBProtocolException("Response handling failed", e);
+                    @Override
+                    public BigInteger getMessageId() {
+                        return messageId;
+                    }
+
+                    @Override
+                    public Result getResult() {
+                        return result;
+                    }
+
+                });
+            } catch (TiesServiceScopeException e) {
+                throw new TiesDBProtocolException("Response handling failed", e);
+            }
         }
         return null;
     }

@@ -20,31 +20,20 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.checkEntryFieldsHash;
-import java.util.HashMap;
 import java.util.LinkedList;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
-import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
+import com.tiesdb.protocol.v0r0.reader.EntryReader.Entry;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 
 public class RecollectionResultReader implements Reader<RecollectionResultReader.RecollectionResult> {
 
-    public static class RecollectionResult implements Entry {
+    public static class RecollectionResult extends Entry {
 
-        private EntryHeader header;
-        private HashMap<String, Field> fields = new HashMap<>();
         private LinkedList<Field> computeFields = new LinkedList<>();
-
-        public EntryHeader getHeader() {
-            return header;
-        }
-
-        public HashMap<String, Field> getFields() {
-            return fields;
-        }
 
         public LinkedList<Field> getComputeFields() {
             return computeFields;
@@ -52,7 +41,7 @@ public class RecollectionResultReader implements Reader<RecollectionResultReader
 
     }
 
-    private final EntryHeaderReader entryHeaderReader = new EntryHeaderReader();
+    private final EntryReader entryReader = new EntryReader();
     private final FieldReader fieldReader = new FieldReader();
 
     public boolean acceptFieldList(Conversation session, Event e, CheckedConsumer<Field, TiesDBProtocolException> c)
@@ -72,34 +61,12 @@ public class RecollectionResultReader implements Reader<RecollectionResultReader
         return false;
     }
 
-    private boolean acceptEntry(Conversation session, Event e, RecollectionResult r) throws TiesDBProtocolException {
-        switch (e.getType()) {
-        case ENTRY_HEADER:
-            EntryHeader header = new EntryHeader();
-            boolean result = entryHeaderReader.accept(session, e, header);
-            if (result) {
-                if (null != r.header) {
-                    throw new TiesDBProtocolException("Multiple headers detected! Should be only one header in each entry.");
-                }
-                r.header = header;
-            }
-            return true;
-        case FIELD_LIST:
-            acceptEach(session, e, this::acceptFieldList, f -> r.fields.put(f.getName(), f));
-            return true;
-        // $CASES-OMITTED$
-        default:
-            // throw new TiesDBProtocolException("Illegal packet format");
-        }
-        return false;
-    }
-
     private boolean acceptRecollectionResult(Conversation session, Event e, RecollectionResult r) throws TiesDBProtocolException {
         switch (e.getType()) {
         case ENTRY:
-            acceptEach(session, e, this::acceptEntry, r);
+            entryReader.accept(session, e, r);
             if (!checkEntryFieldsHash(r)) {
-                throw new TiesDBProtocolException("ModificationEntry fields hash missmatch.");
+                throw new TiesDBProtocolException("Entry fields hash missmatch.");
             }
             return true;
         case RECOLLECTION_COMPUTE:

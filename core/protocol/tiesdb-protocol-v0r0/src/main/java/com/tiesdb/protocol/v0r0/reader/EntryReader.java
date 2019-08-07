@@ -29,24 +29,22 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 
-public class ModificationEntryReader implements Reader<ModificationEntryReader.ModificationEntry> {
+public class EntryReader implements Reader<EntryReader.Entry> {
 
-    public static class ModificationEntry implements Entry {
+    public static class Entry {
 
         private EntryHeader header;
         private HashMap<String, Field> fields = new HashMap<>();
 
         @Override
         public String toString() {
-            return "ModificationEntry [header=" + header + ", fields=" + fields + "]";
+            return "Entry [header=" + header + ", fields=" + fields + "]";
         }
 
-        @Override
         public EntryHeader getHeader() {
             return header;
         }
 
-        @Override
         public HashMap<String, Field> getFields() {
             return fields;
         }
@@ -72,20 +70,20 @@ public class ModificationEntryReader implements Reader<ModificationEntryReader.M
         return false;
     }
 
-    private boolean acceptEntry(Conversation session, Event e, ModificationEntry modificationEntry) throws TiesDBProtocolException {
+    private boolean acceptEntry(Conversation session, Event e, Entry entry) throws TiesDBProtocolException {
         switch (e.getType()) {
         case ENTRY_HEADER:
             EntryHeader header = new EntryHeader();
             boolean result = entryHeaderReader.accept(session, e, header);
             if (result) {
-                if (null != modificationEntry.header) {
+                if (null != entry.header) {
                     throw new TiesDBProtocolException("Multiple headers detected! Should be only one header in each entry.");
                 }
-                modificationEntry.header = header;
+                entry.header = header;
             }
             return true;
         case FIELD_LIST:
-            acceptEach(session, e, this::acceptFieldList, modificationEntry.fields);
+            acceptEach(session, e, this::acceptFieldList, entry.fields);
             return true;
         // $CASES-OMITTED$
         default:
@@ -95,10 +93,10 @@ public class ModificationEntryReader implements Reader<ModificationEntryReader.M
     }
 
     @Override
-    public boolean accept(Conversation session, Event e, ModificationEntry modificationEntry) throws TiesDBProtocolException {
-        acceptEach(session, e, this::acceptEntry, modificationEntry);
-        if (!checkEntryFieldsHash(modificationEntry)) {
-            throw new TiesDBProtocolException("ModificationEntry fields hash missmatch.");
+    public boolean accept(Conversation session, Event e, Entry entry) throws TiesDBProtocolException {
+        acceptEach(session, e, this::acceptEntry, entry);
+        if (!checkEntryFieldsHash(entry)) {
+            throw new TiesDBProtocolException("Entry fields hash missmatch.");
         }
         return true;
     }

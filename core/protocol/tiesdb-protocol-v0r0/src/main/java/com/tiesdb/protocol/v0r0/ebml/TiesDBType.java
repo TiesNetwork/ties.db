@@ -31,7 +31,7 @@ public enum TiesDBType implements TiesEBMLType {
     UNKNOWN_STRUCTURE(Context.UNKNOWN_STRUCTURE), // Meta
     UNKNOWN_VALUE(Context.VALUE, Context.UNKNOWN_STRUCTURE), // Binary
 
-    MESSAGE_ID(0xEC, Context.VALUE, Context.IDENTIFIED), // Unsigned
+    MESSAGE_ID(0xEC, Context.VALUE, Context.IDENTIFIED_MESSAGE), // Unsigned
 
     CONSISTENCY(0xEE, Context.VALUE, Context.COORDINATED_REQUEST), // Unsigned
 
@@ -108,6 +108,8 @@ public enum TiesDBType implements TiesEBMLType {
 
     HEALING_REQUEST(0x1C544945, Context.HEALING_REQUEST, Context.ROOT), // Meta
     HEALING_RESPONSE(0x1D544945, Context.HEALING_RESPONSE, Context.ROOT), // Meta
+    HEALING_RESULT(0xE1, Context.HEALING_RESULT, Context.HEALING_RESPONSE), // Meta
+    HEALING_ERROR(0xEF, Context.HEALING_ERROR, Context.HEALING_RESPONSE), // Meta
 
     ;
 
@@ -126,14 +128,14 @@ public enum TiesDBType implements TiesEBMLType {
 
         SIGNED, //
 
-        IDENTIFIED, //
+        IDENTIFIED_MESSAGE, //
         CONSISTENT, //
 
-        ERROR(IDENTIFIED), //
+        ERROR(IDENTIFIED_MESSAGE), //
 
-        REQUEST(IDENTIFIED), //
+        REQUEST(IDENTIFIED_MESSAGE), //
         COORDINATED_REQUEST(CONSISTENT, REQUEST), //
-        RESPONSE(IDENTIFIED), //
+        RESPONSE(IDENTIFIED_MESSAGE), //
 
         TABLE_META, //
 
@@ -177,7 +179,9 @@ public enum TiesDBType implements TiesEBMLType {
         SCHEMA_RESPONSE(RESPONSE, TABLE_META), //
 
         HEALING_REQUEST(REQUEST, SIGNED_ENTRY_CONTAINER), //
-        HEALING_RESPONSE(MODIFICATION_RESPONSE), //
+        HEALING_RESPONSE(RESPONSE), //
+        HEALING_RESULT(SIGNED, ENTRY_REFERENCE), //
+        HEALING_ERROR(ERROR, ENTRY_REFERENCE), //
 
         ;
 

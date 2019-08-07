@@ -67,9 +67,9 @@ import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
 import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldHash;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldValue;
+import network.tiesdb.service.scope.api.TiesEntryExtended;
+import network.tiesdb.service.scope.api.TiesEntryExtended.TypedHashField;
+import network.tiesdb.service.scope.api.TiesEntryExtended.TypedValueField;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FieldSelector;
@@ -127,7 +127,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         return x -> !p.test(x);
     }
 
-    private static Entry checkEntryIsValid(Entry entry) throws TiesServiceScopeException {
+    private static TiesEntryExtended checkEntryIsValid(TiesEntryExtended entry) throws TiesServiceScopeException {
         TiesEntryHeader header = entry.getHeader();
         {
             short networkId = header.getEntryNetwork();
@@ -202,7 +202,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     protected void modification(TiesServiceScopeModification action, TiesServiceOperation operation) throws TiesServiceScopeException {
 
-        Entry entry = checkEntryIsValid(action.getEntry());
+        TiesEntryExtended entry = checkEntryIsValid(action.getEntry());
         TiesEntryHeader header = entry.getHeader();
 
         String tsn = entry.getTablespaceName();
@@ -220,15 +220,15 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
         byte[] entryKeyHash;
         {
-            Map<String, FieldHash> fhs = entry.getFieldHashes();
-            Map<String, FieldValue> fvs = entry.getFieldValues();
+            Map<String, TypedHashField> fhs = entry.getFieldHashes();
+            Map<String, TypedValueField> fvs = entry.getFieldValues();
             entryKeyHash = getFieldsHash(entry.getHeader().getHash(), keyFields.stream().map(f -> f.getName()).collect(Collectors.toSet()),
                     fieldName -> {
                         byte[] hash;
-                        FieldHash fh = fhs.get(fieldName);
+                        TypedHashField fh = fhs.get(fieldName);
                         hash = null == fh ? null : fh.getHash();
                         if (null == hash) {
-                            FieldValue fv = fvs.get(fieldName);
+                            TypedValueField fv = fvs.get(fieldName);
                             hash = null == fv ? null : fv.getHash();
                         }
                         return hash;
@@ -267,7 +267,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                     }
 
                                     @Override
-                                    public Entry getEntry() {
+                                    public TiesEntryExtended getEntry() {
                                         return action.getEntry();
                                     }
 
@@ -793,6 +793,11 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                             @Override
                             public void setResult(Result result) throws TiesServiceScopeException {
                                 throw new TiesServiceScopeException("Coordinator should not handle ClientScope results");
+                            }
+
+                            @Override
+                            public TiesEntryExtended getEntry() {
+                                throw new RuntimeException("Healing to be implemented");
                             }
                         });
                     }

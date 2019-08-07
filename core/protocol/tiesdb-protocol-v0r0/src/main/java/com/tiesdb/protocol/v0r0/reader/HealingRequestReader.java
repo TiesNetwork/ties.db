@@ -22,6 +22,7 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.LinkedList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
-import com.tiesdb.protocol.v0r0.reader.ComputeRetrieveReader.ComputeRetrieve;
-import com.tiesdb.protocol.v0r0.reader.FieldRetrieveReader.FieldRetrieve;
+import com.tiesdb.protocol.v0r0.reader.EntryReader.Entry;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
@@ -42,14 +42,21 @@ public class HealingRequestReader implements Reader<HealingRequestReader.Healing
 
         private BigInteger messageId;
 
+        private LinkedList<Entry> healingEntries = new LinkedList<>();
+
         @Override
         public String toString() {
-            return "HealingRequest [messageId=" + messageId + "]";
+            return "HealingRequest [messageId=" + messageId + ", healingEntries="
+                    + healingEntries + "]";
         }
 
         @Override
         public <T> T accept(Visitor<T> v) throws TiesDBProtocolException {
             return v.on(this);
+        }
+
+        public LinkedList<Entry> getEntries() {
+            return healingEntries;
         }
 
         @Override
@@ -59,19 +66,7 @@ public class HealingRequestReader implements Reader<HealingRequestReader.Healing
 
     }
 
-    public static interface Retrieve {
-
-        interface Visitor<T> {
-
-            T on(FieldRetrieve retrieve);
-
-            T on(ComputeRetrieve retrieve);
-
-        }
-
-        <T> T accept(Visitor<T> v);
-
-    }
+    private final EntryReader healingEntryReader = new EntryReader();
 
     public boolean acceptHealingRequest(Conversation session, Event e, HealingRequest r) throws TiesDBProtocolException {
         switch (e.getType()) {
@@ -80,15 +75,22 @@ public class HealingRequestReader implements Reader<HealingRequestReader.Healing
             LOG.debug("MESSAGE_ID : {}", r.messageId);
             end(session, e);
             return true;
+        case ENTRY:
+            Entry healingEntry = new Entry();
+            boolean result = healingEntryReader.accept(session, e, healingEntry);
+            if (result) {
+                r.healingEntries.add(healingEntry);
+            }
+            return result;
         // $CASES-OMITTED$
         default:
-            // throw new TiesDBProtocolException("Illegal packet format");
+            return false;
         }
-        return false;
     }
+
     @Override
-    public boolean accept(Conversation session, Event e, HealingRequest request) throws TiesDBProtocolException {
-        acceptEach(session, e, this::acceptHealingRequest, request);
+    public boolean accept(Conversation session, Event e, HealingRequest r) throws TiesDBProtocolException {
+        acceptEach(session, e, this::acceptHealingRequest, r);
         return true;
     }
 

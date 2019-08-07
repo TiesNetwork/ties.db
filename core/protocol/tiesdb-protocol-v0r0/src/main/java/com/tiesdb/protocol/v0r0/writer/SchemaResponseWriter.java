@@ -29,10 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
-import com.tiesdb.protocol.v0r0.ebml.TiesDBType;
 import com.tiesdb.protocol.v0r0.writer.SchemaFieldWriter.SchemaField;
-import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationConsumer;
-import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationFunction;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 

@@ -38,6 +38,7 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.EventState;
+import com.tiesdb.protocol.v0r0.reader.EntryReader.Entry;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 import com.tiesdb.protocol.v0r0.reader.SignatureReader.Signature;
 

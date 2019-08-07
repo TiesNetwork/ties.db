@@ -29,11 +29,11 @@ import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
-public class ModificationEntryWriter implements Writer<ModificationEntryWriter.ModificationEntry> {
+public class EntryWriter implements Writer<EntryWriter.Entry> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ModificationEntryWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EntryWriter.class);
 
-    public static interface ModificationEntry {
+    public static interface Entry {
 
         public Iterable<Field> getFields();
 
@@ -45,12 +45,12 @@ public class ModificationEntryWriter implements Writer<ModificationEntryWriter.M
     private final FieldWriter fieldWriter = new FieldWriter(FIELD);
 
     @Override
-    public void accept(Conversation session, ModificationEntry modificationEntry) throws TiesDBProtocolException {
-        LOG.debug("ModificationEntry {}", modificationEntry);
+    public void accept(Conversation session, Entry entry) throws TiesDBProtocolException {
+        LOG.debug("Entry {}", entry);
         write(ENTRY, //
-                write(entryHeaderWriter, modificationEntry.getHeader()), //
+                write(entryHeaderWriter, entry.getHeader()), //
                 write(FIELD_LIST, //
-                        write(fieldWriter, modificationEntry.getFields()) //
+                        write(fieldWriter, entry.getFields()) //
                 ) //
         ).accept(session);
 

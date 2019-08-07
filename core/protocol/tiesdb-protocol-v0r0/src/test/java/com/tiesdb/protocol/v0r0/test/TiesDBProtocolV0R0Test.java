@@ -24,7 +24,6 @@ import static com.tiesdb.protocol.v0r0.test.util.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.SignatureException;
@@ -414,6 +413,14 @@ public class TiesDBProtocolV0R0Test {
                             case RET_COMPUTE_ALIAS:
                             case RET_COMPUTE_TYPE:
                             case RET_FIELD:
+                            case HEALING_ERROR:
+                            case HEALING_REQUEST:
+                            case HEALING_RESPONSE:
+                            case HEALING_RESULT:
+                            case SCHEMA_FIELD:
+                            case SCHEMA_KEY_FIELD:
+                            case SCHEMA_REQUEST:
+                            case SCHEMA_RESPONSE:
                             case UNKNOWN_STRUCTURE:
                             case UNKNOWN_VALUE:
                                 fail(event.get() + " not yet ready for test");

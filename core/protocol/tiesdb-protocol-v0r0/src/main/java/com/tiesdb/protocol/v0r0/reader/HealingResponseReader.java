@@ -22,6 +22,8 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
+import com.tiesdb.protocol.v0r0.reader.HealingResultErrorReader.HealingResultError;
+import com.tiesdb.protocol.v0r0.reader.HealingResultSuccessReader.HealingResultSuccess;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
@@ -39,6 +43,7 @@ public class HealingResponseReader implements Reader<HealingResponseReader.Heali
     public static class HealingResponse implements Reader.Response {
 
         private BigInteger messageId;
+        private LinkedList<HealingResult> healingResults;
 
         @Override
         public String toString() {
@@ -55,7 +60,30 @@ public class HealingResponseReader implements Reader<HealingResponseReader.Heali
             return messageId;
         }
 
+        public List<HealingResult> getHealingResults() {
+            return healingResults;
+        }
+
     }
+
+    public static interface HealingResult {
+
+        interface Visitor<T> {
+
+            T on(HealingResultSuccess modificationResultSuccess);
+
+            T on(HealingResultError modificationResultError);
+
+        }
+
+        <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
+
+        byte[] getEntryHeaderHash();
+
+    }
+
+    private final HealingResultSuccessReader healingResultSuccessReader = new HealingResultSuccessReader();
+    private final HealingResultErrorReader healingResultErrorReader = new HealingResultErrorReader();
 
     public boolean acceptHealingResponse(Conversation session, Event e, HealingResponse r) throws TiesDBProtocolException {
         switch (e.getType()) {
@@ -64,6 +92,24 @@ public class HealingResponseReader implements Reader<HealingResponseReader.Heali
             LOG.debug("MESSAGE_ID : {}", r.messageId);
             end(session, e);
             return true;
+        case HEALING_RESULT: {
+            LOG.debug("HEALING_RESULT found in message {}", r.getMessageId());
+            HealingResultSuccess healingResultSuccess = new HealingResultSuccess();
+            boolean result = healingResultSuccessReader.accept(session, e, healingResultSuccess);
+            if (result) {
+                r.healingResults.add(healingResultSuccess);
+            }
+            return result;
+        }
+        case HEALING_ERROR: {
+            LOG.debug("HEALING_ERROR found in message {}", r.getMessageId());
+            HealingResultError healingResultError = new HealingResultError();
+            boolean result = healingResultErrorReader.accept(session, e, healingResultError);
+            if (result) {
+                r.healingResults.add(healingResultError);
+            }
+            return result;
+        }
         // $CASES-OMITTED$
         default:
             return false;

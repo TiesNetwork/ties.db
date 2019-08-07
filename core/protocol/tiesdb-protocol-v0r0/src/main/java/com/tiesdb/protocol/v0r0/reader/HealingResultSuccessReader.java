@@ -30,29 +30,23 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.util.FormatUtil;
 
 import one.utopic.sparse.ebml.format.BytesFormat;
-import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
-public class ModificationResultErrorReader implements Reader<ModificationResultErrorReader.ModificationResultError> {
+public class HealingResultSuccessReader implements Reader<HealingResultSuccessReader.HealingResultSuccess> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ModificationResultErrorReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HealingResultSuccessReader.class);
 
-    public static class ModificationResultError implements ModificationResponseReader.ModificationResult {
+    public static class HealingResultSuccess implements HealingResponseReader.HealingResult {
 
         private byte[] entryHeaderHash;
-        private String message;
 
         @Override
         public String toString() {
-            return "ModificationResultError [entryHeaderHash=" + FormatUtil.printPartialHex(entryHeaderHash) + ", message=" + message + "]";
+            return "HealingResultSuccess [entryHeaderHash=" + FormatUtil.printPartialHex(entryHeaderHash) + "]";
         }
 
         @Override
         public byte[] getEntryHeaderHash() {
             return entryHeaderHash;
-        }
-
-        public String getMessage() {
-            return message;
         }
 
         @Override
@@ -62,13 +56,8 @@ public class ModificationResultErrorReader implements Reader<ModificationResultE
 
     }
 
-    public boolean acceptResultSuccess(Conversation session, Event e, ModificationResultError r) throws TiesDBProtocolException {
+    public boolean acceptResultSuccess(Conversation session, Event e, HealingResultSuccess r) throws TiesDBProtocolException {
         switch (e.getType()) {
-        case ERROR_MESSAGE:
-            r.message = session.read(UTF8StringFormat.INSTANCE);
-            LOG.debug("ERROR_MESSAGE : {}", r.message);
-            end(session, e);
-            return true;
         case ENTRY_HASH:
             r.entryHeaderHash = session.read(BytesFormat.INSTANCE);
             LOG.debug("ENTRY_HASH : {}", r.entryHeaderHash);
@@ -81,7 +70,7 @@ public class ModificationResultErrorReader implements Reader<ModificationResultE
     }
 
     @Override
-    public boolean accept(Conversation session, Event e, ModificationResultError r) throws TiesDBProtocolException {
+    public boolean accept(Conversation session, Event e, HealingResultSuccess r) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptResultSuccess, r);
         return true;
     }

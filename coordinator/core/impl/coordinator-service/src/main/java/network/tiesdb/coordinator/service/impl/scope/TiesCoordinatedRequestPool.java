@@ -28,12 +28,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 public class TiesCoordinatedRequestPool<T> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TiesCoordinatedRequestPool.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(TiesCoordinatedRequestPool.class);
 
     private static final int DEFAULT_REGISTER_RETRY_COUNT = 65535;
 

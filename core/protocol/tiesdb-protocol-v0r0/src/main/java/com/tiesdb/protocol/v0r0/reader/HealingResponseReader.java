@@ -43,7 +43,7 @@ public class HealingResponseReader implements Reader<HealingResponseReader.Heali
     public static class HealingResponse implements Reader.Response {
 
         private BigInteger messageId;
-        private LinkedList<HealingResult> healingResults;
+        private LinkedList<HealingResult> healingResults = new LinkedList<>();
 
         @Override
         public String toString() {

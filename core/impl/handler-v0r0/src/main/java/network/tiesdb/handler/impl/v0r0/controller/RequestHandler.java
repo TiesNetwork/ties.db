@@ -874,7 +874,7 @@ public class RequestHandler implements Request.Visitor<Response> {
             try {
                 serviceScope.heal(new TiesServiceScopeHealing() {
 
-                    private final EntryImpl entry = new EntryImpl(healingEntry, true);
+                    private final EntryImpl entry = new EntryImpl(healingEntry, false);
 
                     @Override
                     public TiesEntryExtended getEntry() {

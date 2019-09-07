@@ -519,7 +519,7 @@ public class ServiceClientController implements TiesServiceScope {
                         {
                             fields = Collections.unmodifiableList(entry.getFields().stream().map((field) -> {
                                 try {
-                                    return field.accept(new TiesEntryExtended.TypedFiled.Visitor<Field>() {
+                                    return field.accept(new TiesEntryExtended.TypedField.Visitor<Field>() {
 
                                         @Override
                                         public Field on(TypedHashField hashField) throws TiesServiceScopeException {
@@ -636,12 +636,6 @@ public class ServiceClientController implements TiesServiceScope {
                     });
                 }
 
-            });
-            action.setResult(new TiesServiceScopeHealing.Result.Success() {
-                @Override
-                public byte[] getHeaderHash() {
-                    return entryHeader.getHash();
-                }
             });
         } catch (TiesDBProtocolException e) {
             throw new TiesServiceScopeException("Node modification request failed", e);

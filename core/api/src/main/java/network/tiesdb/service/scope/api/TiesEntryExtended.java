@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 public interface TiesEntryExtended extends TiesEntry {
 
-    interface TypedFiled extends Field {
+    interface TypedField extends Field {
 
         interface Visitor<T> {
 
@@ -35,22 +35,22 @@ public interface TiesEntryExtended extends TiesEntry {
 
         }
 
-        <T> T accept(TiesEntryExtended.TypedFiled.Visitor<T> v) throws TiesServiceScopeException;
+        <T> T accept(TiesEntryExtended.TypedField.Visitor<T> v) throws TiesServiceScopeException;
 
         String getType();
 
     }
 
-    interface TypedHashField extends TypedFiled, HashField {
+    interface TypedHashField extends TypedField, HashField {
 
         @Override
-        default <T> T accept(TiesEntryExtended.TypedFiled.Visitor<T> v) throws TiesServiceScopeException {
+        default <T> T accept(TiesEntryExtended.TypedField.Visitor<T> v) throws TiesServiceScopeException {
             return v.on(this);
         }
 
     }
 
-    interface TypedValueField extends TypedFiled, ValueField {
+    interface TypedValueField extends TypedField, ValueField {
 
         Object getObject();
 
@@ -60,7 +60,7 @@ public interface TiesEntryExtended extends TiesEntry {
         }
 
         @Override
-        default <T> T accept(TiesEntryExtended.TypedFiled.Visitor<T> v) throws TiesServiceScopeException {
+        default <T> T accept(TiesEntryExtended.TypedField.Visitor<T> v) throws TiesServiceScopeException {
             return v.on(this);
         }
 
@@ -75,7 +75,7 @@ public interface TiesEntryExtended extends TiesEntry {
     Map<String, TypedValueField> getFieldValues();
 
     @Override
-    default List<? extends TypedFiled> getFields() {
+    default List<? extends TypedField> getFields() {
         return Stream.concat(getFieldHashes().values().stream(), getFieldValues().values().stream()).collect(Collectors.toList());
     }
 

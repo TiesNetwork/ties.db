@@ -21,6 +21,7 @@ package com.tiesdb.protocol.v0r0.reader;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
+import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -49,11 +50,11 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
         }
 
         public byte[] getSignature() {
-            return signature;
+            return null == signature ? null : Arrays.copyOf(signature, signature.length);
         }
 
         public byte[] getSigner() {
-            return signer;
+            return null == signer ? null : Arrays.copyOf(signer, signer.length);
         }
 
     }

@@ -19,56 +19,37 @@
 package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
-import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.checkEntryFieldsHash;
-
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
-import com.tiesdb.protocol.v0r0.reader.EntryReader.Entry;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 import com.tiesdb.protocol.v0r0.util.CheckedConsumer;
 
-public class RecollectionResultReader implements Reader<RecollectionResultReader.RecollectionResult> {
+public class FieldListReader implements Reader<CheckedConsumer<FieldReader.Field, TiesDBProtocolException>> {
 
-    public static class RecollectionResult extends Entry {
+    private final FieldReader fieldReader = new FieldReader();
 
-        private List<Field> computeFields = new LinkedList<>();
-
-        public List<Field> getComputeFields() {
-            return computeFields;
-        }
-
-    }
-
-    private final EntryReader entryReader = new EntryReader();
-    private final FieldListReader fieldListReader = new FieldListReader();
-
-    private boolean acceptRecollectionResult(Conversation session, Event e, RecollectionResult r) throws TiesDBProtocolException {
+    public boolean acceptFieldList(Conversation session, Event e, CheckedConsumer<FieldReader.Field, TiesDBProtocolException> fieldConsumer)
+            throws TiesDBProtocolException {
         switch (e.getType()) {
-        case ENTRY:
-            entryReader.accept(session, e, r);
-            if (!checkEntryFieldsHash(r)) {
-                throw new TiesDBProtocolException("Entry fields hash missmatch.");
+        case FIELD:
+            Field field = new FieldReader.Field();
+            if (fieldReader.accept(session, e, field)) {
+                fieldConsumer.accept(field);
             }
-            return true;
-        case RECOLLECTION_COMPUTE:
-            fieldListReader.accept(session, e, r.computeFields::add);
             return true;
         // $CASES-OMITTED$
         default:
             // throw new TiesDBProtocolException("Illegal packet format");
+            return false;
         }
-        return false;
     }
 
     @Override
-    public boolean accept(Conversation session, Event e, RecollectionResult r) throws TiesDBProtocolException {
-        acceptEach(session, e, this::acceptRecollectionResult, r);
-        r.computeFields = Collections.unmodifiableList(r.computeFields);
+    public boolean accept(Conversation session, Event e, CheckedConsumer<FieldReader.Field, TiesDBProtocolException> fieldConsumer)
+            throws TiesDBProtocolException {
+        acceptEach(session, e, this::acceptFieldList, fieldConsumer);
         return true;
     }
 

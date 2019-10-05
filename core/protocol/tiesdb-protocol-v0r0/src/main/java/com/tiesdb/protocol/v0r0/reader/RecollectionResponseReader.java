@@ -22,6 +22,7 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -92,6 +93,7 @@ public class RecollectionResponseReader implements Reader<RecollectionResponseRe
     @Override
     public boolean accept(Conversation session, Event e, RecollectionResponse r) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptRecollectionResponse, r);
+        r.recollectionResults = Collections.unmodifiableList(r.recollectionResults);
         return true;
     }
 

@@ -21,6 +21,8 @@ package com.tiesdb.protocol.v0r0.reader;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
+import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +50,7 @@ public class ModificationResultErrorReader implements Reader<ModificationResultE
 
         @Override
         public byte[] getEntryHeaderHash() {
-            return entryHeaderHash;
+            return null == entryHeaderHash ? null : Arrays.copyOf(entryHeaderHash, entryHeaderHash.length);
         }
 
         public String getMessage() {

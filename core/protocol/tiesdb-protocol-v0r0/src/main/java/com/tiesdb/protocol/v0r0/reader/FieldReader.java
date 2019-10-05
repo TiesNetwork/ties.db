@@ -67,11 +67,11 @@ public class FieldReader implements Reader<FieldReader.Field> {
         }
 
         public byte[] getHash() {
-            return hash;
+            return null == hash ? null : Arrays.copyOf(hash, hash.length);
         }
 
         public byte[] getRawValue() {
-            return rawValue;
+            return null == rawValue ? null : Arrays.copyOf(rawValue, rawValue.length);
         }
 
     }
@@ -80,7 +80,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
 
     public boolean acceptField(Conversation session, Event e, Field field) throws TiesDBProtocolException {
         DigestCalculator dc = getDC();
-        Consumer<Byte> fieldHashListener = dc.getFieldHashListener();
+        Consumer<Byte> fieldHashListener = dc.getHashListener();
         switch (e.getType()) {
         case FIELD_NAME:
             field.name = session.read(UTF8StringFormat.INSTANCE);
@@ -131,8 +131,8 @@ public class FieldReader implements Reader<FieldReader.Field> {
     @Override
     public boolean accept(Conversation session, Event e, Field field) throws TiesDBProtocolException {
         DigestCalculator dc = getDC(true);
-        Digest fieldDigest = dc.getFieldDigest();
-        Consumer<Byte> fieldHashListener = dc.getFieldHashListener();
+        Digest fieldDigest = dc.getDigest();
+        Consumer<Byte> fieldHashListener = dc.getHashListener();
         try {
             fieldDigest.reset();
             session.addReaderListener(fieldHashListener);

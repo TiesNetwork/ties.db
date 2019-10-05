@@ -22,7 +22,9 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +47,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
         private BigInteger messageId;
         private TiesDBRequestConsistency consistency;
 
-        private LinkedList<Entry> modificationEntries = new LinkedList<>();
+        private List<Entry> modificationEntries = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -62,7 +64,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
             return consistency;
         }
 
-        public LinkedList<Entry> getEntries() {
+        public List<Entry> getEntries() {
             return modificationEntries;
         }
 
@@ -103,6 +105,7 @@ public class ModificationRequestReader implements Reader<ModificationRequestRead
     @Override
     public boolean accept(Conversation session, Event e, ModificationRequest r) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptModificationRequest, r);
+        r.modificationEntries = Collections.unmodifiableList(r.modificationEntries);
         return true;
     }
 

@@ -24,20 +24,20 @@ import com.tiesdb.lib.crypto.digest.api.Digest;
 
 class DigestCalculator {
 
-    private final Digest fieldDigest;
-    private final Consumer<Byte> fieldHashListener;
+    private final Digest digest;
+    private final Consumer<Byte> hashListener;
 
-    DigestCalculator(Digest fieldDigest) {
-        this.fieldDigest = fieldDigest;
-        this.fieldHashListener = fieldDigest::update;
+    DigestCalculator(Digest digest) {
+        this.digest = digest;
+        this.hashListener = digest::update;
     }
 
-    public Digest getFieldDigest() {
-        return fieldDigest;
+    public Digest getDigest() {
+        return digest;
     }
 
-    public Consumer<Byte> getFieldHashListener() {
-        return fieldHashListener;
+    public Consumer<Byte> getHashListener() {
+        return hashListener;
     }
 
 }

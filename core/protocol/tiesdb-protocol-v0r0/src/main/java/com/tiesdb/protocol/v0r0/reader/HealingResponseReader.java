@@ -22,6 +22,7 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -43,7 +44,7 @@ public class HealingResponseReader implements Reader<HealingResponseReader.Heali
     public static class HealingResponse implements Reader.Response {
 
         private BigInteger messageId;
-        private LinkedList<HealingResult> healingResults = new LinkedList<>();
+        private List<HealingResult> healingResults = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -119,6 +120,7 @@ public class HealingResponseReader implements Reader<HealingResponseReader.Heali
     @Override
     public boolean accept(Conversation session, Event e, HealingResponse r) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptHealingResponse, r);
+        r.healingResults = Collections.unmodifiableList(r.healingResults);
         return true;
     }
 

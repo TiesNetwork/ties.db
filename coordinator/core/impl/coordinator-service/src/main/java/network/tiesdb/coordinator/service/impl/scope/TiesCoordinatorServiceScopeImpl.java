@@ -796,7 +796,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                             enHashStr, nodesForHealing, nodesEntryMap.keySet());
                     TiesEntry entry = nodesEntryMap.values().iterator().next();
                     CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
-                    Node donorNode = getRandom(nodes);
+                    Node donorNode = getRandom(nodesEntryMap.keySet());
                     try {
                         Set<String> keyFieldNames = Collections.unmodifiableSet(
                                 fields.stream().filter(f -> f.isPrimaryKey()).map(f -> f.getName()).collect(Collectors.toSet()));

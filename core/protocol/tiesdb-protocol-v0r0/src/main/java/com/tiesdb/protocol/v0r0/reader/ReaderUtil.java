@@ -23,7 +23,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.security.SignatureException;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeSet;
 
 import javax.xml.bind.DatatypeConverter;
@@ -96,7 +96,7 @@ final class ReaderUtil {
     }
 
     static boolean checkEntryFieldsHash(Entry entry) {
-        HashMap<String, Field> fields = entry.getFields();
+        Map<String, Field> fields = entry.getFields();
         Digest fldDigest = DigestManager.getDigest(DEFAULT_DIGEST_ALG);
         TreeSet<String> fieldNames = new TreeSet<>(fields.keySet());
         for (String fieldName : fieldNames) {

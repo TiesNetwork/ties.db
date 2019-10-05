@@ -22,6 +22,7 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,8 +52,8 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
 
         private String tablespaceName;
         private String tableName;
-        private final List<Retrieve> retrieves = new LinkedList<>();
-        private final List<Filter> filters = new LinkedList<>();
+        private List<Retrieve> retrieves = new LinkedList<>();
+        private List<Filter> filters = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -194,6 +195,8 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
     @Override
     public boolean accept(Conversation session, Event e, RecollectionRequest recollectionRequest) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptRecollectionRequest, recollectionRequest);
+        recollectionRequest.retrieves = Collections.unmodifiableList(recollectionRequest.retrieves);
+        recollectionRequest.filters = Collections.unmodifiableList(recollectionRequest.filters);
         return true;
     }
 

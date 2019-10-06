@@ -64,6 +64,7 @@ import network.tiesdb.coordinator.service.schema.TiesServiceSchema.FieldDescript
 import network.tiesdb.router.api.TiesRouter;
 import network.tiesdb.router.api.TiesRouter.Node;
 import network.tiesdb.router.api.TiesRoutingException;
+import network.tiesdb.service.scope.api.TiesCheque;
 import network.tiesdb.service.scope.api.TiesEntry;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
@@ -1086,6 +1087,12 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                         @Override
                         public Map<String, TypedValueField> getFieldValues() {
                             return valueFields;
+                        }
+
+                        @Override
+                        public List<? extends TiesCheque> getCheques() {
+                            //FIXME!!! Cheques erasure!!!
+                            return Collections.emptyList();
                         }
 
                     };

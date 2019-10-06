@@ -94,6 +94,7 @@ public class EntryReader implements Reader<EntryReader.Entry> {
     public boolean accept(Conversation session, Event e, Entry entry) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptEntry, entry);
         entry.fields = Collections.unmodifiableMap(entry.fields);
+        entry.cheques = Collections.unmodifiableList(entry.cheques);
         if (!checkEntryFieldsHash(entry)) {
             throw new TiesDBProtocolException("Entry fields hash missmatch.");
         }

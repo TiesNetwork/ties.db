@@ -104,7 +104,7 @@ public class ChequeReader implements Reader<ChequeReader.Cheque> {
             this.address = address;
         }
 
-        byte[] getAddress() {
+        public byte[] getAddress() {
             return null == address ? null : Arrays.copyOf(address, address.length);
         }
 

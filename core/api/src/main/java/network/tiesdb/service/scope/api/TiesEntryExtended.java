@@ -18,8 +18,12 @@
  */
 package network.tiesdb.service.scope.api;
 
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.StreamSupport.stream;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -76,7 +80,13 @@ public interface TiesEntryExtended extends TiesEntry {
 
     @Override
     default List<? extends TypedField> getFields() {
-        return Stream.concat(getFieldHashes().values().stream(), getFieldValues().values().stream()).collect(Collectors.toList());
+        return Stream.concat(//
+                stream(spliteratorUnknownSize(getFieldHashes().values().iterator(), Spliterator.ORDERED), true),
+                stream(spliteratorUnknownSize(getFieldValues().values().iterator(), Spliterator.ORDERED), true))
+                .sorted((a, b) -> a.getName().compareTo(b.getName())) //
+                .collect(Collectors.toList());
     }
+
+    List<? extends TiesCheque> getCheques();
 
 }

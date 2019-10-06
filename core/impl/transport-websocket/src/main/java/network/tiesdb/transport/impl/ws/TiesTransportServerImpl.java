@@ -24,7 +24,6 @@ import javax.net.ssl.SSLException;
 
 import network.tiesdb.exception.TiesConfigurationException;
 import network.tiesdb.exception.TiesException;
-import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.api.TiesTransportServer;
 import network.tiesdb.transport.impl.ws.netty.WebSocketServer;
 

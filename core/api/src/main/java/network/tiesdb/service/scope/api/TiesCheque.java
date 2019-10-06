@@ -16,22 +16,29 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package network.tiesdb.transport.api;
+package network.tiesdb.service.scope.api;
 
-import network.tiesdb.api.TiesVersion;
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
-/**
- * TiesDB transport API.
- * 
- * <P>
- * Defines common transport functions.
- * 
- * @author Anton Filatov (filatov@ties.network)
- */
-public interface TiesTransport {
+public interface TiesCheque extends TiesSigned {
 
-    //TiesHandler getHandler();
+    interface Address {
+        byte[] getAddress();
+    }
 
-    TiesVersion getVersion();
+    UUID getChequeRange();
+
+    BigInteger getChequeNumber();
+
+    Date getChequeTimestamp();
+
+    BigInteger getChequeAmount();
+
+    List<Address> getChequeAddresses();
+
+    byte[] getHash();
 
 }

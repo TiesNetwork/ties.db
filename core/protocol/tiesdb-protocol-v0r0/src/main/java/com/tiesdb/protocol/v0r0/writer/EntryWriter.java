@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.writer.ChequeWriter.Cheque;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 
@@ -35,13 +36,16 @@ public class EntryWriter implements Writer<EntryWriter.Entry> {
 
     public static interface Entry {
 
+        public EntryHeader getHeader();
+
         public Iterable<Field> getFields();
 
-        public EntryHeader getHeader();
+        public Iterable<Cheque> getCheques();
 
     }
 
     private final EntryHeaderWriter entryHeaderWriter = new EntryHeaderWriter();
+    private final ChequeWriter chequeWriter = new ChequeWriter();
     private final FieldWriter fieldWriter = new FieldWriter(FIELD);
 
     @Override
@@ -51,6 +55,9 @@ public class EntryWriter implements Writer<EntryWriter.Entry> {
                 write(entryHeaderWriter, entry.getHeader()), //
                 write(FIELD_LIST, //
                         write(fieldWriter, entry.getFields()) //
+                ), //
+                write(CHEQUE_LIST, //
+                        write(chequeWriter, entry.getCheques()) //
                 ) //
         ).accept(session);
 

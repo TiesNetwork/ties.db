@@ -21,7 +21,10 @@ package network.tiesdb.handler.impl.v0r0.controller;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +43,7 @@ import com.tiesdb.protocol.v0r0.reader.Reader.Request;
 import com.tiesdb.protocol.v0r0.writer.ResponseWriter;
 
 import network.tiesdb.service.api.TiesService;
+import network.tiesdb.service.scope.api.TiesCheque;
 import network.tiesdb.service.scope.api.TiesEntryExtended;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
@@ -50,12 +54,16 @@ public class MessageController {
 
     protected static class EntryImpl implements TiesEntryExtended {
 
-        private final EntryReader.Entry modificationEntry;
+        private final TiesEntryHeader header;
+        private final String tablespaceName;
+        private final String tableName;
         private final Map<String, TypedValueField> fieldValues;
         private final Map<String, TypedHashField> fieldHashes;
+        private final List<? extends TiesCheque> cheques;
 
         public EntryImpl(EntryReader.Entry modificationEntry, boolean forInsert) throws TiesServiceScopeException {
-            this.modificationEntry = modificationEntry;
+            this.tablespaceName = modificationEntry.getHeader().getTablespaceName();
+            this.tableName = modificationEntry.getHeader().getTableName();
             Map<String, TypedValueField> fieldValues = new HashMap<>();
             Map<String, TypedHashField> fieldHashes = new HashMap<>();
             for (Map.Entry<String, FieldReader.Field> e : modificationEntry.getFields().entrySet()) {
@@ -115,32 +123,9 @@ public class MessageController {
             }
             this.fieldHashes = fieldHashes;
             this.fieldValues = fieldValues;
-        }
+            this.header = new TiesEntryHeader() {
 
-        @Override
-        public String getTablespaceName() {
-            return modificationEntry.getHeader().getTablespaceName();
-        }
-
-        @Override
-        public String getTableName() {
-            return modificationEntry.getHeader().getTableName();
-        }
-
-        @Override
-        public Map<String, TypedHashField> getFieldHashes() {
-            return fieldHashes;
-        }
-
-        @Override
-        public Map<String, TypedValueField> getFieldValues() {
-            return fieldValues;
-        }
-
-        @Override
-        public TiesEntryHeader getHeader() {
-            EntryHeader header = modificationEntry.getHeader();
-            return new TiesEntryHeader() {
+                private final EntryHeader header = modificationEntry.getHeader();
 
                 @Override
                 public Date getEntryTimestamp() {
@@ -183,6 +168,88 @@ public class MessageController {
                 }
 
             };
+            cheques = modificationEntry.getCheques().parallelStream().map(cheque -> new TiesCheque() {
+
+                private final List<Address> addresses = cheque.getChequeAddresses().parallelStream().map(address -> new Address() {
+
+                    @Override
+                    public byte[] getAddress() {
+                        return address.getAddress();
+                    }
+
+                }).collect(Collectors.toList());
+
+                @Override
+                public byte[] getSigner() {
+                    return cheque.getSigner();
+                }
+
+                @Override
+                public byte[] getSignature() {
+                    return cheque.getSignature();
+                }
+
+                @Override
+                public byte[] getHash() {
+                    return cheque.getHash();
+                }
+
+                @Override
+                public Date getChequeTimestamp() {
+                    return cheque.getChequeTimestamp();
+                }
+
+                @Override
+                public UUID getChequeRange() {
+                    return cheque.getChequeRange();
+                }
+
+                @Override
+                public BigInteger getChequeNumber() {
+                    return cheque.getChequeNumber();
+                }
+
+                @Override
+                public BigInteger getChequeAmount() {
+                    return cheque.getChequeAmount();
+                }
+
+                @Override
+                public List<Address> getChequeAddresses() {
+                    return addresses;
+                }
+
+            }).collect(Collectors.toList());
+        }
+
+        @Override
+        public String getTablespaceName() {
+            return tablespaceName;
+        }
+
+        @Override
+        public String getTableName() {
+            return tableName;
+        }
+
+        @Override
+        public Map<String, TypedHashField> getFieldHashes() {
+            return fieldHashes;
+        }
+
+        @Override
+        public Map<String, TypedValueField> getFieldValues() {
+            return fieldValues;
+        }
+
+        @Override
+        public TiesEntryHeader getHeader() {
+            return header;
+        }
+
+        @Override
+        public List<? extends TiesCheque> getCheques() {
+            return cheques;
         }
     }
 

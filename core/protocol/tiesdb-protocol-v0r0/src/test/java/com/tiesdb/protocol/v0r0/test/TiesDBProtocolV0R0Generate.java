@@ -21,6 +21,7 @@ package com.tiesdb.protocol.v0r0.test;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.test.util.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -34,8 +35,6 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,7 +72,7 @@ public class TiesDBProtocolV0R0Generate {
         byte[] entryDate = encode(//
                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date) //
         );
-        System.out.println("Date " + DatatypeConverter.printHexBinary(entryDate));
+        System.out.println("Date " + DEFAULT_HEX.printHexBinary(entryDate));
         decode(entryDate, ENTRY_HEADER.getContext(), r -> {
             r.forEachRemaining(e -> {
                 System.out.println(DateFormat.INSTANCE.read(r));
@@ -94,7 +93,7 @@ public class TiesDBProtocolV0R0Generate {
         byte[] entryDate = encode(//
                 part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, amount) //
         );
-        System.out.println("BigNumber  DEC " + value + "\nBigNumber EBML " + DatatypeConverter.printHexBinary(entryDate));
+        System.out.println("BigNumber  DEC " + value + "\nBigNumber EBML " + DEFAULT_HEX.printHexBinary(entryDate));
     }
 
     @Test
@@ -123,11 +122,11 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
             byte[] hash = s.get();
-            System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+            System.out.println("FieldHash: " + DEFAULT_HEX.printHexBinary(hash));
             d.update(hash);
         }));
 
-        System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
+        System.out.println("EntryFieldsHash: " + DEFAULT_HEX.printHexBinary(fldsHash));
 
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
@@ -165,7 +164,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("Insert " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("Insert " + DEFAULT_HEX.printHexBinary(encData));
     }
 
     @Test
@@ -179,11 +178,11 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
             byte[] hash = s.get();
-            System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+            System.out.println("FieldHash: " + DEFAULT_HEX.printHexBinary(hash));
             d.update(hash);
         }));
 
-        System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
+        System.out.println("EntryFieldsHash: " + DEFAULT_HEX.printHexBinary(fldsHash));
 
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
@@ -222,7 +221,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("Insert " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("Insert " + DEFAULT_HEX.printHexBinary(encData));
     }
 
     @Test
@@ -251,11 +250,11 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] fldsHash = getHash(d -> fieldHashes.forEach(s -> {
             byte[] hash = s.get();
-            System.out.println("FieldHash: " + DatatypeConverter.printHexBinary(hash));
+            System.out.println("FieldHash: " + DEFAULT_HEX.printHexBinary(hash));
             d.update(hash);
         }));
 
-        System.out.println("EntryFieldsHash: " + DatatypeConverter.printHexBinary(fldsHash));
+        System.out.println("EntryFieldsHash: " + DEFAULT_HEX.printHexBinary(fldsHash));
 
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
@@ -295,7 +294,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("Update " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("Update " + DEFAULT_HEX.printHexBinary(encData));
     }
 
     public byte[] generateModificationRequest(byte[] entryData) {
@@ -321,7 +320,7 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] randomBytes = new byte[rg.nextInt(32) + 32];
         rg.nextBytes(randomBytes);
-        System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
+        System.out.println("randomBytes " + DEFAULT_HEX.printHexBinary(randomBytes));
         byte[] fieldsData = encodeTies(//
                 part(FIELD, //
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
@@ -448,7 +447,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("MultivalueInsert " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("MultivalueInsert " + DEFAULT_HEX.printHexBinary(encData));
         packetDecode(encData);
     }
 
@@ -471,7 +470,7 @@ public class TiesDBProtocolV0R0Generate {
     }
 
     private byte[] hs2ba(String hexString) {
-        return DatatypeConverter.parseHexBinary(hexString);
+        return DEFAULT_HEX.parseHexBinary(hexString);
     }
 
     @Test
@@ -486,7 +485,7 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] randomBytes = new byte[rg.nextInt(32) + 32];
         rg.nextBytes(randomBytes);
-        System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
+        System.out.println("randomBytes " + DEFAULT_HEX.printHexBinary(randomBytes));
         byte[] fieldsData = encodeTies(//
                 part(FIELD, //
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
@@ -589,7 +588,7 @@ public class TiesDBProtocolV0R0Generate {
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
-                                                        DatatypeConverter.parseHexBinary(
+                                                        DEFAULT_HEX.parseHexBinary(
                                                                 "0917769875F57980143A2127F0B2AB7A32B9956E5E6F881D9685882A144ED103")), // UPDATE
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
                                                 part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
@@ -616,7 +615,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("MultivalueInsert " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("MultivalueInsert " + DEFAULT_HEX.printHexBinary(encData));
         packetDecode(encData);
     }
 
@@ -632,7 +631,7 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] randomBytes = new byte[rg.nextInt(32) + 32];
         rg.nextBytes(randomBytes);
-        System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
+        System.out.println("randomBytes " + DEFAULT_HEX.printHexBinary(randomBytes));
         byte[] fieldsData = encodeTies(//
                 part(FIELD, //
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
@@ -695,7 +694,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("MultivalueInsert " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("MultivalueInsert " + DEFAULT_HEX.printHexBinary(encData));
         packetDecode(encData);
     }
 
@@ -711,7 +710,7 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] randomBytes = new byte[rg.nextInt(32) + 32];
         rg.nextBytes(randomBytes);
-        System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
+        System.out.println("randomBytes " + DEFAULT_HEX.printHexBinary(randomBytes));
         byte[] fieldsData = encodeTies(//
                 part(FIELD, //
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
@@ -751,7 +750,7 @@ public class TiesDBProtocolV0R0Generate {
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
                                                 part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
-                                                        DatatypeConverter.parseHexBinary(
+                                                        DEFAULT_HEX.parseHexBinary(
                                                                 "0dc95af0d9af0c80ef9c14346655c4b48e7400f6842bacdea348e72999b574da")), //
                                                 part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                 part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
@@ -777,7 +776,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("MultivalueInsert " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("MultivalueInsert " + DEFAULT_HEX.printHexBinary(encData));
         packetDecode(encData);
     }
 
@@ -793,7 +792,7 @@ public class TiesDBProtocolV0R0Generate {
 
         byte[] randomBytes = new byte[rg.nextInt(32) + 32];
         rg.nextBytes(randomBytes);
-        System.out.println("randomBytes " + DatatypeConverter.printHexBinary(randomBytes));
+        System.out.println("randomBytes " + DEFAULT_HEX.printHexBinary(randomBytes));
         byte[] fieldsData = encodeTies(//
                 part(FIELD, //
                         part(FIELD_TYPE, ASCIIStringFormat.INSTANCE, "uuid"), //
@@ -826,7 +825,7 @@ public class TiesDBProtocolV0R0Generate {
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x0), // DELETE
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
                                                 part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
-                                                        DatatypeConverter.parseHexBinary(
+                                                        DEFAULT_HEX.parseHexBinary(
                                                                 "91d22f6c21b70840246d0523d8d4bde25538e66e0df50c33b280fe4bf11df742")), //
                                                 part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                 part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
@@ -852,7 +851,7 @@ public class TiesDBProtocolV0R0Generate {
                         ) //
                 ) //
         );
-        System.out.println("Delete " + DatatypeConverter.printHexBinary(encData));
+        System.out.println("Delete " + DEFAULT_HEX.printHexBinary(encData));
         packetDecode(encData);
     }
 
@@ -946,7 +945,7 @@ public class TiesDBProtocolV0R0Generate {
         };
 
         for (String data : dataStrings) {
-            packetDecode(DatatypeConverter.parseHexBinary(data.replaceFirst("C001BA5E1225EFFF0000000000000001", "")));
+            packetDecode(DEFAULT_HEX.parseHexBinary(data.replaceFirst("C001BA5E1225EFFF0000000000000001", "")));
         }
     }
 
@@ -994,7 +993,7 @@ public class TiesDBProtocolV0R0Generate {
 
         for (String data : dataStrings) {
             try {
-                packetDecode(DatatypeConverter.parseHexBinary(data.toUpperCase().replaceFirst("C001BA5E1225EFFF0000000000000001", "")));
+                packetDecode(DEFAULT_HEX.parseHexBinary(data.toUpperCase().replaceFirst("C001BA5E1225EFFF0000000000000001", "")));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1011,7 +1010,7 @@ public class TiesDBProtocolV0R0Generate {
 
         for (String data : entryDataStrings) {
             packetDecode(generateModificationRequest(
-                    DatatypeConverter.parseHexBinary(data.toUpperCase().replaceFirst("C001BA5E1225EFFF0000000000000001", ""))));
+                    DEFAULT_HEX.parseHexBinary(data.toUpperCase().replaceFirst("C001BA5E1225EFFF0000000000000001", ""))));
         }
     }
 
@@ -1061,7 +1060,7 @@ public class TiesDBProtocolV0R0Generate {
                     if (type.getContext().equals(Context.VALUE)) {
                         EBMLReadFormat<?> format = formatMap.get(type);
                         if (null == format) {
-                            System.out.print(" format=\"Hex\">" + DatatypeConverter.printHexBinary(BytesFormat.INSTANCE.read(r)));
+                            System.out.print(" format=\"Hex\">" + DEFAULT_HEX.printHexBinary(BytesFormat.INSTANCE.read(r)));
                         } else {
                             System.out.print(
                                     " format=\"" + format.getClass().getSimpleName().replaceAll("Format$", "") + "\">" + format.read(r));
@@ -1083,7 +1082,7 @@ public class TiesDBProtocolV0R0Generate {
                     fail("Wrong event " + e);
                 }
             }
-            System.out.println("<!--\n" + DatatypeConverter.printHexBinary(encData) + "\n-->");
+            System.out.println("<!--\n" + DEFAULT_HEX.printHexBinary(encData) + "\n-->");
             System.out.println();
         });
     }

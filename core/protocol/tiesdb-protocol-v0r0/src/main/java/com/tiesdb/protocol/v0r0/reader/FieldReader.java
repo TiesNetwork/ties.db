@@ -21,11 +21,10 @@ package com.tiesdb.protocol.v0r0.reader;
 import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +99,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
             LOG.debug("FIELD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(field.hash);
+                    return DEFAULT_HEX.printHexBinary(field.hash);
                 }
             });
             end(session, e);
@@ -112,10 +111,10 @@ public class FieldReader implements Reader<FieldReader.Field> {
                 public String toString() {
                     byte[] value = field.rawValue;
                     if (value.length <= 64) {
-                        return DatatypeConverter.printHexBinary(value);
+                        return DEFAULT_HEX.printHexBinary(value);
                     } else {
-                        return DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
-                                + DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
+                        return DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
+                                + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
                                 + "(" + value.length + ")";
                     }
                 }
@@ -143,7 +142,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
                     LOG.debug("FIELD_HASH_CALCULATED: {}", new Object() {
                         @Override
                         public String toString() {
-                            return DatatypeConverter.printHexBinary(fieldHash);
+                            return DEFAULT_HEX.printHexBinary(fieldHash);
                         }
                     });
                     field.hash = fieldHash;

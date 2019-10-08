@@ -18,9 +18,9 @@
  */
 package com.tiesdb.protocol.v0r0.util;
 
-import java.util.Arrays;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.Arrays;
 
 public final class FormatUtil {
 
@@ -32,15 +32,15 @@ public final class FormatUtil {
             return "";
         }
         if (bytes.length <= 64) {
-            return DatatypeConverter.printHexBinary(bytes);
+            return DEFAULT_HEX.printHexBinary(bytes);
         } else {
-            return DatatypeConverter.printHexBinary(Arrays.copyOfRange(bytes, 0, 32)) + "..." //
-                    + DatatypeConverter.printHexBinary(Arrays.copyOfRange(bytes, bytes.length - 32, bytes.length)) //
+            return DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(bytes, 0, 32)) + "..." //
+                    + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(bytes, bytes.length - 32, bytes.length)) //
                     + "(" + bytes.length + ")";
         }
     }
 
     public static String printFullHex(byte[] bytes) {
-        return null == bytes ? null : DatatypeConverter.printHexBinary(bytes);
+        return null == bytes ? null : DEFAULT_HEX.printHexBinary(bytes);
     }
 }

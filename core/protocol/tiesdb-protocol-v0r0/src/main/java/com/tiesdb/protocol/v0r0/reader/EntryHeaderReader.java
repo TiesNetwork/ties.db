@@ -22,14 +22,13 @@ import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.checkSignature;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.function.Consumer;
 
-import javax.xml.bind.DatatypeConverter;
-
-import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,6 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.SignatureReader.Signature;
-
 import com.tiesdb.protocol.v0r0.util.FormatUtil;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
@@ -141,7 +139,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
             LOG.debug("ENTRY_OLD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(header.entryOldHash);
+                    return DEFAULT_HEX.printHexBinary(header.entryOldHash);
                 }
             });
             end(session, e);
@@ -151,7 +149,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
             LOG.debug("ENTRY_FLD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(header.entryFldHash);
+                    return DEFAULT_HEX.printHexBinary(header.entryFldHash);
                 }
             });
             end(session, e);
@@ -177,7 +175,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
                 LOG.debug("ENTRY_HEADER_HASH: {}", new Object() {
                     @Override
                     public String toString() {
-                        return DatatypeConverter.printHexBinary(headerHash);
+                        return DEFAULT_HEX.printHexBinary(headerHash);
                     }
                 });
                 header.hash = headerHash;

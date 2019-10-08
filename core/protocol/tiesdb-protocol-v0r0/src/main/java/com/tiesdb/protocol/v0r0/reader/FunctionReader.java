@@ -20,13 +20,12 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -220,7 +219,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
             LOG.debug("ARG_STATIC_VALUE: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(a.rawValue);
+                    return DEFAULT_HEX.printHexBinary(a.rawValue);
                 }
             });
             end(session, e);

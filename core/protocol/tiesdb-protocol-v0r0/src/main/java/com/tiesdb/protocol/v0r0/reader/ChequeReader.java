@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import javax.xml.bind.DatatypeConverter;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,7 +157,7 @@ public class ChequeReader implements Reader<ChequeReader.Cheque> {
             LOG.debug("ADDRESS : {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(bytes);
+                    return DEFAULT_HEX.printHexBinary(bytes);
                 }
             });
             end(session, e);
@@ -189,7 +189,7 @@ public class ChequeReader implements Reader<ChequeReader.Cheque> {
                 LOG.debug("CHEQUE_HASH: {}", new Object() {
                     @Override
                     public String toString() {
-                        return DatatypeConverter.printHexBinary(chequeHash);
+                        return DEFAULT_HEX.printHexBinary(chequeHash);
                     }
                 });
                 cheque.hash = chequeHash;

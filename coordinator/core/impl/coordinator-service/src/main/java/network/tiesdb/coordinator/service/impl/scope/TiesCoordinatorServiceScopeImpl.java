@@ -18,6 +18,8 @@
  */
 package network.tiesdb.coordinator.service.impl.scope;
 
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
@@ -47,8 +49,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,7 +172,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             byte[] fieldHash = mapper.apply(fieldName);
             if (null == fieldHash) {
                 throw new TiesServiceScopeException(
-                        "Field " + fieldName + " was not found in entry " + DatatypeConverter.printHexBinary(entryHash));
+                        "Field " + fieldName + " was not found in entry " + DEFAULT_HEX.printHexBinary(entryHash));
             }
             keyHashDigest.update(fieldHash);
         }
@@ -262,7 +262,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     });
         }
         Set<? extends Node> nodes = sch.getNodes(tsn, tbn, entryKeyHash);
-        LOG.debug("CoordinatedModification {} nodes: {}", DatatypeConverter.printHexBinary(entryKeyHash), nodes);
+        LOG.debug("CoordinatedModification {} nodes: {}", DEFAULT_HEX.printHexBinary(entryKeyHash), nodes);
         if (null == nodes || nodes.isEmpty()) {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
@@ -536,7 +536,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         ConsistencyArbiter arbiter = new ConsistencyArbiter(recollectionRequest.getConsistency(), sch.getReplicationFactor(tsn, tbn));
 
         Map<String, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters,
-                e -> DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()), result -> {
+                e -> DEFAULT_HEX.printHexBinary(e.getEntryHeader().getHash()), result -> {
                     try {
                         return result.get().get()
                                 .accept(new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
@@ -606,8 +606,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                             }
                             return Stream.empty();
                         }) //
-                        .filter(e -> arbiterEntryHashes.contains(DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
-                        .filter(distinct(e -> DatatypeConverter.printHexBinary(e.getEntryHeader().getHash()))) //
+                        .filter(e -> arbiterEntryHashes.contains(DEFAULT_HEX.printHexBinary(e.getEntryHeader().getHash()))) //
+                        .filter(distinct(e -> DEFAULT_HEX.printHexBinary(e.getEntryHeader().getHash()))) //
                         .collect(Collectors.toList());
 
                 recollectionRequest.setResult(//
@@ -725,8 +725,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                     return fhs.get(fieldName);
                                 });
                                 return new HealingMappingEntry<Node, TiesEntry>( //
-                                        DatatypeConverter.printHexBinary(fieldsHash), //
-                                        DatatypeConverter.printHexBinary(entryHash), //
+                                        DEFAULT_HEX.printHexBinary(fieldsHash), //
+                                        DEFAULT_HEX.printHexBinary(entryHash), //
                                         e.getKey(), //
                                         entry);
                             } catch (TiesServiceScopeException ex) {
@@ -784,7 +784,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
             }
 
-            Set<? extends Node> nodes = nodesMapper.apply(DatatypeConverter.parseHexBinary(pkHashStr));
+            Set<? extends Node> nodes = nodesMapper.apply(DEFAULT_HEX.parseHexBinary(pkHashStr));
             Map<String, String> typeMap = Collections
                     .unmodifiableMap(fields.parallelStream().collect(Collectors.toMap(f -> f.getName(), f -> f.getType())));
             entryMap.entrySet().parallelStream().forEach(ene -> {

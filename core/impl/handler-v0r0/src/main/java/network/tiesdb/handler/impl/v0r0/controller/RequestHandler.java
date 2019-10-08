@@ -19,6 +19,7 @@
 package network.tiesdb.handler.impl.v0r0.controller;
 
 import static java.util.Objects.requireNonNull;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -31,8 +32,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
@@ -377,10 +376,10 @@ public class RequestHandler implements Request.Visitor<Response> {
             return " is null";
         }
         if (value.length <= 64) {
-            return "=0x" + DatatypeConverter.printHexBinary(value);
+            return "=0x" + DEFAULT_HEX.printHexBinary(value);
         } else {
-            return "=0x" + DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
-                    + DatatypeConverter.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
+            return "=0x" + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
+                    + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
                     + "(" + value.length + ")";
         }
     }

@@ -18,17 +18,49 @@
  */
 package network.tiesdb.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Hex {
 
     public static final String HEX_PREFIX = "0x";
 
-    public static final Hex UPPERCASE = new Hex("0123456789ABCDEF".toCharArray());
-    public static final Hex LOWERCASE = new Hex("0123456789abcdef".toCharArray());
+    public static final String HEX_UPPERCASE = "0123456789ABCDEF";
+    public static final String HEX_LOWERCASE = "0123456789abcdef";
+
+    public static final Hex DEFAULT_HEX = new Hex(HEX_UPPERCASE.toCharArray());
 
     private final char[] hexCode;
+    private final Map<Character, Integer> hexMap;
+    private final String prefix;
 
     public Hex(char[] hexCode) {
-        this.hexCode = hexCode;
+        this(hexCode, null);
+    }
+
+    public Hex(char[] hexCode, String prefix) {
+        this.hexCode = checkHexCode(hexCode);
+        this.hexMap = buildHexMap(this.hexCode);
+        this.prefix = null != prefix ? prefix : "";
+    }
+
+    private static Map<Character, Integer> buildHexMap(char[] hexCode) {
+        Map<Character, Integer> map = new HashMap<>();
+        for (int i = 0; i < hexCode.length; i++) {
+            map.put(hexCode[i], i);
+        }
+        return map;
+    }
+
+    /**
+     * @param hex The hex string to be decoded
+     * 
+     * @return An array of bytes represented by the <b>hex</b> argument
+     * 
+     * @throws IllegalArgumentException If string contains illegal characters
+     */
+    public byte[] parseHexBinary(String hex) {
+        return parseHexBinary(hex, this.hexMap);
     }
 
     /**
@@ -58,7 +90,7 @@ public class Hex {
      *         {@code bytes} array
      */
     public String printHexBinary(byte[] bytes, int offset, int length) {
-        return printHexBinary(bytes, offset, length, hexCode);
+        return printHexBinary(bytes, offset, length, hexCode, prefix);
     }
 
     /**
@@ -96,16 +128,16 @@ public class Hex {
      *         {@code bytes} array
      */
     public int formatHexBinary(byte[] bytes, int offset, int length, StringBuilder out) {
-        return formatHexBinary(bytes, offset, length, out, hexCode);
+        return formatHexBinary(bytes, offset, length, out, hexCode, prefix);
     }
 
-    private static String printHexBinary(byte[] bytes, int offset, int length, char[] hexCode) {
+    private static String printHexBinary(byte[] bytes, int offset, int length, char[] hexCode, String prefix) {
         StringBuilder builder = new StringBuilder();
-        formatHexBinary(bytes, offset, length, builder, hexCode);
+        formatHexBinary(bytes, offset, length, builder, hexCode, prefix);
         return builder.toString();
     }
 
-    private static int formatHexBinary(byte[] bytes, int offset, int length, StringBuilder out, char[] hexCode) {
+    private static int formatHexBinary(byte[] bytes, int offset, int length, StringBuilder out, char[] hexCode, String prefix) {
 
         checkBounds(bytes, offset, length);
 
@@ -114,7 +146,9 @@ public class Hex {
         if (length == 0)
             return 0;
 
-        out.ensureCapacity(out.length() + length * 2);
+        out.ensureCapacity(prefix.length() + out.length() + length * 2);
+
+        out.append(prefix);
 
         for (int i = offset, end = offset + length; i < end; i++) {
             byte b = bytes[i];
@@ -138,4 +172,34 @@ public class Hex {
         if (offset > bytes.length - length)
             throw new IndexOutOfBoundsException("Array is too small for offset + length = " + offset + length);
     }
+
+    private static char[] checkHexCode(char[] hexCode) {
+        if (hexCode.length < 16)
+            throw new IllegalArgumentException("Hex code length should be 16. Actual hex code length = " + hexCode.length);
+        return hexCode;
+    }
+
+    private static byte[] parseHexBinary(String s, Map<Character, Integer> hexMap) {
+        final int len = s.length();
+
+        if (len % 2 != 0) {
+            throw new IllegalArgumentException("hexBinary needs to be even-length: " + s);
+        }
+
+        byte[] out = new byte[len / 2];
+
+        for (int i = 0; i < len; i += 2) {
+            int h = hexMap.getOrDefault(s.charAt(i), -1);
+            int l = hexMap.getOrDefault(s.charAt(i + 1), -1);
+            if (h == -1 || l == -1) {
+                throw new IllegalArgumentException(
+                        "contains illegal character in '" + s.charAt(i) + s.charAt(i + 1) + "' at position " + i + " for hexBinary: " + s);
+            }
+
+            out[i / 2] = (byte) (h * 16 + l);
+        }
+
+        return out;
+    }
+
 }

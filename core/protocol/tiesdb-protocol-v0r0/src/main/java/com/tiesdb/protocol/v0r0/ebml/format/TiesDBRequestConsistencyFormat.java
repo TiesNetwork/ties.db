@@ -18,9 +18,9 @@
  */
 package com.tiesdb.protocol.v0r0.ebml.format;
 
-import java.io.IOException;
+import static network.tiesdb.util.Hex.DEFAULT_HEX;
 
-import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
 
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency.ConsistencyType;
@@ -59,7 +59,7 @@ public class TiesDBRequestConsistencyFormat implements EBMLFormat<TiesDBRequestC
     @Override
     public TiesDBRequestConsistency readFormat(byte[] data) {
         if (data.length <= 0) {
-            throw new SparseReaderException("Illegal TiesDBRequestConsistency " + DatatypeConverter.printHexBinary(data));
+            throw new SparseReaderException("Illegal TiesDBRequestConsistency " + DEFAULT_HEX.printHexBinary(data));
         }
         byte cb = data[data.length - 1];
         ConsistencyType type = null;
@@ -74,7 +74,7 @@ public class TiesDBRequestConsistencyFormat implements EBMLFormat<TiesDBRequestC
             type = ConsistencyType.COUNT;
             value = 0 - cb;
         } else {
-            throw new SparseReaderException("Illegal TiesDBRequestConsistency " + DatatypeConverter.printHexBinary(data));
+            throw new SparseReaderException("Illegal TiesDBRequestConsistency " + DEFAULT_HEX.printHexBinary(data));
         }
         return new TiesDBRequestConsistency(type, value);
     }

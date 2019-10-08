@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.tiesdb.lib</groupId>
         <artifactId>lib-parent</artifactId>
-        <version>0.1.8-SNAPSHOT</version>
+        <version>0.1.9-SNAPSHOT</version>
     </parent>
 
     <artifactId>swissknife</artifactId>

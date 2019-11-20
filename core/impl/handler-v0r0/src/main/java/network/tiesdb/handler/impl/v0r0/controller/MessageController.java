@@ -190,6 +190,16 @@ public class MessageController {
                 }
 
                 @Override
+                public BigInteger getChequeVersion() {
+                    return cheque.getChequeVersion();
+                }
+
+                @Override
+                public BigInteger getChequeNetwork() {
+                    return cheque.getChequeNetwork();
+                }
+
+                @Override
                 public byte[] getHash() {
                     return cheque.getHash();
                 }

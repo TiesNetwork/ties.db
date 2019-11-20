@@ -62,10 +62,12 @@ public enum TiesDBType implements TiesEBMLType {
 
     CHEQUE_LIST(0xC1, Context.CHEQUE_LIST, Context.CHEQUE_LIST_CONTAINER), // Meta
     CHEQUE(0xC1, Context.CHEQUE, Context.CHEQUE_LIST), // Meta
-    CHEQUE_RANGE(0x80, Context.VALUE, Context.CHEQUE), // Binary (UUID)
-    CHEQUE_NUMBER(0x82, Context.VALUE, Context.CHEQUE), // Unsigned
-    CHEQUE_TIMESTAMP(0x84, Context.VALUE, Context.CHEQUE), // TimeStamp
-    CHEQUE_AMOUNT(0x86, Context.VALUE, Context.CHEQUE), // Unsigned
+    CHEQUE_VERSION(0x80, Context.VALUE, Context.CHEQUE), // Unsigned
+    CHEQUE_NETWORK(0x82, Context.VALUE, Context.CHEQUE), // Unsigned (BIP-0044/SLIP-0044)
+    CHEQUE_RANGE(0x84, Context.VALUE, Context.CHEQUE), // Binary (UUID)
+    CHEQUE_NUMBER(0x86, Context.VALUE, Context.CHEQUE), // Unsigned
+    CHEQUE_TIMESTAMP(0x88, Context.VALUE, Context.CHEQUE), // TimeStamp
+    CHEQUE_AMOUNT(0x8A, Context.VALUE, Context.CHEQUE), // Unsigned
     ADDRESS_LIST(0xA1, Context.ADDRESS_LIST, Context.CHEQUE), // Meta
     ADDRESS(0xA0, Context.VALUE, Context.ADDRESS_LIST), // Binary
 

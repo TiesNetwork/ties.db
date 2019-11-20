@@ -243,6 +243,8 @@ public class TiesDBProtocolV0R0Test {
                                     ), //
                                     part(CHEQUE_LIST, //
                                             part(CHEQUE, //
+                                                    part(CHEQUE_VERSION, BytesFormat.INSTANCE, stubData), //
+                                                    part(CHEQUE_NETWORK, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_RANGE, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_NUMBER, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
@@ -254,6 +256,8 @@ public class TiesDBProtocolV0R0Test {
                                                     ) //
                                             ), //
                                             part(CHEQUE, //
+                                                    part(CHEQUE_VERSION, BytesFormat.INSTANCE, stubData), //
+                                                    part(CHEQUE_NETWORK, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_RANGE, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_NUMBER, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
@@ -291,6 +295,14 @@ public class TiesDBProtocolV0R0Test {
                                 break;
                             case CHEQUE_AMOUNT:
                                 assertArrayEquals(new EBMLType[] { CHEQUE_AMOUNT, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray());
+                                break;
+                            case CHEQUE_VERSION:
+                                assertArrayEquals(new EBMLType[] { CHEQUE_VERSION, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray());
+                                break;
+                            case CHEQUE_NETWORK:
+                                assertArrayEquals(new EBMLType[] { CHEQUE_VERSION, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_NUMBER:

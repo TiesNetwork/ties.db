@@ -56,12 +56,22 @@ public class ChequeReader implements Reader<ChequeReader.Cheque> {
 
     public static class Cheque extends Signature {
 
+        private BigInteger chequeVersion;
+        private BigInteger chequeNetwork;
         private UUID chequeRange;
         private BigInteger chequeNumber;
         private Date chequeTimestamp;
         private BigInteger chequeAmount;
         private byte[] hash;
         private List<Address> chequeAddresses = new LinkedList<>();
+
+        public BigInteger getChequeVersion() {
+            return chequeVersion;
+        }
+
+        public BigInteger getChequeNetwork() {
+            return chequeNetwork;
+        }
 
         public UUID getChequeRange() {
             return chequeRange;
@@ -90,7 +100,8 @@ public class ChequeReader implements Reader<ChequeReader.Cheque> {
         @Override
         public String toString() {
             return "Cheque [chequeRange=" + chequeRange + ", chequeNumber=" + chequeNumber + ", chequeTimestamp=" + chequeTimestamp
-                    + ", chequeAmount=" + chequeAmount + ", chequeAddresses=" + chequeAddresses + "]";
+                    + ", chequeAmount=" + chequeAmount + ", chequeVersion=" + chequeVersion + ", chequeNetwork=" + chequeNetwork
+                    + ", chequeAddresses=" + chequeAddresses + ", signature=" + super.toString() + "]";
         }
 
     }
@@ -120,6 +131,16 @@ public class ChequeReader implements Reader<ChequeReader.Cheque> {
 
     public boolean acceptCheque(Conversation session, Event e, Cheque cheque) throws TiesDBProtocolException {
         switch (e.getType()) {
+        case CHEQUE_VERSION:
+            cheque.chequeVersion = session.read(BigIntegerFormat.INSTANCE);
+            LOG.debug("CHEQUE_VERSION : {}", cheque.chequeVersion);
+            end(session, e);
+            return true;
+        case CHEQUE_NETWORK:
+            cheque.chequeNetwork = session.read(BigIntegerFormat.INSTANCE);
+            LOG.debug("CHEQUE_NETWORK : {}", cheque.chequeNetwork);
+            end(session, e);
+            return true;
         case CHEQUE_RANGE:
             cheque.chequeRange = session.read(UUIDFormat.INSTANCE);
             LOG.debug("CHEQUE_RANGE : {}", cheque.chequeRange);

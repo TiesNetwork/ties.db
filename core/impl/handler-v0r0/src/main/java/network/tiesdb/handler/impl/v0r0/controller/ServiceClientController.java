@@ -384,6 +384,16 @@ public class ServiceClientController implements TiesServiceScope {
                         }
 
                         @Override
+                        public BigInteger getChequeVersion() {
+                            return cheque.getChequeVersion();
+                        }
+
+                        @Override
+                        public BigInteger getChequeNetwork() {
+                            return cheque.getChequeNetwork();
+                        }
+
+                        @Override
                         public UUID getChequeRange() {
                             return cheque.getChequeRange();
                         }

@@ -45,7 +45,7 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
 
         @Override
         public String toString() {
-            return "Signature [signature=" + FormatUtil.printPartialHex(signature) + ", signer=" + FormatUtil.printPartialHex(signer) + "]";
+            return "Signature [signer=" + FormatUtil.printPartialHex(signer) + ", signature=" + FormatUtil.printPartialHex(signature) + "]";
         }
 
         public byte[] getSignature() {

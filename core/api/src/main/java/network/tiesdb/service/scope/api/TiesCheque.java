@@ -29,6 +29,10 @@ public interface TiesCheque extends TiesSigned {
         byte[] getAddress();
     }
 
+    BigInteger getChequeVersion();
+
+    BigInteger getChequeNetwork();
+
     UUID getChequeRange();
 
     BigInteger getChequeNumber();

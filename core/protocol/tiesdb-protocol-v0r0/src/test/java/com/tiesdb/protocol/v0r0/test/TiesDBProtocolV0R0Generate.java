@@ -148,6 +148,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
@@ -205,6 +207,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
@@ -278,6 +282,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 2L), //
@@ -431,6 +437,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
@@ -599,6 +607,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
@@ -678,6 +688,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
@@ -760,6 +772,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
@@ -835,6 +849,8 @@ public class TiesDBProtocolV0R0Generate {
                                 part(CHEQUE_LIST, //
                                         part(CHEQUE, //
                                                 tiesPartSign(key, SIGNATURE, //
+                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
+                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                         part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
                                                                 UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
                                                         part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
@@ -1026,6 +1042,8 @@ public class TiesDBProtocolV0R0Generate {
         formatMap.put(ENTRY_VERSION, LongFormat.INSTANCE);
         formatMap.put(ENTRY_NETWORK, IntegerFormat.INSTANCE);
         formatMap.put(ENTRY_TIMESTAMP, DateFormat.INSTANCE);
+        formatMap.put(CHEQUE_VERSION, BigIntegerFormat.INSTANCE);
+        formatMap.put(CHEQUE_NETWORK, BigIntegerFormat.INSTANCE);
         formatMap.put(CHEQUE_TIMESTAMP, DateFormat.INSTANCE);
         formatMap.put(CHEQUE_RANGE, UUIDFormat.INSTANCE);
         formatMap.put(CHEQUE_NUMBER, LongFormat.INSTANCE);

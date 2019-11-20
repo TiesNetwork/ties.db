@@ -43,6 +43,10 @@ public class ChequeWriter implements Writer<ChequeWriter.Cheque> {
 
     public static interface Cheque extends Signature {
 
+        BigInteger getChequeVersion();
+
+        BigInteger getChequeNetwork();
+
         UUID getChequeRange();
 
         BigInteger getChequeNumber();
@@ -73,6 +77,8 @@ public class ChequeWriter implements Writer<ChequeWriter.Cheque> {
     public void accept(Conversation session, Cheque cheque) throws TiesDBProtocolException {
         LOG.debug("Cheque {}", cheque);
         write(CHEQUE, //
+                write(CHEQUE_VERSION, BigIntegerFormat.INSTANCE, cheque.getChequeVersion()), //
+                write(CHEQUE_NETWORK, BigIntegerFormat.INSTANCE, cheque.getChequeNetwork()), //
                 write(CHEQUE_RANGE, UUIDFormat.INSTANCE, cheque.getChequeRange()), //
                 write(CHEQUE_NUMBER, BigIntegerFormat.INSTANCE, cheque.getChequeNumber()), //
                 write(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, cheque.getChequeTimestamp()), //

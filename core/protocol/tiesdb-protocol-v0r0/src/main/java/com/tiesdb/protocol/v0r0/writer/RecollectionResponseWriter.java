@@ -27,15 +27,16 @@ import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
-import com.tiesdb.protocol.v0r0.writer.RecollectionResultWriter.RecollectionResult;
+import com.tiesdb.protocol.v0r0.writer.RecollectionErrorWriter.RecollectionError;
+import com.tiesdb.protocol.v0r0.writer.RecollectionResultWriter.RecollectionEntry;
+import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationConsumer;
+import com.tiesdb.protocol.v0r0.writer.WriterUtil.ConversationFunction;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
 public class RecollectionResponseWriter implements Writer<RecollectionResponseWriter.RecollectionResponse> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecollectionResponseWriter.class);
-
-    private final RecollectionResultWriter recollectionResultWriter = new RecollectionResultWriter();
 
     public static interface RecollectionResponse extends Writer.Response {
 
@@ -48,13 +49,53 @@ public class RecollectionResponseWriter implements Writer<RecollectionResponseWr
 
     }
 
+    public static interface RecollectionResult {
+
+        interface Visitor<T> {
+
+            T on(RecollectionEntry entry) throws TiesDBProtocolException;
+
+            T on(RecollectionError error) throws TiesDBProtocolException;
+
+        }
+
+        <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
+
+    }
+
+    private static interface SpecificRecollectionResultWriter extends //
+            RecollectionResult.Visitor<ConversationConsumer>, //
+            ConversationFunction<RecollectionResult> {
+        @Override
+        default ConversationConsumer accept(RecollectionResult r) throws TiesDBProtocolException {
+            return r.accept(this);
+        }
+    }
+
+    private final SpecificRecollectionResultWriter specificRecollectionResultWriter = new SpecificRecollectionResultWriter() {
+
+        private final RecollectionResultWriter recollectionResultWriter = new RecollectionResultWriter();
+        private final RecollectionErrorWriter recollectionErrorWriter = new RecollectionErrorWriter();
+
+        @Override
+        public ConversationConsumer on(RecollectionEntry result) throws TiesDBProtocolException {
+            return write(recollectionResultWriter, result);
+        }
+
+        @Override
+        public ConversationConsumer on(RecollectionError result) throws TiesDBProtocolException {
+            return write(recollectionErrorWriter, result);
+        }
+
+    };
+
     @Override
     public void accept(Conversation session, RecollectionResponse response) throws TiesDBProtocolException {
         LOG.debug("RecollectionResponse {}", response);
 
         write(RECOLLECTION_RESPONSE, //
                 write(MESSAGE_ID, BigIntegerFormat.INSTANCE, response.getMessageId()), //
-                write(recollectionResultWriter, response.getResults()) //
+                write(specificRecollectionResultWriter, response.getResults()) //
         ).accept(session);
 
     }

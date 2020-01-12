@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
@@ -70,7 +71,9 @@ import com.tiesdb.protocol.v0r0.writer.ModificationResultErrorWriter.Modificatio
 import com.tiesdb.protocol.v0r0.writer.ModificationResultSuccessWriter.ModificationResultSuccess;
 import com.tiesdb.protocol.v0r0.writer.Multiple;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResponse;
-import com.tiesdb.protocol.v0r0.writer.RecollectionResultWriter.RecollectionResult;
+import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResult;
+import com.tiesdb.protocol.v0r0.writer.RecollectionResultWriter.RecollectionEntry;
+import com.tiesdb.protocol.v0r0.writer.RecollectionErrorWriter.RecollectionError;
 import com.tiesdb.protocol.v0r0.writer.ResponseWriter;
 import com.tiesdb.protocol.v0r0.writer.SchemaFieldWriter.SchemaField;
 import com.tiesdb.protocol.v0r0.writer.SchemaResponseWriter.SchemaResponse;
@@ -117,7 +120,7 @@ public class RequestHandler implements Request.Visitor<Response> {
         responseWriter.accept(session, processRequest(request));
     }
 
-    public RecollectionResult convertRecollectionResultEntry(RecollectionRequest request, Result.Entry entry) {
+    public RecollectionEntry convertToRecollectionResultEntry(RecollectionRequest request, Result.Entry entry) {
         TiesEntryHeader resultHeader = entry.getEntryHeader();
         EntryHeader entryHeader = new EntryHeader() {
 
@@ -198,7 +201,7 @@ public class RequestHandler implements Request.Visitor<Response> {
                 }
             };
         }
-        return new RecollectionResult() {
+        return new RecollectionEntry() {
 
             @Override
             public EntryHeader getEntryHeader() {
@@ -214,6 +217,7 @@ public class RequestHandler implements Request.Visitor<Response> {
             public Multiple<Field> getComputedFields() {
                 return computedFields;
             }
+
         };
     }
 
@@ -798,7 +802,39 @@ public class RequestHandler implements Request.Visitor<Response> {
                 @Override
                 public void setResult(Result r) throws TiesServiceScopeException {
                     LOG.debug("AddedResult {}", r);
-                    r.getEntries().stream().map(entry -> convertRecollectionResultEntry(request, entry)).forEach(results::add);
+                    r.accept(new TiesServiceScopeRecollection.Result.Visitor<Stream<RecollectionResult>>() {
+
+                        @Override
+                        public Stream<RecollectionResult> on(Success success) throws TiesServiceScopeException {
+                            return success.getEntries().stream().map(entry -> convertToRecollectionResultEntry(request, entry));
+                        }
+
+                        @Override
+                        public Stream<RecollectionResult> on(Error error) throws TiesServiceScopeException {
+                            return error.getErrors().stream().map(th -> new RecollectionError() {
+                                @Override
+                                public Throwable getError() {
+                                    return th;
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "RecollectionError [" + getError() + "]";
+                                }
+                            });
+                        }
+
+                        @Override
+                        public Stream<RecollectionResult> on(Partial partial) throws TiesServiceScopeException {
+                            if (partial.isSuccess() && !partial.isError()) {
+                                return on((Success) partial);
+                            } else if (!partial.isSuccess() && partial.isError()) {
+                                return on((Error) partial);
+                            }
+                            return Stream.concat(on((Success) partial), on((Error) partial));
+                        }
+                    }).forEach(results::add);
+
                 }
 
                 @Override
@@ -829,7 +865,19 @@ public class RequestHandler implements Request.Visitor<Response> {
 
         } catch (TiesServiceScopeException e) {
             LOG.error("Error handling RecollectionRequest {}", request, e);
-            throw new TiesDBProtocolMessageException(messageId, "Error handling RecollectionRequest", e);
+            return new RecollectionResponse() {
+
+                @Override
+                public BigInteger getMessageId() {
+                    return messageId;
+                }
+
+                @Override
+                public Iterable<RecollectionResult> getResults() {
+                    return results;
+                }
+
+            };
         }
 
     }

@@ -60,7 +60,7 @@ public interface TiesServiceScopeModification extends TiesServiceScopeAction, Ti
 
     }
 
-    TiesEntryExtended getEntry();
+    TiesEntryExtended getEntry() throws TiesServiceScopeException;
 
     void setResult(Result result) throws TiesServiceScopeException;
 

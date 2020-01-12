@@ -31,9 +31,9 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.EntryReader.Entry;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 
-public class RecollectionResultReader implements Reader<RecollectionResultReader.RecollectionResult> {
+public class RecollectionResultReader implements Reader<RecollectionResultReader.RecollectionEntry> {
 
-    public static class RecollectionResult extends Entry {
+    public static class RecollectionEntry extends Entry implements RecollectionResponseReader.RecollectionResult {
 
         private List<Field> computeFields = new LinkedList<>();
 
@@ -41,12 +41,17 @@ public class RecollectionResultReader implements Reader<RecollectionResultReader
             return computeFields;
         }
 
+        @Override
+        public <T> T accept(Visitor<T> v) throws TiesDBProtocolException {
+            return v.on(this);
+        }
+
     }
 
     private final EntryReader entryReader = new EntryReader();
     private final FieldListReader fieldListReader = new FieldListReader();
 
-    private boolean acceptRecollectionResult(Conversation session, Event e, RecollectionResult r) throws TiesDBProtocolException {
+    private boolean acceptRecollectionResult(Conversation session, Event e, RecollectionEntry r) throws TiesDBProtocolException {
         switch (e.getType()) {
         case ENTRY:
             entryReader.accept(session, e, r);
@@ -65,7 +70,7 @@ public class RecollectionResultReader implements Reader<RecollectionResultReader
     }
 
     @Override
-    public boolean accept(Conversation session, Event e, RecollectionResult r) throws TiesDBProtocolException {
+    public boolean accept(Conversation session, Event e, RecollectionEntry r) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptRecollectionResult, r);
         r.computeFields = Collections.unmodifiableList(r.computeFields);
         return true;

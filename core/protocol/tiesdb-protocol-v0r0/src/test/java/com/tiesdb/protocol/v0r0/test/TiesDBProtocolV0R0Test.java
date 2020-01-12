@@ -421,6 +421,7 @@ public class TiesDBProtocolV0R0Test {
                             case RECOLLECTION_REQUEST:
                             case RECOLLECTION_RESPONSE:
                             case RECOLLECTION_RESULT:
+                            case RECOLLECTION_ERROR:
                             case RETRIEVE_LIST:
                             case RET_COMPUTE:
                             case RET_COMPUTE_ALIAS:

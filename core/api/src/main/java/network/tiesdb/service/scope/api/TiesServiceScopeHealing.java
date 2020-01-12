@@ -60,7 +60,7 @@ public interface TiesServiceScopeHealing extends TiesServiceScopeAction {
 
     }
 
-    TiesEntryExtended getEntry();
+    TiesEntryExtended getEntry() throws TiesServiceScopeException;
 
     void setResult(Result result) throws TiesServiceScopeException;
 

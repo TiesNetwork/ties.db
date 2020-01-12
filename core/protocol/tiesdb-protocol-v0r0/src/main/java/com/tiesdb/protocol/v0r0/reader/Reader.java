@@ -65,6 +65,7 @@ public interface Reader<T> {
 
         }
 
+        @Override
         default void accept(Message.Visitor v) throws TiesDBProtocolException {
             v.on(this);
         }
@@ -87,6 +88,7 @@ public interface Reader<T> {
 
         }
 
+        @Override
         default void accept(Message.Visitor v) throws TiesDBProtocolException {
             v.on(this);
         }

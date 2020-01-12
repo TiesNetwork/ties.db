@@ -33,18 +33,25 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
+import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResult;
+import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResult.Visitor;
 
-public class RecollectionResultWriter implements Writer<RecollectionResultWriter.RecollectionResult> {
+public class RecollectionResultWriter implements Writer<RecollectionResultWriter.RecollectionEntry> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecollectionResultWriter.class);
 
-    public static interface RecollectionResult {
+    public static interface RecollectionEntry extends RecollectionResult {
 
         EntryHeader getEntryHeader();
 
         Multiple<Field> getEntryFields();
 
         Multiple<Field> getComputedFields();
+
+        @Override
+        default public <T> T accept(Visitor<T> v) throws TiesDBProtocolException {
+            return v.on(this);
+        }
 
     }
 
@@ -53,7 +60,7 @@ public class RecollectionResultWriter implements Writer<RecollectionResultWriter
     private final FieldWriter computeFieldWriter = new FieldWriter(COMPUTE_FIELD);
 
     @Override
-    public void accept(Conversation session, RecollectionResult result) throws TiesDBProtocolException {
+    public void accept(Conversation session, RecollectionEntry result) throws TiesDBProtocolException {
         LOG.debug("RecollectionResult {}", result);
 
         Multiple<Field> computedFields = result.getComputedFields();

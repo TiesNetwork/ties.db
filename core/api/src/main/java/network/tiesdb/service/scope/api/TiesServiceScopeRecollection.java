@@ -141,16 +141,26 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
         }
     }
 
-    Query getQuery();
+    Query getQuery() throws TiesServiceScopeException;
 
     public interface Result extends TiesServiceScopeResult.Result {
 
+        interface Visitor<T> {
+
+            T on(Success success) throws TiesServiceScopeException;
+
+            T on(Error error) throws TiesServiceScopeException;
+
+            T on(Partial partial) throws TiesServiceScopeException;
+
+        }
+
         interface Field extends TiesEntry.Field {
 
-            interface HashField extends Result.Field, TiesEntry.HashField {
+            interface HashField extends Success.Field, TiesEntry.HashField {
 
                 @Override
-                default <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
@@ -158,26 +168,27 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
             }
 
-            interface ValueField extends Result.Field {
+            interface ValueField extends Success.Field {
 
                 @Override
-                default <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
                 @Override
                 default <T> T accept(TiesEntry.Field.Visitor<T> v) throws TiesServiceScopeException {
-                    throw new TiesServiceScopeException("Internal field representation could not be used as TiesEntry.Field, please use RawField instead");
+                    throw new TiesServiceScopeException(
+                            "Internal field representation could not be used as TiesEntry.Field, please use RawField instead");
                 }
 
                 Object getFieldValue();
 
             }
 
-            interface RawField extends Result.Field, TiesEntry.ValueField {
+            interface RawField extends Success.Field, TiesEntry.ValueField {
 
                 @Override
-                default <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
@@ -200,7 +211,7 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
             }
 
-            <T> T accept(Result.Field.Visitor<T> v) throws TiesServiceScopeException;
+            <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException;
 
             String getName();
 
@@ -212,9 +223,9 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
             TiesEntryHeader getEntryHeader();
 
-            List<Result.Field> getEntryFields();
+            List<Success.Field> getEntryFields();
 
-            List<Result.Field> getComputedFields();
+            List<Success.Field> getComputedFields();
 
             @Override
             default TiesEntryHeader getHeader() {
@@ -228,11 +239,52 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
         }
 
+        <T> T accept(Visitor<T> v) throws TiesServiceScopeException;
+
+        @Override
         default <T> T accept(TiesServiceScopeResult.Result.Visitor<T> v) throws TiesServiceScopeException {
             return v.on(this);
         }
 
+    }
+
+    public interface Success extends Result {
+
         List<Entry> getEntries();
+
+        @Override
+        default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+            return v.on(this);
+        }
+
+    }
+
+    public interface Error extends Result {
+
+        List<Throwable> getErrors();
+
+        @Override
+        default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+            return v.on(this);
+        }
+    }
+
+    public interface Partial extends Success, Error {
+
+        default boolean isSuccess() {
+            List<Entry> entries = getEntries();
+            return null != entries && !entries.isEmpty();
+        }
+
+        default boolean isError() {
+            List<Throwable> errors = getErrors();
+            return null != errors && !errors.isEmpty();
+        }
+
+        @Override
+        default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+            return v.on(this);
+        }
 
     }
 

@@ -27,7 +27,7 @@
 	<parent>
 		<groupId>com.tiesdb</groupId>
 		<artifactId>core-impl</artifactId>
-		<version>0.1.10-SNAPSHOT</version>
+		<version>0.1.11-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>handler-v0r0</artifactId>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>com.tiesdb.protocol</groupId>
             <artifactId>tiesdb-protocol-v0r0</artifactId>
-            <version>0.1.10-SNAPSHOT</version>
+            <version>0.1.11-SNAPSHOT</version>
         </dependency>
 		<dependency>
 			<groupId>com.tiesdb</groupId>

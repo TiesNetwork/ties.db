@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.tiesdb.lib</groupId>
         <artifactId>lib-parent</artifactId>
-        <version>0.1.10-SNAPSHOT</version>
+        <version>0.1.11-SNAPSHOT</version>
     </parent>
 
     <artifactId>merkletree</artifactId>
@@ -49,7 +49,7 @@
         <dependency>
             <groupId>com.tiesdb.lib</groupId>
             <artifactId>crypto</artifactId>
-            <version>0.1.10-SNAPSHOT</version>
+            <version>0.1.11-SNAPSHOT</version>
         </dependency>
         <!-- Test scope -->
         <dependency>

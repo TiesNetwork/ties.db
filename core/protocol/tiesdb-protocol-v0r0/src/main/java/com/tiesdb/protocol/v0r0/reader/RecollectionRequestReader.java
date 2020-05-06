@@ -34,6 +34,7 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.format.TiesDBRequestConsistencyFormat;
+import com.tiesdb.protocol.v0r0.reader.ChequeReader.Cheque;
 import com.tiesdb.protocol.v0r0.reader.ComputeRetrieveReader.ComputeRetrieve;
 import com.tiesdb.protocol.v0r0.reader.FieldRetrieveReader.FieldRetrieve;
 import com.tiesdb.protocol.v0r0.reader.FilterReader.Filter;
@@ -54,6 +55,8 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
         private String tableName;
         private List<Retrieve> retrieves = new LinkedList<>();
         private List<Filter> filters = new LinkedList<>();
+
+        private List<Cheque> cheques = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -91,6 +94,10 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
             return filters;
         }
 
+        public List<Cheque> getCheques() {
+            return cheques;
+        }
+
     }
 
     public static interface Retrieve {
@@ -110,6 +117,7 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
     private final FieldRetrieveReader fieldRetrieveReader = new FieldRetrieveReader();
     private final ComputeRetrieveReader computeRetrieveReader = new ComputeRetrieveReader();
     private final FilterReader filterReader = new FilterReader();
+    private final ChequeListReader chequeListReader = new ChequeListReader();
 
     public boolean acceptRecollectionRequest(Conversation session, Event e, RecollectionRequest r) throws TiesDBProtocolException {
         switch (e.getType()) {
@@ -138,6 +146,10 @@ public class RecollectionRequestReader implements Reader<RecollectionRequestRead
             return true;
         case FILTER_LIST: {
             acceptEach(session, e, this::acceptRecollectionFilter, r.filters);
+            return true;
+        }
+        case CHEQUE_LIST: {
+            chequeListReader.accept(session, e, r.cheques::add);
             return true;
         }
         // $CASES-OMITTED$

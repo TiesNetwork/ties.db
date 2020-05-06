@@ -22,7 +22,7 @@ import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.VERSION;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.test.util.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -80,9 +80,9 @@ public class TiesDBProtocolV0R0Test {
 
         byte[] encDataRequest = Arrays.copyOfRange(channel(packetHeader, c), 0, protocolVersionHeader.length);
         if (Boolean.getBoolean("test-verbose")) {
-            System.out.print(DEFAULT_HEX.printHexBinary(packetHeader));
+            System.out.print(UPPERCASE_HEX.printHexBinary(packetHeader));
             System.out.print(" == ");
-            System.out.println(DEFAULT_HEX.printHexBinary(encDataRequest));
+            System.out.println(UPPERCASE_HEX.printHexBinary(encDataRequest));
         }
         assertArrayEquals(protocolVersionHeader, encDataRequest);
     }
@@ -274,7 +274,7 @@ public class TiesDBProtocolV0R0Test {
                     ) //
             );
             if (Boolean.getBoolean("test-verbose")) {
-                System.out.println(DEFAULT_HEX.printHexBinary(encData));
+                System.out.println(UPPERCASE_HEX.printHexBinary(encData));
             }
             decode(encData, Context.ROOT, reader -> {
                 LinkedList<EBMLType> stack = new LinkedList<>();

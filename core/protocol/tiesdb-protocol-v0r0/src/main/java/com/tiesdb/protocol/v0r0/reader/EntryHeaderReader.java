@@ -22,7 +22,7 @@ import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.checkSignature;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -139,7 +139,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
             LOG.debug("ENTRY_OLD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DEFAULT_HEX.printHexBinary(header.entryOldHash);
+                    return UPPERCASE_HEX.printHexBinary(header.entryOldHash);
                 }
             });
             end(session, e);
@@ -149,7 +149,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
             LOG.debug("ENTRY_FLD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DEFAULT_HEX.printHexBinary(header.entryFldHash);
+                    return UPPERCASE_HEX.printHexBinary(header.entryFldHash);
                 }
             });
             end(session, e);
@@ -175,7 +175,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
                 LOG.debug("ENTRY_HEADER_HASH: {}", new Object() {
                     @Override
                     public String toString() {
-                        return DEFAULT_HEX.printHexBinary(headerHash);
+                        return UPPERCASE_HEX.printHexBinary(headerHash);
                     }
                 });
                 header.hash = headerHash;

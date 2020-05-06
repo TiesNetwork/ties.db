@@ -32,6 +32,8 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
         List<Filter> getFilters();
 
+        List<? extends TiesCheque> getCheques();
+
         interface Value {
 
             String getType();

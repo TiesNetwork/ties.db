@@ -20,7 +20,7 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -75,7 +75,7 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
             LOG.debug("SIGNATURE : {}", new Object() {
                 @Override
                 public String toString() {
-                    return DEFAULT_HEX.printHexBinary(signature.signature);
+                    return UPPERCASE_HEX.printHexBinary(signature.signature);
                 }
             });
             end(session, e);
@@ -85,7 +85,7 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
             LOG.debug("SIGNER : {}", new Object() {
                 @Override
                 public String toString() {
-                    return DEFAULT_HEX.printHexBinary(signature.signer);
+                    return UPPERCASE_HEX.printHexBinary(signature.signer);
                 }
             });
             end(session, e);

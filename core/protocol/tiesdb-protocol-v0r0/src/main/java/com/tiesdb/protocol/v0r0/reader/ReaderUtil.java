@@ -20,7 +20,7 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static java.util.Objects.requireNonNull;
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.security.SignatureException;
 import java.util.Arrays;
@@ -103,7 +103,7 @@ final class ReaderUtil {
         }
         byte[] fldHash = new byte[fldDigest.getDigestSize()];
         fldDigest.doFinal(fldHash, 0);
-        LOG.debug("ENTRY_FLD_HASH_CALCULATED: {}", DEFAULT_HEX.printHexBinary(fldHash));
+        LOG.debug("ENTRY_FLD_HASH_CALCULATED: {}", UPPERCASE_HEX.printHexBinary(fldHash));
         return Arrays.equals(fldHash, entry.getHeader().getEntryFldHash());
     }
 }

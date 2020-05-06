@@ -21,7 +21,7 @@ package com.tiesdb.protocol.v0r0.reader;
 import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -99,7 +99,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
             LOG.debug("FIELD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DEFAULT_HEX.printHexBinary(field.hash);
+                    return UPPERCASE_HEX.printHexBinary(field.hash);
                 }
             });
             end(session, e);
@@ -111,10 +111,10 @@ public class FieldReader implements Reader<FieldReader.Field> {
                 public String toString() {
                     byte[] value = field.rawValue;
                     if (value.length <= 64) {
-                        return DEFAULT_HEX.printHexBinary(value);
+                        return UPPERCASE_HEX.printHexBinary(value);
                     } else {
-                        return DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
-                                + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
+                        return UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
+                                + UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
                                 + "(" + value.length + ")";
                     }
                 }
@@ -142,7 +142,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
                     LOG.debug("FIELD_HASH_CALCULATED: {}", new Object() {
                         @Override
                         public String toString() {
-                            return DEFAULT_HEX.printHexBinary(fieldHash);
+                            return UPPERCASE_HEX.printHexBinary(fieldHash);
                         }
                     });
                     field.hash = fieldHash;

@@ -83,6 +83,8 @@ public interface TiesSchema {
 
     short getSchemaNetwork();
 
+    String getNodeAddress();
+
     Tablespace getTablespace(String name);
 
 }

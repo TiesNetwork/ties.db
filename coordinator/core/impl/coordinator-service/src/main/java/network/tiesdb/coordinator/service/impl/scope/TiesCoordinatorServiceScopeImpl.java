@@ -18,7 +18,7 @@
  */
 package network.tiesdb.coordinator.service.impl.scope;
 
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -179,10 +179,10 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             byte[] fieldHash = mapper.apply(fieldName);
             if (null == fieldHash) {
                 throw new TiesServiceScopeException(
-                        "Field " + fieldName + " was not found in entry " + DEFAULT_HEX.printHexBinary(entryHash));
+                        "Field " + fieldName + " was not found in entry " + UPPERCASE_HEX.printHexBinary(entryHash));
             }
             if (LOG.isTraceEnabled())
-                LOG.trace("AddedFieldHash for {}: {}", fieldName, DEFAULT_HEX.printHexBinary(fieldHash));
+                LOG.trace("AddedFieldHash for {}: {}", fieldName, UPPERCASE_HEX.printHexBinary(fieldHash));
             keyHashDigest.update(fieldHash);
         }
         byte[] out = new byte[keyHashDigest.getDigestSize()];
@@ -270,9 +270,9 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 return hash;
             });
         }
-        LOG.trace("PrimaryKeyFieldHash: {}", DEFAULT_HEX.printHexBinary(pkFieldsHash));
+        LOG.trace("PrimaryKeyFieldHash: {}", UPPERCASE_HEX.printHexBinary(pkFieldsHash));
         Set<? extends Node> nodes = sch.getNodes(tsn, tbn, pkFieldsHash);
-        LOG.debug("CoordinatedModification {} nodes: {}", DEFAULT_HEX.printHexBinary(pkFieldsHash), nodes);
+        LOG.debug("CoordinatedModification {} nodes: {}", UPPERCASE_HEX.printHexBinary(pkFieldsHash), nodes);
         if (null == nodes || nodes.isEmpty()) {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
@@ -571,7 +571,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
         LinkedList<Throwable> resultErrors = new LinkedList<>();
         Map<String, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters,
-                e -> DEFAULT_HEX.printHexBinary(e.getEntryHeader().getHash()), result -> {
+                e -> UPPERCASE_HEX.printHexBinary(e.getEntryHeader().getHash()), result -> {
                     try {
                         return result.get().get()
                                 .accept(new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
@@ -700,8 +700,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                     }
                                     return Stream.empty();
                                 }) //
-                                .filter(e -> arbiterEntryHashes.contains(DEFAULT_HEX.printHexBinary(e.getEntryHeader().getHash()))) //
-                                .filter(distinct(e -> DEFAULT_HEX.printHexBinary(e.getEntryHeader().getHash()))) //
+                                .filter(e -> arbiterEntryHashes.contains(UPPERCASE_HEX.printHexBinary(e.getEntryHeader().getHash()))) //
+                                .filter(distinct(e -> UPPERCASE_HEX.printHexBinary(e.getEntryHeader().getHash()))) //
                                 .collect(Collectors.toList());
 
                 recollectionRequest.setResult(resultErrors.isEmpty()//
@@ -769,7 +769,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                         // TODO Auto-generated method stub
                         RuntimeException err = new RuntimeException("not yet implemented");
                         err.setStackTrace(new StackTraceElement[] { err.getStackTrace()[0] });
-                        LOG.debug("Modification healing unimplemented", err);
+                        LOG.debug("Modification healing not yet implemented", err);
                         return Stream.<HealingMappingEntry<Node, TiesEntry>>empty();
                     }
 
@@ -826,10 +826,10 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                                 byte[] pkFieldsHash = getFieldsHash(entryHash, primaryKeyFieldNames, fieldName -> {
                                                     return fhs.get(fieldName);
                                                 });
-                                                LOG.trace("PrimaryKeyFieldHash: {}", DEFAULT_HEX.printHexBinary(pkFieldsHash));
+                                                LOG.trace("PrimaryKeyFieldHash: {}", UPPERCASE_HEX.printHexBinary(pkFieldsHash));
                                                 return new HealingMappingEntry<Node, TiesEntry>( //
-                                                        DEFAULT_HEX.printHexBinary(pkFieldsHash), //
-                                                        DEFAULT_HEX.printHexBinary(entryHash), //
+                                                        UPPERCASE_HEX.printHexBinary(pkFieldsHash), //
+                                                        UPPERCASE_HEX.printHexBinary(entryHash), //
                                                         e.getKey(), //
                                                         entry);
                                             } catch (TiesServiceScopeException ex) {
@@ -904,7 +904,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
             }
 
-            Set<? extends Node> nodes = nodesMapper.apply(DEFAULT_HEX.parseHexBinary(pkFieldsHash));
+            Set<? extends Node> nodes = nodesMapper.apply(UPPERCASE_HEX.parseHexBinary(pkFieldsHash));
             Map<String, String> typeMap = Collections
                     .unmodifiableMap(fields.parallelStream().collect(Collectors.toMap(f -> f.getName(), f -> f.getType())));
             entryMap.entrySet().parallelStream().forEach(ene -> {
@@ -999,6 +999,11 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                         @Override
                                         public List<Filter> getFilters() {
                                             return filters;
+                                        }
+
+                                        @Override
+                                        public List<? extends TiesCheque> getCheques() {
+                                            return Collections.emptyList(); // TODO FIXME Add cheque creation for healing!
                                         }
                                     };
 

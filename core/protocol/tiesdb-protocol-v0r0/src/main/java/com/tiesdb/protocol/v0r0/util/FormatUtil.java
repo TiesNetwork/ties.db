@@ -18,7 +18,7 @@
  */
 package com.tiesdb.protocol.v0r0.util;
 
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.util.Arrays;
 
@@ -32,15 +32,15 @@ public final class FormatUtil {
             return "";
         }
         if (bytes.length <= 64) {
-            return DEFAULT_HEX.printHexBinary(bytes);
+            return UPPERCASE_HEX.printHexBinary(bytes);
         } else {
-            return DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(bytes, 0, 32)) + "..." //
-                    + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(bytes, bytes.length - 32, bytes.length)) //
+            return UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(bytes, 0, 32)) + "..." //
+                    + UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(bytes, bytes.length - 32, bytes.length)) //
                     + "(" + bytes.length + ")";
         }
     }
 
     public static String printFullHex(byte[] bytes) {
-        return null == bytes ? null : DEFAULT_HEX.printHexBinary(bytes);
+        return null == bytes ? null : UPPERCASE_HEX.printHexBinary(bytes);
     }
 }

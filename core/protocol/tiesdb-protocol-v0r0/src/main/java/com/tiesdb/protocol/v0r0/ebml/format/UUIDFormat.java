@@ -18,7 +18,7 @@
  */
 package com.tiesdb.protocol.v0r0.ebml.format;
 
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.util.UUID;
 
@@ -40,12 +40,12 @@ public class UUIDFormat implements EBMLFormat<UUID> {
         if (data.length != REQUIRED_LENGTH) {
             throw new SparseReaderException("Not enough bytes to construct UUID. Required " + REQUIRED_LENGTH + " but was " + data.length);
         }
-        return UUID.fromString(DEFAULT_HEX.printHexBinary(data).replaceFirst("(.{8})(.{4})(.{4})(.{4})(.{12})", "$1-$2-$3-$4-$5"));
+        return UUID.fromString(UPPERCASE_HEX.printHexBinary(data).replaceFirst("(.{8})(.{4})(.{4})(.{4})(.{12})", "$1-$2-$3-$4-$5"));
     }
 
     @Override
     public Writable getWritable(UUID data) {
-        return BytesFormat.INSTANCE.getWritable(DEFAULT_HEX.parseHexBinary(data.toString().replaceAll("-", "")));
+        return BytesFormat.INSTANCE.getWritable(UPPERCASE_HEX.parseHexBinary(data.toString().toUpperCase().replaceAll("-", "")));
     }
 
     @Override

@@ -25,10 +25,10 @@ public class Hex {
 
     public static final String HEX_PREFIX = "0x";
 
-    public static final String HEX_UPPERCASE = "0123456789ABCDEF";
-    public static final String HEX_LOWERCASE = "0123456789abcdef";
+    public static final String HEX_UPPERCASE_CODE = "0123456789ABCDEF";
+    public static final String HEX_LOWERCASE_CODE = "0123456789abcdef";
 
-    public static final Hex DEFAULT_HEX = new Hex(HEX_UPPERCASE.toCharArray());
+    public static final Hex UPPERCASE_HEX = new Hex(HEX_UPPERCASE_CODE.toCharArray());
 
     private final char[] hexCode;
     private final Map<Character, Integer> hexMap;

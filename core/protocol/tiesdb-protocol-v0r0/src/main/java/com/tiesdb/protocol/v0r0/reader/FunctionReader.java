@@ -20,7 +20,7 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -219,7 +219,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
             LOG.debug("ARG_STATIC_VALUE: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DEFAULT_HEX.printHexBinary(a.rawValue);
+                    return UPPERCASE_HEX.printHexBinary(a.rawValue);
                 }
             });
             end(session, e);

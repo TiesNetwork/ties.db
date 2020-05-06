@@ -178,6 +178,7 @@ public class ServiceClientController implements TiesServiceScope {
 
                     private final List<Retrieve> retrieves;
                     private final List<Filter> filters;
+                    private final List<Cheque> cheques;
                     {
                         CompletableFuture<List<Retrieve>> retrievesFuture = CompletableFuture.supplyAsync(() -> {
                             return query.getSelectors().parallelStream().map(selector -> {
@@ -253,8 +254,76 @@ public class ServiceClientController implements TiesServiceScope {
                                 };
                             }).collect(Collectors.toList());
                         });
+                        CompletableFuture<List<Cheque>> chequesFuture = CompletableFuture.supplyAsync(() -> {
+                            return query.getCheques().stream().map(cheque -> {
+                                return new Cheque() {
+
+                                    private List<Address> addresses = cheque.getChequeAddresses().parallelStream()
+                                            .map(addr -> new Address() {
+
+                                                @Override
+                                                public byte[] getAddress() {
+                                                    return addr.getAddress();
+                                                }
+
+                                            }).collect(Collectors.toList());
+
+                                    @Override
+                                    public byte[] getSignature() {
+                                        return cheque.getSignature();
+                                    }
+
+                                    @Override
+                                    public byte[] getSigner() {
+                                        return cheque.getSigner();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeVersion() {
+                                        return cheque.getChequeVersion();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeNetwork() {
+                                        return cheque.getChequeNetwork();
+                                    }
+
+                                    @Override
+                                    public UUID getChequeRange() {
+                                        return cheque.getChequeRange();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeNumber() {
+                                        return cheque.getChequeNumber();
+                                    }
+
+                                    @Override
+                                    public Date getChequeTimestamp() {
+                                        return cheque.getChequeTimestamp();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeAmount() {
+                                        return cheque.getChequeAmount();
+                                    }
+
+                                    @Override
+                                    public byte[] getHash() {
+                                        return cheque.getHash();
+                                    }
+
+                                    @Override
+                                    public Iterable<Address> getChequeAddresses() {
+                                        return this.addresses;
+                                    }
+
+                                };
+                            }).collect(Collectors.toList());
+                        });
                         retrieves = retrievesFuture.get();
                         filters = filtersFuture.get();
+                        cheques = chequesFuture.get();
                     }
 
                     @Override
@@ -285,6 +354,11 @@ public class ServiceClientController implements TiesServiceScope {
                     @Override
                     public TiesDBRequestConsistency getConsistency() {
                         return convertConsistency(action.getConsistency());
+                    }
+
+                    @Override
+                    public List<Cheque> getCheques() {
+                        return cheques;
                     }
 
                 });

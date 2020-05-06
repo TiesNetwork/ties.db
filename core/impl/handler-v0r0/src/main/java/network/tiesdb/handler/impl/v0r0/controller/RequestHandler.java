@@ -19,7 +19,7 @@
 package network.tiesdb.handler.impl.v0r0.controller;
 
 import static java.util.Objects.requireNonNull;
-import static network.tiesdb.util.Hex.DEFAULT_HEX;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -30,7 +30,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,20 +41,12 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.exception.TiesDBProtocolMessageException;
-import com.tiesdb.protocol.v0r0.reader.ComputeRetrieveReader.ComputeRetrieve;
 import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader;
-import com.tiesdb.protocol.v0r0.reader.FieldRetrieveReader.FieldRetrieve;
-import com.tiesdb.protocol.v0r0.reader.FilterReader;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentFunction;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentReference;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.ArgumentStatic;
-import com.tiesdb.protocol.v0r0.reader.FunctionReader.FunctionArgument;
-import com.tiesdb.protocol.v0r0.reader.HealingRequestReader.HealingRequest;
 import com.tiesdb.protocol.v0r0.reader.EntryReader;
+import com.tiesdb.protocol.v0r0.reader.HealingRequestReader.HealingRequest;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.Reader.Request;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
-import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.Retrieve;
 import com.tiesdb.protocol.v0r0.reader.SchemaRequestReader.SchemaRequest;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
@@ -70,17 +61,16 @@ import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationRe
 import com.tiesdb.protocol.v0r0.writer.ModificationResultErrorWriter.ModificationResultError;
 import com.tiesdb.protocol.v0r0.writer.ModificationResultSuccessWriter.ModificationResultSuccess;
 import com.tiesdb.protocol.v0r0.writer.Multiple;
+import com.tiesdb.protocol.v0r0.writer.RecollectionErrorWriter.RecollectionError;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResponse;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResult;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResultWriter.RecollectionEntry;
-import com.tiesdb.protocol.v0r0.writer.RecollectionErrorWriter.RecollectionError;
 import com.tiesdb.protocol.v0r0.writer.ResponseWriter;
 import com.tiesdb.protocol.v0r0.writer.SchemaFieldWriter.SchemaField;
 import com.tiesdb.protocol.v0r0.writer.SchemaResponseWriter.SchemaResponse;
 import com.tiesdb.protocol.v0r0.writer.Writer.Response;
 
 import network.tiesdb.handler.impl.v0r0.controller.ControllerUtil.WriteConverter;
-import network.tiesdb.handler.impl.v0r0.controller.MessageController.EntryImpl;
 import network.tiesdb.service.api.TiesService;
 import network.tiesdb.service.scope.api.TiesEntryExtended;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
@@ -93,7 +83,6 @@ import network.tiesdb.service.scope.api.TiesServiceScopeException;
 import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field.RawField;
 import network.tiesdb.service.scope.api.TiesServiceScopeSchema;
@@ -380,73 +369,11 @@ public class RequestHandler implements Request.Visitor<Response> {
             return " is null";
         }
         if (value.length <= 64) {
-            return "=0x" + DEFAULT_HEX.printHexBinary(value);
+            return "=0x" + UPPERCASE_HEX.printHexBinary(value);
         } else {
-            return "=0x" + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
-                    + DEFAULT_HEX.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
+            return "=0x" + UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
+                    + UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
                     + "(" + value.length + ")";
-        }
-    }
-
-    protected static void convertArguments(List<FunctionArgument> from, Consumer<Query.Function.Argument> c) {
-        for (FunctionArgument arg : from) {
-            c.accept(arg.accept(new FunctionArgument.Visitor<Query.Function.Argument>() {
-
-                @Override
-                public Query.Function.Argument on(ArgumentFunction arg) {
-                    return new Query.Function.Argument.FunctionArgument() {
-
-                        List<Argument> arguments = new LinkedList<>();
-                        {
-                            convertArguments(arg.getFunction().getArguments(), arguments::add);
-                        }
-
-                        @Override
-                        public String getName() {
-                            return arg.getFunction().getName();
-                        }
-
-                        @Override
-                        public List<Argument> getArguments() {
-                            return arguments;
-                        }
-
-                    };
-                }
-
-                @Override
-                public Query.Function.Argument on(ArgumentReference arg) {
-                    return new Query.Function.Argument.FieldArgument() {
-
-                        @Override
-                        public String getFieldName() {
-                            return arg.getFieldName();
-                        }
-
-                    };
-                }
-
-                @Override
-                public Query.Function.Argument on(ArgumentStatic arg) {
-                    return new Query.Function.Argument.ValueArgument() {
-
-                        @Override
-                        public Object getValue() throws TiesServiceScopeException {
-                            return ControllerUtil.readerForType(getType()).apply(getRawValue());
-                        }
-
-                        @Override
-                        public String getType() {
-                            return arg.getType();
-                        }
-
-                        @Override
-                        public byte[] getRawValue() {
-                            return arg.getRawValue();
-                        }
-                    };
-                }
-            }));
         }
     }
 
@@ -697,106 +624,11 @@ public class RequestHandler implements Request.Visitor<Response> {
         try {
             serviceScope.select(new TiesServiceScopeRecollection() {
 
-                private final List<Query.Selector> selectors = new LinkedList<>();
-                {
-                    for (Retrieve r : request.getRetrieves()) {
-                        selectors.add(r.accept(new Retrieve.Visitor<Query.Selector>() {
-
-                            @Override
-                            public Query.Selector on(FieldRetrieve retrieve) {
-                                return new Query.Selector.FieldSelector() {
-                                    @Override
-                                    public String getFieldName() {
-                                        return retrieve.getFieldName();
-                                    }
-                                };
-                            }
-
-                            @Override
-                            public Query.Selector on(ComputeRetrieve retrieve) {
-                                return new Query.Selector.FunctionSelector() {
-
-                                    List<Argument> arguments = new LinkedList<>();
-                                    {
-                                        convertArguments(retrieve.getArguments(), arguments::add);
-                                    }
-
-                                    @Override
-                                    public String getName() {
-                                        return retrieve.getName();
-                                    }
-
-                                    @Override
-                                    public List<Argument> getArguments() {
-                                        return arguments;
-                                    }
-
-                                    @Override
-                                    public String getAlias() {
-                                        return retrieve.getAlias();
-                                    }
-
-                                    @Override
-                                    public String getType() {
-                                        return retrieve.getType();
-                                    }
-                                };
-                            }
-                        }));
-                    }
-                }
-                private final List<Query.Filter> filters = new LinkedList<>();
-                {
-                    for (FilterReader.Filter filter : request.getFilters()) {
-                        filters.add(new Query.Filter() {
-
-                            private final List<Argument> arguments = new LinkedList<>();
-                            {
-                                convertArguments(filter.getArguments(), arguments::add);
-                            }
-
-                            @Override
-                            public String getName() {
-                                return filter.getName();
-                            }
-
-                            @Override
-                            public List<Argument> getArguments() {
-                                return arguments;
-                            }
-
-                            @Override
-                            public String getFieldName() {
-                                return filter.getFieldName();
-                            }
-                        });
-                    }
-                }
+                private final Query query = new QueryImpl(request);
 
                 @Override
                 public Query getQuery() {
-                    return new Query() {
-
-                        @Override
-                        public String getTablespaceName() {
-                            return request.getTablespaceName();
-                        }
-
-                        @Override
-                        public String getTableName() {
-                            return request.getTableName();
-                        }
-
-                        @Override
-                        public List<Selector> getSelectors() {
-                            return selectors;
-                        }
-
-                        @Override
-                        public List<Filter> getFilters() {
-                            return filters;
-                        }
-                    };
+                    return this.query;
                 }
 
                 @Override

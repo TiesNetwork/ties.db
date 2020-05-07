@@ -30,6 +30,8 @@ import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
+import java.util.Iterator;
+
 public class EntryWriter implements Writer<EntryWriter.Entry> {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntryWriter.class);
@@ -51,13 +53,14 @@ public class EntryWriter implements Writer<EntryWriter.Entry> {
     @Override
     public void accept(Conversation session, Entry entry) throws TiesDBProtocolException {
         LOG.debug("Entry {}", entry);
+        Iterator<Cheque> cheques = entry.getCheques().iterator();
         write(ENTRY, //
                 write(entryHeaderWriter, entry.getHeader()), //
                 write(FIELD_LIST, //
                         write(fieldWriter, entry.getFields()) //
                 ), //
-                write(CHEQUE_LIST, //
-                        write(chequeWriter, entry.getCheques()) //
+                write(cheques.hasNext(), write(CHEQUE_LIST, //
+                        write(chequeWriter, cheques)) //
                 ) //
         ).accept(session);
 

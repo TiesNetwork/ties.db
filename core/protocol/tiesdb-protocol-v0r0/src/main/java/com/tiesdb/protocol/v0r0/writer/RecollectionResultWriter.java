@@ -34,7 +34,6 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResult;
-import com.tiesdb.protocol.v0r0.writer.RecollectionResponseWriter.RecollectionResult.Visitor;
 
 public class RecollectionResultWriter implements Writer<RecollectionResultWriter.RecollectionEntry> {
 

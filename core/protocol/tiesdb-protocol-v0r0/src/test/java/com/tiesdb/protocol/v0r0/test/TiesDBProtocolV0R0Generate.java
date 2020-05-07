@@ -478,7 +478,7 @@ public class TiesDBProtocolV0R0Generate {
     }
 
     private byte[] hs2ba(String hexString) {
-        return UPPERCASE_HEX.parseHexBinary(hexString);
+        return UPPERCASE_HEX.parseHexBinary(hexString.toUpperCase());
     }
 
     @Test
@@ -697,7 +697,13 @@ public class TiesDBProtocolV0R0Generate {
                                                         part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
                                                         part(ADDRESS_LIST, //
                                                                 part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
+                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")), //
+                                                                part(ADDRESS, BytesFormat.INSTANCE,
+                                                                        hs2ba("821aEa9a577a9b44299B9c15c88cf3087F3b5544")), //
+                                                                part(ADDRESS, BytesFormat.INSTANCE,
+                                                                        hs2ba("4c1b469711709d1bf4BFe53B02198139a4283b74")), //
+                                                                part(ADDRESS, BytesFormat.INSTANCE,
+                                                                        hs2ba("7A8e4dC5f3b028ABf25056C85783c98cc266ddD0")) //
                                                         ), //
                                                         part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
                                                 ) //

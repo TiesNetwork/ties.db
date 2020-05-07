@@ -79,4 +79,8 @@ public interface TiesServiceScopeAction {
 
     BigInteger getMessageId();
 
+    default void checkPrerequisites() throws TiesServiceScopeException {
+        // NOP
+    }
+
 }

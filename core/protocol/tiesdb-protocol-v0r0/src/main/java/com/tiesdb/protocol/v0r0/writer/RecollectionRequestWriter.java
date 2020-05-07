@@ -117,14 +117,17 @@ public class RecollectionRequestWriter implements Writer<RecollectionRequestWrit
     @Override
     public void accept(Conversation session, RecollectionRequest request) throws TiesDBProtocolException {
         LOG.debug("RecollectionRequest {}", request);
+        List<Cheque> cheques = request.getCheques();
         write(RECOLLECTION_REQUEST, //
                 write(CONSISTENCY, TiesDBRequestConsistencyFormat.INSTANCE, request.getConsistency()), //
                 write(MESSAGE_ID, BigIntegerFormat.INSTANCE, request.getMessageId()), //
                 write(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, request.getTablespaceName()), //
                 write(TABLE_NAME, UTF8StringFormat.INSTANCE, request.getTableName()), //
                 write(RETRIEVE_LIST, write(retrieveWriter, request.getRetrieves())), //
-                write(FILTER_LIST, write(filterWriter, request.getFilters())), //
-                write(CHEQUE_LIST, write(chequeWriter, request.getCheques())) //
+                write(FILTER_LIST, write(filterWriter, request.getFilters())), // , //
+                write(!cheques.isEmpty(), write(CHEQUE_LIST, //
+                        write(chequeWriter, cheques)) //
+                ) //
         ).accept(session);
     }
 

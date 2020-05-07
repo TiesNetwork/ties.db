@@ -25,7 +25,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.tiesdb</groupId>
-    <version>0.1.11-SNAPSHOT</version>
+    <version>0.1.12-SNAPSHOT</version>
 
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>

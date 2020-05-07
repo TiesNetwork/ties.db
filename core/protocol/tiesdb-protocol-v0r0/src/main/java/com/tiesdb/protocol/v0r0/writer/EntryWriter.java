@@ -23,34 +23,44 @@ import org.slf4j.LoggerFactory;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.writer.ChequeWriter.Cheque;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
 
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
-public class ModificationEntryWriter implements Writer<ModificationEntryWriter.ModificationEntry> {
+import java.util.Iterator;
 
-    private static final Logger LOG = LoggerFactory.getLogger(ModificationEntryWriter.class);
+public class EntryWriter implements Writer<EntryWriter.Entry> {
 
-    public static interface ModificationEntry {
+    private static final Logger LOG = LoggerFactory.getLogger(EntryWriter.class);
+
+    public static interface Entry {
+
+        public EntryHeader getHeader();
 
         public Iterable<Field> getFields();
 
-        public EntryHeader getHeader();
+        public Iterable<Cheque> getCheques();
 
     }
 
     private final EntryHeaderWriter entryHeaderWriter = new EntryHeaderWriter();
+    private final ChequeWriter chequeWriter = new ChequeWriter();
     private final FieldWriter fieldWriter = new FieldWriter(FIELD);
 
     @Override
-    public void accept(Conversation session, ModificationEntry modificationEntry) throws TiesDBProtocolException {
-        LOG.debug("ModificationEntry {}", modificationEntry);
+    public void accept(Conversation session, Entry entry) throws TiesDBProtocolException {
+        LOG.debug("Entry {}", entry);
+        Iterator<Cheque> cheques = entry.getCheques().iterator();
         write(ENTRY, //
-                write(entryHeaderWriter, modificationEntry.getHeader()), //
+                write(entryHeaderWriter, entry.getHeader()), //
                 write(FIELD_LIST, //
-                        write(fieldWriter, modificationEntry.getFields()) //
+                        write(fieldWriter, entry.getFields()) //
+                ), //
+                write(cheques.hasNext(), write(CHEQUE_LIST, //
+                        write(chequeWriter, cheques)) //
                 ) //
         ).accept(session);
 

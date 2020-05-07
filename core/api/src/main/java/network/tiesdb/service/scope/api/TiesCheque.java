@@ -16,17 +16,33 @@
  * You should have received a copy of the GNU General Public License along
  * with Ties.DB project. If not, see <https://www.gnu.org/licenses/lgpl-3.0>.
  */
-package com.tiesdb.protocol.v0r0.reader;
+package network.tiesdb.service.scope.api;
 
-import java.util.HashMap;
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
-import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
-import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
+public interface TiesCheque extends TiesSigned {
 
-public interface Entry {
+    interface Address {
+        byte[] getAddress();
+    }
 
-    EntryHeader getHeader();
+    BigInteger getChequeVersion();
 
-    HashMap<String, Field> getFields();
+    BigInteger getChequeNetwork();
+
+    UUID getChequeRange();
+
+    BigInteger getChequeNumber();
+
+    Date getChequeTimestamp();
+
+    BigInteger getChequeAmount();
+
+    List<Address> getChequeAddresses();
+
+    byte[] getHash();
 
 }

@@ -22,7 +22,9 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +43,7 @@ public class SchemaResponseReader implements Reader<SchemaResponseReader.SchemaR
     public static class SchemaResponse implements Reader.Response {
 
         private BigInteger messageId;
-        private LinkedList<SchemaField> fields = new LinkedList<>();
+        private List<SchemaField> fields = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -52,7 +54,7 @@ public class SchemaResponseReader implements Reader<SchemaResponseReader.SchemaR
             return messageId;
         }
 
-        public LinkedList<SchemaField> getFields() {
+        public List<SchemaField> getFields() {
             return fields;
         }
 
@@ -98,6 +100,7 @@ public class SchemaResponseReader implements Reader<SchemaResponseReader.SchemaR
     @Override
     public boolean accept(Conversation session, Event e, SchemaResponse schemaRequest) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptSchemaRequest, schemaRequest);
+        schemaRequest.fields = Collections.unmodifiableList(schemaRequest.fields);
         return true;
     }
 

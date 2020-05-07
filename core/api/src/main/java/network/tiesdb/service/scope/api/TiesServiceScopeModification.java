@@ -18,39 +18,7 @@
  */
 package network.tiesdb.service.scope.api;
 
-import java.util.Map;
-
 public interface TiesServiceScopeModification extends TiesServiceScopeAction, TiesServiceScopeAction.Distributed {
-
-    interface Entry {
-
-        interface FieldHash {
-
-            byte[] getHash();
-
-            String getType();
-
-        }
-
-        interface FieldValue extends FieldHash {
-
-            Object get();
-
-            byte[] getBytes();
-
-        }
-
-        String getTablespaceName();
-
-        String getTableName();
-
-        TiesEntryHeader getHeader();
-
-        Map<String, FieldHash> getFieldHashes();
-
-        Map<String, FieldValue> getFieldValues();
-
-    }
 
     interface Result extends TiesServiceScopeResult.Result {
 
@@ -92,7 +60,7 @@ public interface TiesServiceScopeModification extends TiesServiceScopeAction, Ti
 
     }
 
-    Entry getEntry();
+    TiesEntryExtended getEntry() throws TiesServiceScopeException;
 
     void setResult(Result result) throws TiesServiceScopeException;
 

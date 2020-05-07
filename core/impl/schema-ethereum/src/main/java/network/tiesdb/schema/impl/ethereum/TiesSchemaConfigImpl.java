@@ -31,12 +31,9 @@ public class TiesSchemaConfigImpl implements TiesSchemaConfig, TiesSchemaEthereu
 
     private String web3ProviderEndpointUrl;
     private String tiesDBContractAddress;
+    private String tiesDBNodeAddress;
 
     public void setTiesDBContractAddress(String tiesDBContractAddress) {
-        this.tiesDBContractAddress = tiesDBContractAddress;
-    }
-
-    public void setContractAddress(String tiesDBContractAddress) {
         this.tiesDBContractAddress = tiesDBContractAddress;
     }
 
@@ -44,8 +41,20 @@ public class TiesSchemaConfigImpl implements TiesSchemaConfig, TiesSchemaEthereu
         this.web3ProviderEndpointUrl = web3ProviderEndpointUrl;
     }
 
+    public void setTiesDBNodeAddress(String tiesDBNodeAddress) {
+        this.tiesDBNodeAddress = tiesDBNodeAddress;
+    }
+
+    public void setContractAddress(String tiesDBContractAddress) {
+        this.setTiesDBContractAddress(tiesDBContractAddress);
+    }
+
     public void setEndpointUrl(String web3ProviderEndpointUrl) {
-        this.web3ProviderEndpointUrl = web3ProviderEndpointUrl;
+        this.setWeb3ProviderEndpointUrl(web3ProviderEndpointUrl);
+    }
+
+    public void setNodeAddress(String tiesDBNodeAddress) {
+        this.setTiesDBNodeAddress(tiesDBNodeAddress);
     }
 
     public TiesSchemaConfigImpl() {
@@ -70,6 +79,11 @@ public class TiesSchemaConfigImpl implements TiesSchemaConfig, TiesSchemaEthereu
     @Override
     public String getTiesDBContractAddress() {
         return tiesDBContractAddress;
+    }
+
+    @Override
+    public String getTiesDBNodeAddress() {
+        return tiesDBNodeAddress;
     }
 
 }

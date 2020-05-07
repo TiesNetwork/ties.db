@@ -22,9 +22,9 @@ import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.VERSION;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
 import static com.tiesdb.protocol.v0r0.test.util.TestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.SignatureException;
@@ -80,9 +80,9 @@ public class TiesDBProtocolV0R0Test {
 
         byte[] encDataRequest = Arrays.copyOfRange(channel(packetHeader, c), 0, protocolVersionHeader.length);
         if (Boolean.getBoolean("test-verbose")) {
-            System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(packetHeader));
+            System.out.print(UPPERCASE_HEX.printHexBinary(packetHeader));
             System.out.print(" == ");
-            System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(encDataRequest));
+            System.out.println(UPPERCASE_HEX.printHexBinary(encDataRequest));
         }
         assertArrayEquals(protocolVersionHeader, encDataRequest);
     }
@@ -243,6 +243,8 @@ public class TiesDBProtocolV0R0Test {
                                     ), //
                                     part(CHEQUE_LIST, //
                                             part(CHEQUE, //
+                                                    part(CHEQUE_VERSION, BytesFormat.INSTANCE, stubData), //
+                                                    part(CHEQUE_NETWORK, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_RANGE, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_NUMBER, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
@@ -254,6 +256,8 @@ public class TiesDBProtocolV0R0Test {
                                                     ) //
                                             ), //
                                             part(CHEQUE, //
+                                                    part(CHEQUE_VERSION, BytesFormat.INSTANCE, stubData), //
+                                                    part(CHEQUE_NETWORK, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_RANGE, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_NUMBER, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
@@ -270,7 +274,7 @@ public class TiesDBProtocolV0R0Test {
                     ) //
             );
             if (Boolean.getBoolean("test-verbose")) {
-                System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(encData));
+                System.out.println(UPPERCASE_HEX.printHexBinary(encData));
             }
             decode(encData, Context.ROOT, reader -> {
                 LinkedList<EBMLType> stack = new LinkedList<>();
@@ -291,6 +295,14 @@ public class TiesDBProtocolV0R0Test {
                                 break;
                             case CHEQUE_AMOUNT:
                                 assertArrayEquals(new EBMLType[] { CHEQUE_AMOUNT, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray());
+                                break;
+                            case CHEQUE_VERSION:
+                                assertArrayEquals(new EBMLType[] { CHEQUE_VERSION, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray());
+                                break;
+                            case CHEQUE_NETWORK:
+                                assertArrayEquals(new EBMLType[] { CHEQUE_VERSION, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_NUMBER:
@@ -409,11 +421,20 @@ public class TiesDBProtocolV0R0Test {
                             case RECOLLECTION_REQUEST:
                             case RECOLLECTION_RESPONSE:
                             case RECOLLECTION_RESULT:
+                            case RECOLLECTION_ERROR:
                             case RETRIEVE_LIST:
                             case RET_COMPUTE:
                             case RET_COMPUTE_ALIAS:
                             case RET_COMPUTE_TYPE:
                             case RET_FIELD:
+                            case HEALING_ERROR:
+                            case HEALING_REQUEST:
+                            case HEALING_RESPONSE:
+                            case HEALING_RESULT:
+                            case SCHEMA_FIELD:
+                            case SCHEMA_KEY_FIELD:
+                            case SCHEMA_REQUEST:
+                            case SCHEMA_RESPONSE:
                             case UNKNOWN_STRUCTURE:
                             case UNKNOWN_VALUE:
                                 fail(event.get() + " not yet ready for test");

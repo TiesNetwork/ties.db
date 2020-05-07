@@ -27,6 +27,7 @@ import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.format.TiesDBRequestConsistencyFormat;
 import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.ArgumentWriter;
 import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function;
+import com.tiesdb.protocol.v0r0.writer.ChequeWriter.Cheque;
 import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest.Retrieve.Compute;
 import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest.Retrieve.Field;
 
@@ -94,6 +95,8 @@ public class RecollectionRequestWriter implements Writer<RecollectionRequestWrit
             return v.on(this);
         }
 
+        TiesDBRequestConsistency getConsistency();
+
         String getTablespaceName();
 
         String getTableName();
@@ -102,24 +105,29 @@ public class RecollectionRequestWriter implements Writer<RecollectionRequestWrit
 
         List<Filter> getFilters();
 
-        TiesDBRequestConsistency getConsistency();
+        List<Cheque> getCheques();
 
     }
 
     private final ArgumentWriter argumentWriter = new ArgumentWriter();
     private final RetrieveWriter retrieveWriter = new RetrieveWriter(argumentWriter);
     private final FilterWriter filterWriter = new FilterWriter(argumentWriter);
+    private final ChequeWriter chequeWriter = new ChequeWriter();
 
     @Override
     public void accept(Conversation session, RecollectionRequest request) throws TiesDBProtocolException {
         LOG.debug("RecollectionRequest {}", request);
+        List<Cheque> cheques = request.getCheques();
         write(RECOLLECTION_REQUEST, //
                 write(CONSISTENCY, TiesDBRequestConsistencyFormat.INSTANCE, request.getConsistency()), //
                 write(MESSAGE_ID, BigIntegerFormat.INSTANCE, request.getMessageId()), //
                 write(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, request.getTablespaceName()), //
                 write(TABLE_NAME, UTF8StringFormat.INSTANCE, request.getTableName()), //
                 write(RETRIEVE_LIST, write(retrieveWriter, request.getRetrieves())), //
-                write(FILTER_LIST, write(filterWriter, request.getFilters())) //
+                write(FILTER_LIST, write(filterWriter, request.getFilters())), // , //
+                write(!cheques.isEmpty(), write(CHEQUE_LIST, //
+                        write(chequeWriter, cheques)) //
+                ) //
         ).accept(session);
     }
 

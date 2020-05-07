@@ -21,11 +21,10 @@ package com.tiesdb.protocol.v0r0.reader;
 import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
         @Override
         public String toString() {
             return "Field [name=" + name + ", type=" + type + ", hash=" + Arrays.toString(hash) + ", rawValue="
-                    + FormatUtil.printHex(rawValue) + "]";
+                    + FormatUtil.printPartialHex(rawValue) + "]";
         }
 
         public String getName() {
@@ -67,11 +66,11 @@ public class FieldReader implements Reader<FieldReader.Field> {
         }
 
         public byte[] getHash() {
-            return hash;
+            return null == hash ? null : Arrays.copyOf(hash, hash.length);
         }
 
         public byte[] getRawValue() {
-            return rawValue;
+            return null == rawValue ? null : Arrays.copyOf(rawValue, rawValue.length);
         }
 
     }
@@ -80,7 +79,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
 
     public boolean acceptField(Conversation session, Event e, Field field) throws TiesDBProtocolException {
         DigestCalculator dc = getDC();
-        Consumer<Byte> fieldHashListener = dc.getFieldHashListener();
+        Consumer<Byte> fieldHashListener = dc.getHashListener();
         switch (e.getType()) {
         case FIELD_NAME:
             field.name = session.read(UTF8StringFormat.INSTANCE);
@@ -100,7 +99,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
             LOG.debug("FIELD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(field.hash);
+                    return UPPERCASE_HEX.printHexBinary(field.hash);
                 }
             });
             end(session, e);
@@ -110,7 +109,14 @@ public class FieldReader implements Reader<FieldReader.Field> {
             LOG.debug("FIELD_VALUE: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(field.rawValue);
+                    byte[] value = field.rawValue;
+                    if (value.length <= 64) {
+                        return UPPERCASE_HEX.printHexBinary(value);
+                    } else {
+                        return UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(value, 0, 32)) + "..." //
+                                + UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(value, value.length - 32, value.length)) //
+                                + "(" + value.length + ")";
+                    }
                 }
             });
             end(session, e);
@@ -124,8 +130,8 @@ public class FieldReader implements Reader<FieldReader.Field> {
     @Override
     public boolean accept(Conversation session, Event e, Field field) throws TiesDBProtocolException {
         DigestCalculator dc = getDC(true);
-        Digest fieldDigest = dc.getFieldDigest();
-        Consumer<Byte> fieldHashListener = dc.getFieldHashListener();
+        Digest fieldDigest = dc.getDigest();
+        Consumer<Byte> fieldHashListener = dc.getHashListener();
         try {
             fieldDigest.reset();
             session.addReaderListener(fieldHashListener);
@@ -136,7 +142,7 @@ public class FieldReader implements Reader<FieldReader.Field> {
                     LOG.debug("FIELD_HASH_CALCULATED: {}", new Object() {
                         @Override
                         public String toString() {
-                            return DatatypeConverter.printHexBinary(fieldHash);
+                            return UPPERCASE_HEX.printHexBinary(fieldHash);
                         }
                     });
                     field.hash = fieldHash;

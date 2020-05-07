@@ -21,6 +21,7 @@ package com.tiesdb.protocol.v0r0.reader;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
+import com.tiesdb.protocol.v0r0.reader.HealingRequestReader.HealingRequest;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
 import com.tiesdb.protocol.v0r0.reader.SchemaRequestReader.SchemaRequest;
@@ -30,6 +31,7 @@ public class RequestReader implements Reader<CheckedConsumer<Reader.Request, Tie
 
     private final ModificationRequestReader modificationRequestReader = new ModificationRequestReader();
     private final RecollectionRequestReader recollectionRequestReader = new RecollectionRequestReader();
+    private final HealingRequestReader healingRequestReader = new HealingRequestReader();
     private final SchemaRequestReader schemaRequestReader = new SchemaRequestReader();
 
     @Override
@@ -47,6 +49,14 @@ public class RequestReader implements Reader<CheckedConsumer<Reader.Request, Tie
         case RECOLLECTION_REQUEST: {
             RecollectionRequest request = new RecollectionRequest();
             if (recollectionRequestReader.accept(session, e, request)) {
+                requestHandler.accept(request);
+                return true;
+            }
+            break;
+        }
+        case HEALING_REQUEST: {
+            HealingRequest request = new HealingRequest();
+            if (healingRequestReader.accept(session, e, request)) {
                 requestHandler.accept(request);
                 return true;
             }

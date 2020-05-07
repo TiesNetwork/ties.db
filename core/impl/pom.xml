@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.tiesdb</groupId>
         <artifactId>core-parent</artifactId>
-        <version>0.1.4-SNAPSHOT</version>
+        <version>0.1.12-SNAPSHOT</version>
     </parent>
 
     <artifactId>core-impl</artifactId>
@@ -70,7 +70,7 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
-                <version>4.0.39.Final</version>
+                <version>4.1.42.Final</version>
             </dependency>
     	</dependencies>
     </dependencyManagement>

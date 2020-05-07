@@ -32,6 +32,8 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
         List<Filter> getFilters();
 
+        List<? extends TiesCheque> getCheques();
+
         interface Value {
 
             String getType();
@@ -141,16 +143,26 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
         }
     }
 
-    Query getQuery();
+    Query getQuery() throws TiesServiceScopeException;
 
     public interface Result extends TiesServiceScopeResult.Result {
 
-        interface Field {
+        interface Visitor<T> {
 
-            interface HashField extends Field {
+            T on(Success success) throws TiesServiceScopeException;
+
+            T on(Error error) throws TiesServiceScopeException;
+
+            T on(Partial partial) throws TiesServiceScopeException;
+
+        }
+
+        interface Field extends TiesEntry.Field {
+
+            interface HashField extends Success.Field, TiesEntry.HashField {
 
                 @Override
-                default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
@@ -158,25 +170,36 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
             }
 
-            interface ValueField extends Field {
+            interface ValueField extends Success.Field {
 
                 @Override
-                default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
-                Object getValue();
+                @Override
+                default <T> T accept(TiesEntry.Field.Visitor<T> v) throws TiesServiceScopeException {
+                    throw new TiesServiceScopeException(
+                            "Internal field representation could not be used as TiesEntry.Field, please use RawField instead");
+                }
+
+                Object getFieldValue();
 
             }
 
-            interface RawField extends Field {
+            interface RawField extends Success.Field, TiesEntry.ValueField {
 
                 @Override
-                default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+                default <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException {
                     return v.on(this);
                 }
 
                 byte[] getRawValue();
+
+                @Override
+                default byte[] getValue() {
+                    return getRawValue();
+                }
 
             }
 
@@ -190,7 +213,7 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
             }
 
-            <T> T accept(Visitor<T> v) throws TiesServiceScopeException;
+            <T> T accept(Success.Field.Visitor<T> v) throws TiesServiceScopeException;
 
             String getName();
 
@@ -198,21 +221,72 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
         }
 
-        interface Entry {
+        interface Entry extends TiesEntry {
 
             TiesEntryHeader getEntryHeader();
 
-            List<Field> getEntryFields();
+            List<Success.Field> getEntryFields();
 
-            List<Field> getComputedFields();
+            List<Success.Field> getComputedFields();
+
+            @Override
+            default TiesEntryHeader getHeader() {
+                return getEntryHeader();
+            }
+
+            @Override
+            default List<? extends Field> getFields() {
+                return getEntryFields();
+            }
 
         }
 
+        <T> T accept(Visitor<T> v) throws TiesServiceScopeException;
+
+        @Override
         default <T> T accept(TiesServiceScopeResult.Result.Visitor<T> v) throws TiesServiceScopeException {
             return v.on(this);
         }
 
+    }
+
+    public interface Success extends Result {
+
         List<Entry> getEntries();
+
+        @Override
+        default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+            return v.on(this);
+        }
+
+    }
+
+    public interface Error extends Result {
+
+        List<Throwable> getErrors();
+
+        @Override
+        default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+            return v.on(this);
+        }
+    }
+
+    public interface Partial extends Success, Error {
+
+        default boolean isSuccess() {
+            List<Entry> entries = getEntries();
+            return null != entries && !entries.isEmpty();
+        }
+
+        default boolean isError() {
+            List<Throwable> errors = getErrors();
+            return null != errors && !errors.isEmpty();
+        }
+
+        @Override
+        default <T> T accept(Visitor<T> v) throws TiesServiceScopeException {
+            return v.on(this);
+        }
 
     }
 

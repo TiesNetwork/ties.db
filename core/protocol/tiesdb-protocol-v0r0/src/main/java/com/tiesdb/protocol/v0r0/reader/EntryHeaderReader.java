@@ -22,12 +22,12 @@ import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.checkSignature;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.function.Consumer;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,6 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.reader.SignatureReader.Signature;
-
 import com.tiesdb.protocol.v0r0.util.FormatUtil;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
@@ -66,8 +65,9 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
         public String toString() {
             return "EntryHeader [tablespaceName=" + tablespaceName + ", tableName=" + tableName /* + ", entryType=" + entryType */
                     + ", entryTimestamp=" + entryTimestamp + ", entryVersion=" + entryVersion + ", entryNetwork=" + entryNetwork
-                    + ", entryOldHash=" + FormatUtil.printHex(entryOldHash) + ", entryFldHash=" + FormatUtil.printHex(entryFldHash)
-                    + ", hash=" + FormatUtil.printHex(hash) + ", signature=" + super.toString() + "]";
+                    + ", entryOldHash=" + FormatUtil.printPartialHex(entryOldHash) + ", entryFldHash="
+                    + FormatUtil.printPartialHex(entryFldHash) + ", hash=" + FormatUtil.printPartialHex(hash) + ", signature="
+                    + super.toString() + "]";
         }
 
         public String getTablespaceName() {
@@ -91,20 +91,20 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
         }
 
         public byte[] getEntryOldHash() {
-            return entryOldHash;
+            return null == entryOldHash ? null : Arrays.copyOf(entryOldHash, entryOldHash.length);
         }
 
         public byte[] getEntryFldHash() {
-            return entryFldHash;
+            return null == entryFldHash ? null : Arrays.copyOf(entryFldHash, entryFldHash.length);
         }
 
         public byte[] getHash() {
-            return hash;
+            return null == hash ? null : Arrays.copyOf(hash, hash.length);
         }
 
     }
 
-    private final SignatureReader signatureReader = new SignatureReader(() -> getDC().getFieldHashListener());
+    private final SignatureReader signatureReader = new SignatureReader(() -> getDC().getHashListener());
     private final ThreadLocal<DigestCalculator> digestCalculator = new ThreadLocal<>();
 
     public boolean acceptEntryHeader(Conversation session, Event e, EntryHeader header) throws TiesDBProtocolException {
@@ -113,61 +113,59 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
             header.tablespaceName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("ENTRY_TABLESPACE_NAME: {}", header.tablespaceName);
             end(session, e);
-            break;
+            return true;
         case TABLE_NAME:
             header.tableName = session.read(UTF8StringFormat.INSTANCE);
             LOG.debug("ENTRY_TABLE_NAME: {}", header.tableName);
             end(session, e);
-            break;
+            return true;
         case ENTRY_TIMESTAMP:
             header.entryTimestamp = session.read(DateFormat.INSTANCE);
             LOG.debug("ENTRY_TIMESTAMP: {}", header.entryTimestamp);
             end(session, e);
-            break;
+            return true;
         case ENTRY_VERSION:
             header.entryVersion = session.read(BigIntegerFormat.INSTANCE);
             LOG.debug("ENTRY_VERSION: {}", header.entryVersion);
             end(session, e);
-            break;
+            return true;
         case ENTRY_NETWORK:
             header.entryNetwork = session.read(IntegerFormat.INSTANCE);
             LOG.debug("ENTRY_NETWORK: {}", header.entryNetwork);
             end(session, e);
-            break;
+            return true;
         case ENTRY_OLD_HASH:
             header.entryOldHash = session.read(BytesFormat.INSTANCE);
             LOG.debug("ENTRY_OLD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(header.entryOldHash);
+                    return UPPERCASE_HEX.printHexBinary(header.entryOldHash);
                 }
             });
             end(session, e);
-            break;
+            return true;
         case ENTRY_FLD_HASH:
             header.entryFldHash = session.read(BytesFormat.INSTANCE);
             LOG.debug("ENTRY_FLD_HASH: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(header.entryFldHash);
+                    return UPPERCASE_HEX.printHexBinary(header.entryFldHash);
                 }
             });
             end(session, e);
-            break;
+            return true;
         // $CASES-OMITTED$
         default:
-            if (!signatureReader.acceptSignature(session, e, header)) {
-                throw new TiesDBProtocolException("Unknown header field with " + e.getEBMLCode());
-            }
+            // throw new TiesDBProtocolException("Illegal packet format");
+            return signatureReader.acceptSignature(session, e, header);
         }
-        return true;
     }
 
     @Override
     public boolean accept(Conversation session, Event e, EntryHeader header) throws TiesDBProtocolException {
         DigestCalculator dc = getDC(true);
-        Digest headerDigest = dc.getFieldDigest();
-        Consumer<Byte> headerHashListener = dc.getFieldHashListener();
+        Digest headerDigest = dc.getDigest();
+        Consumer<Byte> headerHashListener = dc.getHashListener();
         try {
             headerDigest.reset();
             session.addReaderListener(headerHashListener);
@@ -177,7 +175,7 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
                 LOG.debug("ENTRY_HEADER_HASH: {}", new Object() {
                     @Override
                     public String toString() {
-                        return DatatypeConverter.printHexBinary(headerHash);
+                        return UPPERCASE_HEX.printHexBinary(headerHash);
                     }
                 });
                 header.hash = headerHash;

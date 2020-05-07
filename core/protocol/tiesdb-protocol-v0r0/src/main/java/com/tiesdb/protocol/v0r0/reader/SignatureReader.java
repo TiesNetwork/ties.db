@@ -20,11 +20,11 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
+import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,15 +45,15 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
 
         @Override
         public String toString() {
-            return "Signature [signature=" + FormatUtil.printHex(signature) + ", signer=" + FormatUtil.printHex(signer) + "]";
+            return "Signature [signer=" + FormatUtil.printPartialHex(signer) + ", signature=" + FormatUtil.printPartialHex(signature) + "]";
         }
 
         public byte[] getSignature() {
-            return signature;
+            return null == signature ? null : Arrays.copyOf(signature, signature.length);
         }
 
         public byte[] getSigner() {
-            return signer;
+            return null == signer ? null : Arrays.copyOf(signer, signer.length);
         }
 
     }
@@ -75,7 +75,7 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
             LOG.debug("SIGNATURE : {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(signature.signature);
+                    return UPPERCASE_HEX.printHexBinary(signature.signature);
                 }
             });
             end(session, e);
@@ -85,7 +85,7 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
             LOG.debug("SIGNER : {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(signature.signer);
+                    return UPPERCASE_HEX.printHexBinary(signature.signer);
                 }
             });
             end(session, e);

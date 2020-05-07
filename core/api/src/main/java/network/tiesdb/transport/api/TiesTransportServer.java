@@ -19,7 +19,6 @@
 package network.tiesdb.transport.api;
 
 import network.tiesdb.api.TiesDaemon;
-import network.tiesdb.exception.TiesConfigurationException;
 
 /**
  * TiesDB transport daemon API.

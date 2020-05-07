@@ -22,6 +22,8 @@ import java.math.BigInteger;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.writer.HealingRequestWriter.HealingRequest;
+import com.tiesdb.protocol.v0r0.writer.HealingResponseWriter.HealingResponse;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
 import com.tiesdb.protocol.v0r0.writer.ModificationResponseWriter.ModificationResponse;
 import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
@@ -45,6 +47,8 @@ public interface Writer<T> {
 
             T on(RecollectionRequest recollectionRequest) throws TiesDBProtocolException;
 
+            T on(HealingRequest healingRequest) throws TiesDBProtocolException;
+
         }
 
         <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
@@ -59,6 +63,8 @@ public interface Writer<T> {
             T on(RecollectionResponse recollectionResponse) throws TiesDBProtocolException;
 
             T on(SchemaResponse schemaResponse) throws TiesDBProtocolException;
+
+            T on(HealingResponse healingResponse) throws TiesDBProtocolException;
 
         }
 

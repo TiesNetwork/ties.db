@@ -21,7 +21,7 @@ package network.tiesdb.service.scope.api;
 import java.math.BigInteger;
 import java.util.Date;
 
-public interface TiesEntryHeader {
+public interface TiesEntryHeader extends TiesSigned {
 
     Date getEntryTimestamp();
 
@@ -31,12 +31,8 @@ public interface TiesEntryHeader {
 
     byte[] getEntryFldHash();
 
-    byte[] getSigner();
-
-    byte[] getHash();
-
     byte[] getEntryOldHash();
 
-    byte[] getSignature();
+    byte[] getHash();
 
 }

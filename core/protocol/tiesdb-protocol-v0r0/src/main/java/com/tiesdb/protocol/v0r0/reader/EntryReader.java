@@ -21,84 +21,82 @@ package com.tiesdb.protocol.v0r0.reader;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.checkEntryFieldsHash;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
+import com.tiesdb.protocol.v0r0.reader.ChequeReader.Cheque;
 import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 
-public class ModificationEntryReader implements Reader<ModificationEntryReader.ModificationEntry> {
+public class EntryReader implements Reader<EntryReader.Entry> {
 
-    public static class ModificationEntry implements Entry {
+    public static class Entry {
 
         private EntryHeader header;
-        private HashMap<String, Field> fields = new HashMap<>();
+        private Map<String, Field> fields = new HashMap<>();
+        private List<Cheque> cheques = new LinkedList<>();
 
         @Override
         public String toString() {
-            return "ModificationEntry [header=" + header + ", fields=" + fields + "]";
+            return "Entry [header=" + header + ", fields=" + fields + "]";
         }
 
-        @Override
         public EntryHeader getHeader() {
             return header;
         }
 
-        @Override
-        public HashMap<String, Field> getFields() {
+        public Map<String, Field> getFields() {
             return fields;
+        }
+
+        public List<Cheque> getCheques() {
+            return cheques;
         }
 
     }
 
     private final EntryHeaderReader entryHeaderReader = new EntryHeaderReader();
-    private final FieldReader fieldReader = new FieldReader();
+    private final FieldListReader fieldListReader = new FieldListReader();
+    private final ChequeListReader chequeListReader = new ChequeListReader();
 
-    public boolean acceptFieldList(Conversation session, Event e, HashMap<String, Field> t) throws TiesDBProtocolException {
-        switch (e.getType()) {
-        case FIELD:
-            Field f = new Field();
-            if (fieldReader.accept(session, e, f)) {
-                t.put(f.getName(), f);
-                return true;
-            }
-            break;
-        // $CASES-OMITTED$
-        default:
-            // throw new TiesDBProtocolException("Illegal packet format");
-        }
-        return false;
-    }
-
-    private boolean acceptEntry(Conversation session, Event e, ModificationEntry modificationEntry) throws TiesDBProtocolException {
+    private boolean acceptEntry(Conversation session, Event e, Entry entry) throws TiesDBProtocolException {
         switch (e.getType()) {
         case ENTRY_HEADER:
             EntryHeader header = new EntryHeader();
             boolean result = entryHeaderReader.accept(session, e, header);
             if (result) {
-                if (null != modificationEntry.header) {
+                if (null != entry.header) {
                     throw new TiesDBProtocolException("Multiple headers detected! Should be only one header in each entry.");
                 }
-                modificationEntry.header = header;
+                entry.header = header;
             }
             return true;
         case FIELD_LIST:
-            acceptEach(session, e, this::acceptFieldList, modificationEntry.fields);
+            fieldListReader.accept(session, e, (f) -> entry.fields.put(f.getName(), f));
+            return true;
+        case CHEQUE_LIST:
+            chequeListReader.accept(session, e, entry.cheques::add);
             return true;
         // $CASES-OMITTED$
         default:
             // throw new TiesDBProtocolException("Illegal packet format");
+            return false;
         }
-        return false;
     }
 
     @Override
-    public boolean accept(Conversation session, Event e, ModificationEntry modificationEntry) throws TiesDBProtocolException {
-        acceptEach(session, e, this::acceptEntry, modificationEntry);
-        if (!checkEntryFieldsHash(modificationEntry)) {
-            throw new TiesDBProtocolException("ModificationEntry fields hash missmatch.");
+    public boolean accept(Conversation session, Event e, Entry entry) throws TiesDBProtocolException {
+        acceptEach(session, e, this::acceptEntry, entry);
+        entry.fields = Collections.unmodifiableMap(entry.fields);
+        entry.cheques = Collections.unmodifiableList(entry.cheques);
+        if (!checkEntryFieldsHash(entry)) {
+            throw new TiesDBProtocolException("Entry fields hash missmatch.");
         }
         return true;
     }

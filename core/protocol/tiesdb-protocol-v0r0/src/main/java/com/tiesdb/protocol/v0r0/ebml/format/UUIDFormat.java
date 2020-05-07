@@ -18,9 +18,9 @@
  */
 package com.tiesdb.protocol.v0r0.ebml.format;
 
-import java.util.UUID;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.UUID;
 
 import one.utopic.sparse.api.exception.SparseReaderException;
 import one.utopic.sparse.ebml.EBMLFormat;
@@ -40,12 +40,12 @@ public class UUIDFormat implements EBMLFormat<UUID> {
         if (data.length != REQUIRED_LENGTH) {
             throw new SparseReaderException("Not enough bytes to construct UUID. Required " + REQUIRED_LENGTH + " but was " + data.length);
         }
-        return UUID.fromString(DatatypeConverter.printHexBinary(data).replaceFirst("(.{8})(.{4})(.{4})(.{4})(.{12})", "$1-$2-$3-$4-$5"));
+        return UUID.fromString(UPPERCASE_HEX.printHexBinary(data).replaceFirst("(.{8})(.{4})(.{4})(.{4})(.{12})", "$1-$2-$3-$4-$5"));
     }
 
     @Override
     public Writable getWritable(UUID data) {
-        return BytesFormat.INSTANCE.getWritable(DatatypeConverter.parseHexBinary(data.toString().replaceAll("-", "")));
+        return BytesFormat.INSTANCE.getWritable(UPPERCASE_HEX.parseHexBinary(data.toString().toUpperCase().replaceAll("-", "")));
     }
 
     @Override

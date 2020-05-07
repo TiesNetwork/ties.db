@@ -24,4 +24,6 @@ public interface TiesSchemaEthereumConfig {
 
     String getTiesDBContractAddress();
 
+    String getTiesDBNodeAddress();
+
 }

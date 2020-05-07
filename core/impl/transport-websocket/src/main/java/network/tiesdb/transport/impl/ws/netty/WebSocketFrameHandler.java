@@ -18,6 +18,8 @@
  */
 package network.tiesdb.transport.impl.ws.netty;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -29,6 +31,9 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import network.tiesdb.exception.TiesException;
 import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
 import network.tiesdb.transport.impl.ws.TiesTransportImpl;
+
+import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +53,31 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame inboundFrame) throws Exception {
+        ByteBuf content = inboundFrame.content();
         if (inboundFrame instanceof PingWebSocketFrame) {
-            logger.debug("{} pinged {} bytes", ctx.channel(), inboundFrame.content().readableBytes());
-            ctx.channel().writeAndFlush(new PongWebSocketFrame(inboundFrame.content()));
+            logger.debug("{} ping", ctx.channel());
+            if (content.readableBytes() == Long.BYTES) {
+                ByteBuffer timestampBuf = ByteBuffer.allocate(Long.BYTES);
+                content.getBytes(0, timestampBuf);
+                timestampBuf.flip();
+                logger.debug("{} pinged timestamp {}", ctx.channel(), timestampBuf.getLong());
+                ctx.channel().writeAndFlush(new PongWebSocketFrame(Unpooled.wrappedBuffer(timestampBuf.array())));
+            } else {
+                logger.warn("{} can't read timestamp from ping", ctx.channel());
+                ctx.channel().writeAndFlush(new PongWebSocketFrame());
+            }
+        } else if (inboundFrame instanceof PongWebSocketFrame) {
+            logger.debug("{} pong", ctx.channel());
+            if (content.readableBytes() == Long.BYTES) {
+                ByteBuffer timestampBuf = ByteBuffer.allocate(Long.BYTES);
+                content.getBytes(0, timestampBuf);
+                timestampBuf.flip();
+                logger.debug("{} ponged timestamp {}", ctx.channel(), timestampBuf.getLong());
+            } else {
+                logger.warn("{} can't read timestamp from pong", ctx.channel());
+            }
         } else if (inboundFrame instanceof BinaryWebSocketFrame) {
-            logger.trace("{} received {} bytes", ctx.channel(), inboundFrame.content().readableBytes());
+            logger.trace("{} received {} bytes", ctx.channel(), content.readableBytes());
             BinaryWebSocketFrame frame = (BinaryWebSocketFrame) inboundFrame;
             try {
                 try (WebSocketInputHandler request = new WebSocketInputHandler(frame)) {
@@ -64,13 +89,16 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                 logger.error("Channel error: {}", e.getMessage(), e);
                 ctx.channel().writeAndFlush(new CloseWebSocketFrame(1008, e.getMessage()));
             }
-            // ctx.channel().writeAndFlush(new
-            // TextWebSocketFrame(request.toUpperCase(Locale.US)));
+        } else if (inboundFrame instanceof CloseWebSocketFrame) {
+            logger.trace("{} close requested by client", ctx.channel());
+            try {
+                ctx.close().await(30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.error("Channel close error: {}", e.getMessage(), e);
+            }
         } else {
             logger.error("Unsupported frame type: {}", inboundFrame.getClass().getName());
             ctx.channel().writeAndFlush(new CloseWebSocketFrame(1003, "Only Binary Web Socket frames are supported"));
-            // throw new UnsupportedOperationException("unsupported frame type: " +
-            // frame.getClass().getName());
         }
     }
 

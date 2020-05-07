@@ -44,7 +44,11 @@ public class TiesSchemaEthereum implements TiesSchema {
 
     private final TiesDB contract;
 
+    private final String nodeAddress;
+
     public TiesSchemaEthereum(TiesSchemaEthereumConfig ethereumConfig) throws IOException, TiesConfigurationException {
+
+        this.nodeAddress = ethereumConfig.getTiesDBNodeAddress();
 
         Web3j web3j = Web3j.build(new HttpService(nullreplace(ethereumConfig.getWeb3ProviderEndpointUrl(), HttpService.DEFAULT_URL)));
         EthGasPrice gasPrice = web3j.ethGasPrice().send();
@@ -60,7 +64,7 @@ public class TiesSchemaEthereum implements TiesSchema {
             String contractCode = Numeric.cleanHexPrefix(contract.getContractBinary()).toUpperCase();
             throw new TiesConfigurationException("Invalid contract address: contract binary missmatch\n" //
                     + "    Code: " + contractCode + "\n" //
-                    + "    Was not found in: " + code );
+                    + "    Was not found in: " + code);
         }
 
         this.contract = contract;
@@ -75,6 +79,11 @@ public class TiesSchemaEthereum implements TiesSchema {
     @Override
     public short getSchemaNetwork() {
         return ETHEREUM_NETWORK_ID;
+    }
+
+    @Override
+    public String getNodeAddress() {
+        return this.nodeAddress;
     }
 
 }

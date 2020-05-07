@@ -22,9 +22,7 @@ import java.net.URI;
 
 import network.tiesdb.exception.TiesConfigurationException;
 import network.tiesdb.exception.TiesException;
-import network.tiesdb.service.api.TiesService;
 import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
-import network.tiesdb.transport.api.TiesTransport;
 import network.tiesdb.transport.api.TiesTransportClient;
 import network.tiesdb.transport.impl.ws.netty.WebSocketClient;
 

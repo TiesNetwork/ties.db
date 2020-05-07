@@ -20,10 +20,12 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
-
-import javax.xml.bind.DatatypeConverter;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +45,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
     public static class Function {
 
         private String name;
-        private LinkedList<FunctionArgument> arguments = new LinkedList<>();
+        private List<FunctionArgument> arguments = new LinkedList<>();
 
         @Override
         public String toString() {
@@ -54,7 +56,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
             return name;
         }
 
-        public LinkedList<FunctionArgument> getArguments() {
+        public List<FunctionArgument> getArguments() {
             return arguments;
         }
 
@@ -87,7 +89,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
 
         @Override
         public String toString() {
-            return "ArgumentStatic [type=" + type + ", rawValue=" + FormatUtil.printHex(rawValue) + "]";
+            return "ArgumentStatic [type=" + type + ", rawValue=" + FormatUtil.printPartialHex(rawValue) + "]";
         }
 
         public String getType() {
@@ -95,7 +97,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
         }
 
         public byte[] getRawValue() {
-            return rawValue;
+            return null == rawValue ? null : Arrays.copyOf(rawValue, rawValue.length);
         }
 
         @Override
@@ -217,7 +219,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
             LOG.debug("ARG_STATIC_VALUE: {}", new Object() {
                 @Override
                 public String toString() {
-                    return DatatypeConverter.printHexBinary(a.rawValue);
+                    return UPPERCASE_HEX.printHexBinary(a.rawValue);
                 }
             });
             end(session, e);
@@ -232,6 +234,7 @@ public class FunctionReader implements Reader<FunctionReader.Function> {
     @Override
     public boolean accept(Conversation session, Event e, Function fun) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptFunction, fun);
+        fun.arguments = Collections.unmodifiableList(fun.arguments);
         return true;
     }
 

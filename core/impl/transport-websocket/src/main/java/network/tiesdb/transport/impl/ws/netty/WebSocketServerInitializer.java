@@ -20,11 +20,14 @@ package network.tiesdb.transport.impl.ws.netty;
 
 import static network.tiesdb.util.Safecheck.nullsafe;
 
+import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -33,6 +36,7 @@ import io.netty.channel.socket.SocketChannelConfig;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -49,6 +53,7 @@ public class WebSocketServerInitializer extends ChannelInitializer<SocketChannel
     private static final String WEBSOCKET_PATH = "/websocket";
 
     private static class ConfigurableIdleStateHandler extends IdleStateHandler {
+
         private ConfigurableIdleStateHandler(long readerIdleTime, long writerIdleTime, long allIdleTime, TimeUnit unit) {
             super(readerIdleTime, writerIdleTime, allIdleTime, nullsafe(unit));
         }
@@ -62,15 +67,35 @@ public class WebSocketServerInitializer extends ChannelInitializer<SocketChannel
         protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception {
             switch (evt.state()) {
             case ALL_IDLE:
-            case WRITER_IDLE:
-                ctx.channel().write(new PingWebSocketFrame());
-                break;
             case READER_IDLE:
+            case WRITER_IDLE:
+                long timestamp = System.nanoTime();
+                logger.debug("{} channel idle: {} timestamp {}", ctx.channel(), evt.state().name(), timestamp);
+                byte[] tsBytes = ByteBuffer.allocate(Long.BYTES).putLong(timestamp).array();
+                ctx.channel().writeAndFlush(new PingWebSocketFrame(Unpooled.wrappedBuffer(tsBytes)));
+                break;
             default:
                 ctx.close();
             }
             super.channelIdle(ctx, evt);
         }
+    }
+
+    private static class ConfigurableWebSocketServerProtocolHandler extends WebSocketServerProtocolHandler {
+
+        public ConfigurableWebSocketServerProtocolHandler(String websocketPath, String subprotocols, boolean allowExtensions) {
+            super(websocketPath, subprotocols, allowExtensions);
+        }
+
+        public ConfigurableWebSocketServerProtocolHandler(String websocketPath, String subprotocols, boolean allowExtensions, int maxFrameSize) {
+            super(websocketPath, subprotocols, allowExtensions, maxFrameSize);
+        }
+
+        @Override
+        protected void decode(ChannelHandlerContext ctx, WebSocketFrame frame, List<Object> out) throws Exception {
+            out.add(frame.retain());
+        }
+
     }
 
     private final SslContext sslCtx;
@@ -91,11 +116,10 @@ public class WebSocketServerInitializer extends ChannelInitializer<SocketChannel
             pipeline.addLast(sslCtx.newHandler(ch.alloc()));
         }
         pipeline.addLast(new HttpServerCodec());
-        pipeline.addLast(new HttpObjectAggregator(65536));
-        pipeline.addLast(new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
+        pipeline.addLast(new HttpObjectAggregator(Integer.MAX_VALUE));
+        pipeline.addLast(new ConfigurableWebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true, Integer.MAX_VALUE));
         pipeline.addLast(new WebSocketIndexPageHandler(WEBSOCKET_PATH));
         pipeline.addLast(new WebSocketFrameHandler(transport));
-
         config2ndStage(ch);
     }
 

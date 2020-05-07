@@ -20,13 +20,12 @@ package com.tiesdb.protocol.v0r0.reader;
 
 import static com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.DEFAULT_DIGEST_ALG;
 import static java.util.Objects.requireNonNull;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
 
 import java.security.SignatureException;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeSet;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +37,7 @@ import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.EventState;
+import com.tiesdb.protocol.v0r0.reader.EntryReader.Entry;
 import com.tiesdb.protocol.v0r0.reader.FieldReader.Field;
 import com.tiesdb.protocol.v0r0.reader.SignatureReader.Signature;
 
@@ -95,7 +95,7 @@ final class ReaderUtil {
     }
 
     static boolean checkEntryFieldsHash(Entry entry) {
-        HashMap<String, Field> fields = entry.getFields();
+        Map<String, Field> fields = entry.getFields();
         Digest fldDigest = DigestManager.getDigest(DEFAULT_DIGEST_ALG);
         TreeSet<String> fieldNames = new TreeSet<>(fields.keySet());
         for (String fieldName : fieldNames) {
@@ -103,7 +103,7 @@ final class ReaderUtil {
         }
         byte[] fldHash = new byte[fldDigest.getDigestSize()];
         fldDigest.doFinal(fldHash, 0);
-        LOG.debug("ENTRY_FLD_HASH_CALCULATED: {}", DatatypeConverter.printHexBinary(fldHash));
+        LOG.debug("ENTRY_FLD_HASH_CALCULATED: {}", UPPERCASE_HEX.printHexBinary(fldHash));
         return Arrays.equals(fldHash, entry.getHeader().getEntryFldHash());
     }
 }

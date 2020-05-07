@@ -45,12 +45,12 @@ public class ModificationResultErrorReader implements Reader<ModificationResultE
 
         @Override
         public String toString() {
-            return "ModificationResultError [entryHeaderHash=" + FormatUtil.printHex(entryHeaderHash) + ", message=" + message + "]";
+            return "ModificationResultError [entryHeaderHash=" + FormatUtil.printPartialHex(entryHeaderHash) + ", message=" + message + "]";
         }
 
         @Override
         public byte[] getEntryHeaderHash() {
-            return entryHeaderHash;
+            return null == entryHeaderHash ? null : Arrays.copyOf(entryHeaderHash, entryHeaderHash.length);
         }
 
         public String getMessage() {

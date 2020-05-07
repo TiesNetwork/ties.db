@@ -22,7 +22,6 @@ import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.Actio
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -103,31 +102,23 @@ public class ConsistencyArbiter {
     }
 
     // TODO Remove this black magic!!!
-    public static <N, X, P, M> Map<P, Set<N>> segregate(Map<N, X> resultMap, Map<P, Set<N>> partitionMap, Function<M, P> partitioner,
+    public static <N, X, P, M> Map<P, Set<N>> segregate(Map<N, X> resultMap, Function<M, P> partitioner,
             Function<X, ? extends Stream<M>> flattener) {
         return segregate( //
                 resultMap.entrySet().parallelStream() //
                         .flatMap(e -> flattener.apply(e.getValue()).map(v -> new HashMap.SimpleImmutableEntry<>(e.getKey(), v))), //
-                partitionMap, //
                 partitioner);
     }
 
-    public static <N, T, P> Map<P, Set<N>> segregate(Map<N, T> resultMap, Map<P, Set<N>> partitionMap, Function<T, P> partitioner) {
-        return segregate(resultMap.entrySet().parallelStream(), partitionMap, partitioner);
+    public static <N, T, P> Map<P, Set<N>> segregate(Map<N, T> resultMap, Function<T, P> partitioner) {
+        return segregate(resultMap.entrySet().parallelStream(), partitioner);
     }
 
-    public static <N, T, P> Map<P, Set<N>> segregate(Stream<Map.Entry<N, T>> results, Map<P, Set<N>> partitionMap,
-            Function<T, P> partitioner) {
-        results.forEach(e -> {
-            P pk = partitioner.apply(e.getValue());
-            Set<N> partition = partitionMap.get(pk);
-            if (null == partition) {
-                partition = new HashSet<>();
-                partitionMap.put(pk, partition);
-            }
-            partition.add(e.getKey());
-        });
-        return partitionMap;
+    public static <N, T, P> Map<P, Set<N>> segregate(Stream<Map.Entry<N, T>> results, Function<T, P> partitioner) {
+        return results.collect(//
+                Collectors.groupingByConcurrent(e -> partitioner.apply(e.getValue()), //
+                        Collectors.mapping(e -> e.getKey(), //
+                                Collectors.toSet())));
     }
 
 }

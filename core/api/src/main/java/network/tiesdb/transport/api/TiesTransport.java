@@ -19,7 +19,6 @@
 package network.tiesdb.transport.api;
 
 import network.tiesdb.api.TiesVersion;
-import network.tiesdb.handler.api.TiesHandler;
 
 /**
  * TiesDB transport API.

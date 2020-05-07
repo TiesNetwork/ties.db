@@ -20,10 +20,10 @@ package network.tiesdb.handler.impl.v0r0.controller;
 
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -34,13 +34,22 @@ import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.exception.TiesDBProtocolMessageException;
 import com.tiesdb.protocol.v0r0.reader.EntryHeaderReader.EntryHeader;
 import com.tiesdb.protocol.v0r0.reader.FieldReader;
+import com.tiesdb.protocol.v0r0.reader.HealingResponseReader;
+import com.tiesdb.protocol.v0r0.reader.HealingResponseReader.HealingResponse;
+import com.tiesdb.protocol.v0r0.reader.HealingResponseReader.HealingResult;
+import com.tiesdb.protocol.v0r0.reader.HealingResultErrorReader.HealingResultError;
+import com.tiesdb.protocol.v0r0.reader.HealingResultSuccessReader.HealingResultSuccess;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResponse;
 import com.tiesdb.protocol.v0r0.reader.ModificationResponseReader.ModificationResult;
 import com.tiesdb.protocol.v0r0.reader.ModificationResultErrorReader.ModificationResultError;
 import com.tiesdb.protocol.v0r0.reader.ModificationResultSuccessReader.ModificationResultSuccess;
 import com.tiesdb.protocol.v0r0.reader.Reader.Response;
+import com.tiesdb.protocol.v0r0.reader.RecollectionErrorReader.RecollectionError;
+import com.tiesdb.protocol.v0r0.reader.RecollectionResponseReader;
 import com.tiesdb.protocol.v0r0.reader.RecollectionResponseReader.RecollectionResponse;
+import com.tiesdb.protocol.v0r0.reader.RecollectionResponseReader.RecollectionResult;
+import com.tiesdb.protocol.v0r0.reader.RecollectionResultReader.RecollectionEntry;
 import com.tiesdb.protocol.v0r0.reader.SchemaResponseReader.SchemaResponse;
 
 import network.tiesdb.exception.TiesException;
@@ -48,9 +57,9 @@ import network.tiesdb.service.api.TiesService;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field;
 import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 
 public class ResponseHandler implements Response.Visitor<Void> {
@@ -85,7 +94,12 @@ public class ResponseHandler implements Response.Visitor<Void> {
 
         BigInteger messageId = modificationResponse.getMessageId();
 
-        TiesServiceScope serviceScope = service.newServiceScope();
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            throw new TiesDBProtocolException("Response could not be handled", e);
+        }
         for (ModificationResult modificationResult : modificationResponse.getModificationResults()) {
             try {
                 TiesServiceScopeResult.Result result = modificationResult
@@ -141,44 +155,72 @@ public class ResponseHandler implements Response.Visitor<Void> {
 
         BigInteger messageId = recollectionResponse.getMessageId();
 
-        TiesServiceScope serviceScope = service.newServiceScope();
+        TiesServiceScope serviceScope;
         try {
-            TiesServiceScopeResult.Result result = new TiesServiceScopeRecollection.Result() {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            throw new TiesDBProtocolException("Response could not be handled", e);
+        }
+        try {
+            TiesServiceScopeResult.Result result = new TiesServiceScopeRecollection.Partial() {
 
-                private final List<Entry> entries;
+                private final List<TiesServiceScopeRecollection.Result.Entry> entries;
+                private final List<Throwable> errors;
+
                 {
-                    CompletableFuture<List<Entry>> entriesFuture = CompletableFuture.supplyAsync(() -> {
-                        return recollectionResponse.getRecollectionResults().parallelStream().map(r -> {
-                            return new Entry() {
+                    List<TiesServiceScopeRecollection.Result.Entry> ent = new LinkedList<>();
+                    List<Throwable> err = new LinkedList<>();
+                    for (RecollectionResult r : recollectionResponse.getRecollectionResults()) {
+                        r.accept(new RecollectionResponseReader.RecollectionResult.Visitor<Void>() {
 
-                                private final TiesEntryHeader header = convertHeader(r.getHeader());
-                                private final List<Field> entryFields = convertFields(r.getFields().values());
-                                private final List<Field> computedFields = convertFields(r.getComputeFields());
+                            @Override
+                            public Void on(RecollectionEntry entry) {
+                                ent.add(new TiesServiceScopeRecollection.Result.Entry() {
 
-                                @Override
-                                public TiesEntryHeader getEntryHeader() {
-                                    return header;
-                                }
+                                    private final TiesEntryHeader header = convertHeader(entry.getHeader());
+                                    private final List<TiesServiceScopeRecollection.Result.Field> entryFields = convertFields(
+                                            entry.getFields().values());
+                                    private final List<TiesServiceScopeRecollection.Result.Field> computedFields = convertFields(
+                                            entry.getComputeFields());
 
-                                @Override
-                                public List<Field> getEntryFields() {
-                                    return entryFields;
-                                }
+                                    @Override
+                                    public TiesEntryHeader getEntryHeader() {
+                                        return header;
+                                    }
 
-                                @Override
-                                public List<Field> getComputedFields() {
-                                    return computedFields;
-                                }
+                                    @Override
+                                    public List<TiesServiceScopeRecollection.Result.Field> getEntryFields() {
+                                        return entryFields;
+                                    }
 
-                            };
-                        }).collect(Collectors.toList());
-                    });
-                    entries = entriesFuture.get();
+                                    @Override
+                                    public List<TiesServiceScopeRecollection.Result.Field> getComputedFields() {
+                                        return computedFields;
+                                    }
+
+                                });
+                                return null;
+                            }
+
+                            @Override
+                            public Void on(RecollectionError error) {
+                                err.add(new Throwable(error.getMessage()));
+                                return null;
+                            }
+                        });
+                    }
+                    entries = Collections.unmodifiableList(ent);
+                    errors = Collections.unmodifiableList(err);
                 }
 
                 @Override
                 public List<Entry> getEntries() {
                     return entries;
+                }
+
+                @Override
+                public List<Throwable> getErrors() {
+                    return errors;
                 }
 
             };
@@ -195,16 +237,76 @@ public class ResponseHandler implements Response.Visitor<Void> {
                 }
 
             });
-        } catch (InterruptedException | ExecutionException | TiesServiceScopeException e) {
+        } catch (TiesServiceScopeException e) {
             throw new TiesDBProtocolException("Response handling failed", e);
         }
         return null;
     }
 
     @Override
+    public Void on(HealingResponse healingResponse) throws TiesDBProtocolException {
+
+        BigInteger messageId = healingResponse.getMessageId();
+
+        TiesServiceScope serviceScope;
+        try {
+            serviceScope = service.newServiceScope();
+        } catch (TiesServiceScopeException e) {
+            throw new TiesDBProtocolException("Response could not be handled", e);
+        }
+        for (HealingResult healingResult : healingResponse.getHealingResults()) {
+            try {
+                TiesServiceScopeResult.Result result = healingResult
+                        .accept(new HealingResponseReader.HealingResult.Visitor<TiesServiceScopeResult.Result>() {
+                            @Override
+                            public TiesServiceScopeResult.Result on(HealingResultSuccess healingResultSuccess) {
+                                return new TiesServiceScopeHealing.Result.Success() {
+                                    @Override
+                                    public byte[] getHeaderHash() {
+                                        return healingResultSuccess.getEntryHeaderHash();
+                                    }
+                                };
+                            }
+
+                            @Override
+                            public TiesServiceScopeResult.Result on(HealingResultError healingResultError) {
+                                return new TiesServiceScopeHealing.Result.Error() {
+
+                                    @Override
+                                    public byte[] getHeaderHash() {
+                                        return healingResultError.getEntryHeaderHash();
+                                    }
+
+                                    @Override
+                                    public Throwable getError() {
+                                        return new TiesException(healingResultError.getMessage());
+                                    }
+                                };
+                            }
+                        });
+                serviceScope.result(new TiesServiceScopeResult() {
+
+                    @Override
+                    public BigInteger getMessageId() {
+                        return messageId;
+                    }
+
+                    @Override
+                    public Result getResult() {
+                        return result;
+                    }
+
+                });
+            } catch (TiesServiceScopeException e) {
+                throw new TiesDBProtocolException("Response handling failed", e);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Void on(SchemaResponse schemaResponse) throws TiesDBProtocolException {
-        // TODO Auto-generated method stub
-        throw new TiesDBProtocolException("Not implemented");
+        throw new TiesDBProtocolException("Schema delegation is prohibited");
     }
 
     private static TiesEntryHeader convertHeader(EntryHeader header) {
@@ -254,7 +356,7 @@ public class ResponseHandler implements Response.Visitor<Void> {
     }
 
     private List<TiesServiceScopeRecollection.Result.Field> convertFields(Collection<FieldReader.Field> fields) {
-        List<Field> result = fields.parallelStream().map(field -> {
+        List<TiesServiceScopeRecollection.Result.Field> result = fields.parallelStream().map(field -> {
             byte[] raw = field.getRawValue();
             if (null != raw) {
                 return new TiesServiceScopeRecollection.Result.Field.RawField() {
@@ -272,6 +374,16 @@ public class ResponseHandler implements Response.Visitor<Void> {
                     @Override
                     public byte[] getRawValue() {
                         return raw;
+                    }
+
+                    @Override
+                    public byte[] getValue() {
+                        return getRawValue();
+                    }
+
+                    @Override
+                    public byte[] getHash() {
+                        return field.getHash();
                     }
                 };
             } else {

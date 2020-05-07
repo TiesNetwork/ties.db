@@ -18,46 +18,50 @@
  */
 package network.tiesdb.handler.impl.v0r0.controller;
 
+import static java.util.stream.StreamSupport.stream;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency.ConsistencyType;
+import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function;
+import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function.Argument;
+import com.tiesdb.protocol.v0r0.writer.ChequeWriter.Address;
+import com.tiesdb.protocol.v0r0.writer.ChequeWriter.Cheque;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
+import com.tiesdb.protocol.v0r0.writer.EntryWriter.Entry;
 import com.tiesdb.protocol.v0r0.writer.FieldWriter.Field;
-import com.tiesdb.protocol.v0r0.writer.ModificationEntryWriter.ModificationEntry;
+import com.tiesdb.protocol.v0r0.writer.HealingRequestWriter.HealingRequest;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
 import com.tiesdb.protocol.v0r0.writer.RecollectionRequestWriter.RecollectionRequest;
 import com.tiesdb.protocol.v0r0.writer.RequestWriter;
-import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function;
-import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function.Argument;
 
 import network.tiesdb.api.TiesVersion;
 import network.tiesdb.service.api.TiesService;
+import network.tiesdb.service.scope.api.TiesEntryExtended;
 import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.CountConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.PercentConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.QuorumConsistency;
-import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
 import network.tiesdb.service.scope.api.TiesServiceScopeModification;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldHash;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Entry.FieldValue;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Function.Argument.FieldArgument;
@@ -65,6 +69,7 @@ import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Funct
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Function.Argument.ValueArgument;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FieldSelector;
 import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FunctionSelector;
+import network.tiesdb.service.scope.api.TiesServiceScopeResult;
 import network.tiesdb.service.scope.api.TiesServiceScopeSchema;
 import one.utopic.sparse.ebml.EBMLFormat;
 import one.utopic.sparse.ebml.format.BytesFormat;
@@ -124,7 +129,7 @@ public class ServiceClientController implements TiesServiceScope {
 
     private void modify(TiesServiceScopeModification action) throws TiesServiceScopeException {
         try {
-            Entry entry = action.getEntry();
+            TiesEntryExtended entry = action.getEntry();
             if (null == entry) {
                 throw new TiesServiceScopeException("No entry found in modification request");
             }
@@ -140,132 +145,8 @@ public class ServiceClientController implements TiesServiceScope {
                 }
 
                 @Override
-                public Iterable<ModificationEntry> getEntries() {
-                    return Arrays.asList(new ModificationEntry() {
-
-                        private final Iterable<Field> fields;
-                        {
-                            Map<String, FieldHash> fieldHashes = entry.getFieldHashes();
-                            Map<String, FieldValue> fieldValues = entry.getFieldValues();
-                            HashSet<String> fieldNames = new HashSet<>(fieldHashes.size() + fieldValues.size());
-                            fieldNames.addAll(fieldHashes.keySet());
-                            fieldNames.addAll(fieldValues.keySet());
-                            LinkedList<Field> fieldsCache = new LinkedList<>();
-                            for (final String name : fieldNames) {
-                                {
-                                    FieldValue field = fieldValues.get(name);
-                                    if (null != field) {
-                                        fieldsCache.add(new Field.ValueField<byte[]>() {
-
-                                            @Override
-                                            public String getName() {
-                                                return name;
-                                            }
-
-                                            @Override
-                                            public String getType() {
-                                                return field.getType();
-                                            }
-
-                                            @Override
-                                            public EBMLFormat<byte[]> getFormat() {
-                                                return BytesFormat.INSTANCE;
-                                            }
-
-                                            @Override
-                                            public byte[] getValue() {
-                                                return field.getBytes();
-                                            }
-                                        });
-                                        continue;
-                                    }
-                                }
-                                {
-                                    FieldHash field = fieldHashes.get(name);
-                                    if (null != field) {
-                                        fieldsCache.add(new Field.HashField() {
-
-                                            @Override
-                                            public String getName() {
-                                                return name;
-                                            }
-
-                                            @Override
-                                            public String getType() {
-                                                return field.getType();
-                                            }
-
-                                            @Override
-                                            public byte[] getHash() {
-                                                return field.getHash();
-                                            }
-                                        });
-                                        continue;
-                                    }
-                                }
-                            }
-                            fields = Collections.unmodifiableList(fieldsCache);
-                        }
-
-                        @Override
-                        public Iterable<Field> getFields() {
-                            return fields;
-                        }
-
-                        @Override
-                        public EntryHeader getHeader() {
-                            return new EntryHeader() {
-
-                                TiesEntryHeader header = entry.getHeader();
-
-                                @Override
-                                public byte[] getSigner() {
-                                    return header.getSigner();
-                                }
-
-                                @Override
-                                public byte[] getSignature() {
-                                    return header.getSignature();
-                                }
-
-                                @Override
-                                public String getTablespaceName() {
-                                    return entry.getTablespaceName();
-                                }
-
-                                @Override
-                                public String getTableName() {
-                                    return entry.getTableName();
-                                }
-
-                                @Override
-                                public BigInteger getEntryVersion() {
-                                    return header.getEntryVersion();
-                                }
-
-                                @Override
-                                public Date getEntryTimestamp() {
-                                    return header.getEntryTimestamp();
-                                }
-
-                                @Override
-                                public byte[] getEntryOldHash() {
-                                    return header.getEntryOldHash();
-                                }
-
-                                @Override
-                                public Integer getEntryNetwork() {
-                                    return Short.toUnsignedInt(header.getEntryNetwork());
-                                }
-
-                                @Override
-                                public byte[] getEntryFldHash() {
-                                    return header.getEntryFldHash();
-                                }
-                            };
-                        }
-
-                    });
+                public Iterable<Entry> getEntries() {
+                    return Arrays.asList(convertForWriting(entry));
                 }
 
                 @Override
@@ -297,6 +178,7 @@ public class ServiceClientController implements TiesServiceScope {
 
                     private final List<Retrieve> retrieves;
                     private final List<Filter> filters;
+                    private final List<Cheque> cheques;
                     {
                         CompletableFuture<List<Retrieve>> retrievesFuture = CompletableFuture.supplyAsync(() -> {
                             return query.getSelectors().parallelStream().map(selector -> {
@@ -372,8 +254,76 @@ public class ServiceClientController implements TiesServiceScope {
                                 };
                             }).collect(Collectors.toList());
                         });
+                        CompletableFuture<List<Cheque>> chequesFuture = CompletableFuture.supplyAsync(() -> {
+                            return query.getCheques().stream().map(cheque -> {
+                                return new Cheque() {
+
+                                    private List<Address> addresses = cheque.getChequeAddresses().parallelStream()
+                                            .map(addr -> new Address() {
+
+                                                @Override
+                                                public byte[] getAddress() {
+                                                    return addr.getAddress();
+                                                }
+
+                                            }).collect(Collectors.toList());
+
+                                    @Override
+                                    public byte[] getSignature() {
+                                        return cheque.getSignature();
+                                    }
+
+                                    @Override
+                                    public byte[] getSigner() {
+                                        return cheque.getSigner();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeVersion() {
+                                        return cheque.getChequeVersion();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeNetwork() {
+                                        return cheque.getChequeNetwork();
+                                    }
+
+                                    @Override
+                                    public UUID getChequeRange() {
+                                        return cheque.getChequeRange();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeNumber() {
+                                        return cheque.getChequeNumber();
+                                    }
+
+                                    @Override
+                                    public Date getChequeTimestamp() {
+                                        return cheque.getChequeTimestamp();
+                                    }
+
+                                    @Override
+                                    public BigInteger getChequeAmount() {
+                                        return cheque.getChequeAmount();
+                                    }
+
+                                    @Override
+                                    public byte[] getHash() {
+                                        return cheque.getHash();
+                                    }
+
+                                    @Override
+                                    public Iterable<Address> getChequeAddresses() {
+                                        return this.addresses;
+                                    }
+
+                                };
+                            }).collect(Collectors.toList());
+                        });
                         retrieves = retrievesFuture.get();
                         filters = filtersFuture.get();
+                        cheques = chequesFuture.get();
                     }
 
                     @Override
@@ -406,6 +356,11 @@ public class ServiceClientController implements TiesServiceScope {
                         return convertConsistency(action.getConsistency());
                     }
 
+                    @Override
+                    public List<Cheque> getCheques() {
+                        return cheques;
+                    }
+
                 });
             } catch (ConversionException | InterruptedException | ExecutionException e) {
                 throw new TiesDBProtocolException("Entyty async conversion failed", e);
@@ -417,8 +372,7 @@ public class ServiceClientController implements TiesServiceScope {
 
     @Override
     public void schema(TiesServiceScopeSchema query) throws TiesServiceScopeException {
-        // TODO Auto-generated method stub
-        throw new TiesServiceScopeException("Not implemented");
+        throw new TiesServiceScopeException("Client should not handle schema request");
     }
 
     @Override
@@ -429,6 +383,186 @@ public class ServiceClientController implements TiesServiceScope {
     @Override
     public void result(TiesServiceScopeResult result) throws TiesServiceScopeException {
         throw new TiesServiceScopeException("Client should not handle any result");
+    }
+
+    private Entry convertForWriting(TiesEntryExtended entry) {
+        return new Entry() {
+
+            private final Iterable<Field> fields = Stream.concat(//
+                    stream(Spliterators.spliteratorUnknownSize(entry.getFieldHashes().values().iterator(), Spliterator.ORDERED), true) //
+                            .map(f -> new Field.HashField() {
+
+                                @Override
+                                public String getName() {
+                                    return f.getName();
+                                }
+
+                                @Override
+                                public String getType() {
+                                    return f.getType();
+                                }
+
+                                @Override
+                                public byte[] getHash() {
+                                    return f.getHash();
+                                }
+
+                            }), //
+                    stream(Spliterators.spliteratorUnknownSize(entry.getFieldValues().values().iterator(), Spliterator.ORDERED), true) //
+                            .map(f -> new Field.ValueField<byte[]>() {
+
+                                @Override
+                                public String getName() {
+                                    return f.getName();
+                                }
+
+                                @Override
+                                public String getType() {
+                                    return f.getType();
+                                }
+
+                                @Override
+                                public EBMLFormat<byte[]> getFormat() {
+                                    return BytesFormat.INSTANCE;
+                                }
+
+                                @Override
+                                public byte[] getValue() {
+                                    return f.getValue();
+                                }
+                            })) //
+                    .sorted((a, b) -> a.getName().compareTo(b.getName())) //
+                    .collect(Collectors.toList());
+
+            private final Iterable<Cheque> cheques = Collections.unmodifiableList(entry.getCheques()//
+                    .parallelStream().map(cheque -> new Cheque() {
+
+                        private final Iterable<Address> addresses = Collections
+                                .unmodifiableList(cheque.getChequeAddresses().parallelStream().map(address -> new Address() {
+
+                                    @Override
+                                    public byte[] getAddress() {
+                                        return address.getAddress();
+                                    }
+
+                                }).collect(Collectors.toList()));
+
+                        @Override
+                        public byte[] getSignature() {
+                            return cheque.getSignature();
+                        }
+
+                        @Override
+                        public byte[] getSigner() {
+                            return cheque.getSigner();
+                        }
+
+                        @Override
+                        public BigInteger getChequeVersion() {
+                            return cheque.getChequeVersion();
+                        }
+
+                        @Override
+                        public BigInteger getChequeNetwork() {
+                            return cheque.getChequeNetwork();
+                        }
+
+                        @Override
+                        public UUID getChequeRange() {
+                            return cheque.getChequeRange();
+                        }
+
+                        @Override
+                        public BigInteger getChequeNumber() {
+                            return cheque.getChequeNumber();
+                        }
+
+                        @Override
+                        public Date getChequeTimestamp() {
+                            return cheque.getChequeTimestamp();
+                        }
+
+                        @Override
+                        public BigInteger getChequeAmount() {
+                            return cheque.getChequeAmount();
+                        }
+
+                        @Override
+                        public byte[] getHash() {
+                            return cheque.getHash();
+                        }
+
+                        @Override
+                        public Iterable<Address> getChequeAddresses() {
+                            return addresses;
+                        }
+
+                    }).collect(Collectors.toList()));
+
+            @Override
+            public Iterable<Field> getFields() {
+                return fields;
+            }
+
+            @Override
+            public EntryHeader getHeader() {
+                return new EntryHeader() {
+
+                    TiesEntryHeader header = entry.getHeader();
+
+                    @Override
+                    public byte[] getSigner() {
+                        return header.getSigner();
+                    }
+
+                    @Override
+                    public byte[] getSignature() {
+                        return header.getSignature();
+                    }
+
+                    @Override
+                    public String getTablespaceName() {
+                        return entry.getTablespaceName();
+                    }
+
+                    @Override
+                    public String getTableName() {
+                        return entry.getTableName();
+                    }
+
+                    @Override
+                    public BigInteger getEntryVersion() {
+                        return header.getEntryVersion();
+                    }
+
+                    @Override
+                    public Date getEntryTimestamp() {
+                        return header.getEntryTimestamp();
+                    }
+
+                    @Override
+                    public byte[] getEntryOldHash() {
+                        return header.getEntryOldHash();
+                    }
+
+                    @Override
+                    public Integer getEntryNetwork() {
+                        return Short.toUnsignedInt(header.getEntryNetwork());
+                    }
+
+                    @Override
+                    public byte[] getEntryFldHash() {
+                        return header.getEntryFldHash();
+                    }
+                };
+            }
+
+            @Override
+            public Iterable<Cheque> getCheques() {
+                return cheques;
+            }
+
+        };
     }
 
     private static final List<Function.Argument> convertFunctionArguments(List<Query.Function.Argument> list) throws ConversionException {
@@ -490,6 +624,35 @@ public class ServiceClientController implements TiesServiceScope {
             return DEFAULT_CONSISTENCY;
         }
         return consistency.accept(CONSISTENCY_SELECTOR);
+    }
+
+    @Override
+    public void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException {
+        try {
+            TiesEntryExtended entry = action.getEntry();
+            if (null == entry) {
+                throw new TiesServiceScopeException("No entry found in modification request");
+            }
+            TiesEntryHeader entryHeader = entry.getHeader();
+            if (null == entryHeader) {
+                throw new TiesServiceScopeException("No header found in modification request entry");
+            }
+            REQUEST_WRITER_INSTANCE.accept(session, new HealingRequest() {
+
+                @Override
+                public BigInteger getMessageId() {
+                    return action.getMessageId();
+                }
+
+                @Override
+                public Iterable<Entry> getEntries() {
+                    return Arrays.asList(convertForWriting(entry));
+                }
+
+            });
+        } catch (TiesDBProtocolException e) {
+            throw new TiesServiceScopeException("Node modification request failed", e);
+        }
     }
 
 }

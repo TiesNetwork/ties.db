@@ -18,14 +18,29 @@
  */
 package com.tiesdb.protocol.v0r0.util;
 
-import javax.xml.bind.DatatypeConverter;
+import static network.tiesdb.util.Hex.UPPERCASE_HEX;
+
+import java.util.Arrays;
 
 public final class FormatUtil {
 
     private FormatUtil() {
     }
 
-    public static String printHex(byte[] bytes) {
-        return null == bytes ? null : DatatypeConverter.printHexBinary(bytes);
+    public static String printPartialHex(byte[] bytes) {
+        if (null == bytes) {
+            return "";
+        }
+        if (bytes.length <= 64) {
+            return UPPERCASE_HEX.printHexBinary(bytes);
+        } else {
+            return UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(bytes, 0, 32)) + "..." //
+                    + UPPERCASE_HEX.printHexBinary(Arrays.copyOfRange(bytes, bytes.length - 32, bytes.length)) //
+                    + "(" + bytes.length + ")";
+        }
+    }
+
+    public static String printFullHex(byte[] bytes) {
+        return null == bytes ? null : UPPERCASE_HEX.printHexBinary(bytes);
     }
 }

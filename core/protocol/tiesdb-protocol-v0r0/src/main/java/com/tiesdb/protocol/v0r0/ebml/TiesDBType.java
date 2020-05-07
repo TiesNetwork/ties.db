@@ -31,7 +31,7 @@ public enum TiesDBType implements TiesEBMLType {
     UNKNOWN_STRUCTURE(Context.UNKNOWN_STRUCTURE), // Meta
     UNKNOWN_VALUE(Context.VALUE, Context.UNKNOWN_STRUCTURE), // Binary
 
-    MESSAGE_ID(0xEC, Context.VALUE, Context.IDENTIFIED), // Unsigned
+    MESSAGE_ID(0xEC, Context.VALUE, Context.IDENTIFIED_MESSAGE), // Unsigned
 
     CONSISTENCY(0xEE, Context.VALUE, Context.COORDINATED_REQUEST), // Unsigned
 
@@ -62,10 +62,12 @@ public enum TiesDBType implements TiesEBMLType {
 
     CHEQUE_LIST(0xC1, Context.CHEQUE_LIST, Context.CHEQUE_LIST_CONTAINER), // Meta
     CHEQUE(0xC1, Context.CHEQUE, Context.CHEQUE_LIST), // Meta
-    CHEQUE_RANGE(0x80, Context.VALUE, Context.CHEQUE), // Binary (UUID)
-    CHEQUE_NUMBER(0x82, Context.VALUE, Context.CHEQUE), // Unsigned
-    CHEQUE_TIMESTAMP(0x84, Context.VALUE, Context.CHEQUE), // TimeStamp
-    CHEQUE_AMOUNT(0x86, Context.VALUE, Context.CHEQUE), // Unsigned
+    CHEQUE_VERSION(0x80, Context.VALUE, Context.CHEQUE), // Unsigned
+    CHEQUE_NETWORK(0x82, Context.VALUE, Context.CHEQUE), // Unsigned (BIP-0044/SLIP-0044)
+    CHEQUE_RANGE(0x84, Context.VALUE, Context.CHEQUE), // Binary (UUID)
+    CHEQUE_NUMBER(0x86, Context.VALUE, Context.CHEQUE), // Unsigned
+    CHEQUE_TIMESTAMP(0x88, Context.VALUE, Context.CHEQUE), // TimeStamp
+    CHEQUE_AMOUNT(0x8A, Context.VALUE, Context.CHEQUE), // Unsigned
     ADDRESS_LIST(0xA1, Context.ADDRESS_LIST, Context.CHEQUE), // Meta
     ADDRESS(0xA0, Context.VALUE, Context.ADDRESS_LIST), // Binary
 
@@ -97,6 +99,7 @@ public enum TiesDBType implements TiesEBMLType {
 
     RECOLLECTION_RESPONSE(0x12544945, Context.RECOLLECTION_RESPONSE, Context.ROOT), // Meta
     RECOLLECTION_RESULT(0xA1, Context.RECOLLECTION_RESULT, Context.RECOLLECTION_RESPONSE), // Meta
+    RECOLLECTION_ERROR(0xAF, Context.RECOLLECTION_ERROR, Context.RECOLLECTION_RESPONSE), // Meta
     RECOLLECTION_COMPUTE(0xC1, Context.RECOLLECTION_COMPUTE, Context.RECOLLECTION_RESULT), // Meta
     COMPUTE_FIELD(0xC1, Context.FIELD, Context.RECOLLECTION_COMPUTE), // Meta
 
@@ -108,6 +111,8 @@ public enum TiesDBType implements TiesEBMLType {
 
     HEALING_REQUEST(0x1C544945, Context.HEALING_REQUEST, Context.ROOT), // Meta
     HEALING_RESPONSE(0x1D544945, Context.HEALING_RESPONSE, Context.ROOT), // Meta
+    HEALING_RESULT(0xE1, Context.HEALING_RESULT, Context.HEALING_RESPONSE), // Meta
+    HEALING_ERROR(0xEF, Context.HEALING_ERROR, Context.HEALING_RESPONSE), // Meta
 
     ;
 
@@ -126,14 +131,14 @@ public enum TiesDBType implements TiesEBMLType {
 
         SIGNED, //
 
-        IDENTIFIED, //
+        IDENTIFIED_MESSAGE, //
         CONSISTENT, //
 
-        ERROR(IDENTIFIED), //
+        ERROR(IDENTIFIED_MESSAGE), //
 
-        REQUEST(IDENTIFIED), //
+        REQUEST(IDENTIFIED_MESSAGE), //
         COORDINATED_REQUEST(CONSISTENT, REQUEST), //
-        RESPONSE(IDENTIFIED), //
+        RESPONSE(IDENTIFIED_MESSAGE), //
 
         TABLE_META, //
 
@@ -157,8 +162,9 @@ public enum TiesDBType implements TiesEBMLType {
         MODIFICATION_RESULT(SIGNED, ENTRY_REFERENCE), //
         MODIFICATION_ERROR(ERROR, ENTRY_REFERENCE), //
 
-        RECOLLECTION_REQUEST(COORDINATED_REQUEST, TABLE_META), //
+        RECOLLECTION_REQUEST(COORDINATED_REQUEST, CHEQUE_LIST_CONTAINER, TABLE_META), //
         RECOLLECTION_RESPONSE(RESPONSE), //
+        RECOLLECTION_ERROR(ERROR, ENTRY_REFERENCE), //
 
         FUNCTION, //
         ARGUMENT_STATIC, //
@@ -177,7 +183,9 @@ public enum TiesDBType implements TiesEBMLType {
         SCHEMA_RESPONSE(RESPONSE, TABLE_META), //
 
         HEALING_REQUEST(REQUEST, SIGNED_ENTRY_CONTAINER), //
-        HEALING_RESPONSE(MODIFICATION_RESPONSE), //
+        HEALING_RESPONSE(RESPONSE), //
+        HEALING_RESULT(SIGNED, ENTRY_REFERENCE), //
+        HEALING_ERROR(ERROR, ENTRY_REFERENCE), //
 
         ;
 

@@ -22,6 +22,7 @@ import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.acceptEach;
 import static com.tiesdb.protocol.v0r0.reader.ReaderUtil.end;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,7 +32,8 @@ import org.slf4j.LoggerFactory;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
-import com.tiesdb.protocol.v0r0.reader.RecollectionResultReader.RecollectionResult;
+import com.tiesdb.protocol.v0r0.reader.RecollectionErrorReader.RecollectionError;
+import com.tiesdb.protocol.v0r0.reader.RecollectionResultReader.RecollectionEntry;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 
@@ -58,7 +60,7 @@ public class RecollectionResponseReader implements Reader<RecollectionResponseRe
         public List<RecollectionResult> getRecollectionResults() {
             return recollectionResults;
         }
-
+        
         @Override
         public BigInteger getMessageId() {
             return messageId;
@@ -66,7 +68,22 @@ public class RecollectionResponseReader implements Reader<RecollectionResponseRe
 
     }
 
+    public static interface RecollectionResult {
+
+        interface Visitor<T> {
+
+            T on(RecollectionEntry entry);
+
+            T on(RecollectionError error);
+
+        }
+
+        <T> T accept(Visitor<T> v) throws TiesDBProtocolException;
+
+    }
+
     private final RecollectionResultReader recollectionResultReader = new RecollectionResultReader();
+    private final RecollectionErrorReader recollectionErrorReader = new RecollectionErrorReader();
 
     public boolean acceptRecollectionResponse(Conversation session, Event e, RecollectionResponse r) throws TiesDBProtocolException {
         switch (e.getType()) {
@@ -75,14 +92,24 @@ public class RecollectionResponseReader implements Reader<RecollectionResponseRe
             LOG.debug("MESSAGE_ID : {}", r.messageId);
             end(session, e);
             return true;
-        case RECOLLECTION_RESULT:
+        case RECOLLECTION_RESULT: {
             LOG.debug("RECOLLECTION_RESULT found in message {}", r.getMessageId());
-            RecollectionResult recollectionResult = new RecollectionResult();
-            boolean result = recollectionResultReader.accept(session, e, recollectionResult);
-            if (result) {
+            RecollectionEntry recollectionResult = new RecollectionEntry();
+            if (recollectionResultReader.accept(session, e, recollectionResult)) {
                 r.recollectionResults.add(recollectionResult);
+                return true;
             }
-            return result;
+            return false;
+        }
+        case RECOLLECTION_ERROR: {
+            LOG.debug("RECOLLECTION_ERROR found in message {}", r.getMessageId());
+            RecollectionError recollectionError = new RecollectionError();
+            if (recollectionErrorReader.accept(session, e, recollectionError)) {
+                r.recollectionResults.add(recollectionError);
+                return true;
+            }
+            return false;
+        }
         // $CASES-OMITTED$
         default:
             return false;
@@ -92,6 +119,7 @@ public class RecollectionResponseReader implements Reader<RecollectionResponseRe
     @Override
     public boolean accept(Conversation session, Event e, RecollectionResponse r) throws TiesDBProtocolException {
         acceptEach(session, e, this::acceptRecollectionResponse, r);
+        r.recollectionResults = Collections.unmodifiableList(r.recollectionResults);
         return true;
     }
 

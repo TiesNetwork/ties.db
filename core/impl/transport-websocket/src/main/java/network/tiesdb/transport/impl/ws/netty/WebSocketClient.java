@@ -67,7 +67,7 @@ public class WebSocketClient {
         // If you change it to V00, ping is not supported and remember to change
         // HttpResponseDecoder to WebSocketHttpResponseDecoder in the pipeline.
         final WebSocketClientHandler handler = new WebSocketClientHandler(WebSocketClientHandshakerFactory.newHandshaker(destination,
-                WebSocketVersion.V13, null, false, HttpHeaders.EMPTY_HEADERS, 1280000), frameHandler);
+                WebSocketVersion.V13, null, false, HttpHeaders.EMPTY_HEADERS, Integer.MAX_VALUE), frameHandler);
 
         Bootstrap b = new Bootstrap();
         b.group(group).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {

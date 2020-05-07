@@ -34,6 +34,8 @@ public interface TiesServiceScope extends Closeable {
 
     void select(TiesServiceScopeRecollection action) throws TiesServiceScopeException;
 
+    void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException;
+
     void schema(TiesServiceScopeSchema action) throws TiesServiceScopeException;
 
     void result(TiesServiceScopeResult action) throws TiesServiceScopeException;

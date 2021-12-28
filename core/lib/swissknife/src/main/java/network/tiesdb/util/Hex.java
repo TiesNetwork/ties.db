@@ -29,6 +29,7 @@ public class Hex {
     public static final String HEX_LOWERCASE_CODE = "0123456789abcdef";
 
     public static final Hex UPPERCASE_HEX = new Hex(HEX_UPPERCASE_CODE.toCharArray());
+    public static final Hex LOWERCASE_HEX = new Hex(HEX_LOWERCASE_CODE.toCharArray());
 
     private final char[] hexCode;
     private final Map<Character, Integer> hexMap;

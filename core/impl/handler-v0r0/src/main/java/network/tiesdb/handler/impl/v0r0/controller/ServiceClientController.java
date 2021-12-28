@@ -40,7 +40,6 @@ import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBRequestConsistency.ConsistencyType;
 import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function;
 import com.tiesdb.protocol.v0r0.writer.AbstractFunctionWriter.Function.Argument;
-import com.tiesdb.protocol.v0r0.writer.ChequeWriter.Address;
 import com.tiesdb.protocol.v0r0.writer.ChequeWriter.Cheque;
 import com.tiesdb.protocol.v0r0.writer.EntryHeaderWriter.EntryHeader;
 import com.tiesdb.protocol.v0r0.writer.EntryWriter.Entry;
@@ -258,26 +257,6 @@ public class ServiceClientController implements TiesServiceScope {
                             return query.getCheques().stream().map(cheque -> {
                                 return new Cheque() {
 
-                                    private List<Address> addresses = cheque.getChequeAddresses().parallelStream()
-                                            .map(addr -> new Address() {
-
-                                                @Override
-                                                public byte[] getAddress() {
-                                                    return addr.getAddress();
-                                                }
-
-                                            }).collect(Collectors.toList());
-
-                                    @Override
-                                    public byte[] getSignature() {
-                                        return cheque.getSignature();
-                                    }
-
-                                    @Override
-                                    public byte[] getSigner() {
-                                        return cheque.getSigner();
-                                    }
-
                                     @Override
                                     public BigInteger getChequeVersion() {
                                         return cheque.getChequeVersion();
@@ -289,8 +268,8 @@ public class ServiceClientController implements TiesServiceScope {
                                     }
 
                                     @Override
-                                    public UUID getChequeRange() {
-                                        return cheque.getChequeRange();
+                                    public UUID getChequeSession() {
+                                        return cheque.getChequeSession();
                                     }
 
                                     @Override
@@ -299,23 +278,28 @@ public class ServiceClientController implements TiesServiceScope {
                                     }
 
                                     @Override
-                                    public Date getChequeTimestamp() {
-                                        return cheque.getChequeTimestamp();
+                                    public BigInteger getChequeCropAmount() {
+                                        return cheque.getChequeCropAmount();
                                     }
 
                                     @Override
-                                    public BigInteger getChequeAmount() {
-                                        return cheque.getChequeAmount();
+                                    public String getTablespaceName() {
+                                        return cheque.getTablespaceName();
                                     }
 
                                     @Override
-                                    public byte[] getHash() {
-                                        return cheque.getHash();
+                                    public String getTableName() {
+                                        return cheque.getTableName();
                                     }
 
                                     @Override
-                                    public Iterable<Address> getChequeAddresses() {
-                                        return this.addresses;
+                                    public byte[] getSigner() {
+                                        return cheque.getSigner();
+                                    }
+
+                                    @Override
+                                    public byte[] getSignature() {
+                                        return cheque.getSignature();
                                     }
 
                                 };
@@ -437,26 +421,6 @@ public class ServiceClientController implements TiesServiceScope {
             private final Iterable<Cheque> cheques = Collections.unmodifiableList(entry.getCheques()//
                     .parallelStream().map(cheque -> new Cheque() {
 
-                        private final Iterable<Address> addresses = Collections
-                                .unmodifiableList(cheque.getChequeAddresses().parallelStream().map(address -> new Address() {
-
-                                    @Override
-                                    public byte[] getAddress() {
-                                        return address.getAddress();
-                                    }
-
-                                }).collect(Collectors.toList()));
-
-                        @Override
-                        public byte[] getSignature() {
-                            return cheque.getSignature();
-                        }
-
-                        @Override
-                        public byte[] getSigner() {
-                            return cheque.getSigner();
-                        }
-
                         @Override
                         public BigInteger getChequeVersion() {
                             return cheque.getChequeVersion();
@@ -468,8 +432,8 @@ public class ServiceClientController implements TiesServiceScope {
                         }
 
                         @Override
-                        public UUID getChequeRange() {
-                            return cheque.getChequeRange();
+                        public UUID getChequeSession() {
+                            return cheque.getChequeSession();
                         }
 
                         @Override
@@ -478,23 +442,28 @@ public class ServiceClientController implements TiesServiceScope {
                         }
 
                         @Override
-                        public Date getChequeTimestamp() {
-                            return cheque.getChequeTimestamp();
+                        public BigInteger getChequeCropAmount() {
+                            return cheque.getChequeCropAmount();
                         }
 
                         @Override
-                        public BigInteger getChequeAmount() {
-                            return cheque.getChequeAmount();
+                        public String getTablespaceName() {
+                            return cheque.getTablespaceName();
                         }
 
                         @Override
-                        public byte[] getHash() {
-                            return cheque.getHash();
+                        public String getTableName() {
+                            return cheque.getTableName();
                         }
 
                         @Override
-                        public Iterable<Address> getChequeAddresses() {
-                            return addresses;
+                        public byte[] getSigner() {
+                            return cheque.getSigner();
+                        }
+
+                        @Override
+                        public byte[] getSignature() {
+                            return cheque.getSignature();
                         }
 
                     }).collect(Collectors.toList()));

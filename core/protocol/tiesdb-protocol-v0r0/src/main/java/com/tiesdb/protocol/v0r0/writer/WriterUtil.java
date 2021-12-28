@@ -39,6 +39,7 @@ final class WriterUtil {
     }
 
     private static final ConversationConsumer NOP_CONSUMER = s -> {
+        // NOP
     };
 
     private WriterUtil() {
@@ -64,7 +65,7 @@ final class WriterUtil {
         };
     }
 
-    public static ConversationConsumer write(boolean condition, ConversationConsumer c) {
+    public static ConversationConsumer writeIf(boolean condition, ConversationConsumer c) {
         return condition ? c : NOP_CONSUMER;
     }
 
@@ -96,13 +97,19 @@ final class WriterUtil {
         return write(t, s -> writeData(s, f, d));
     }
 
+    public static <O> ConversationConsumer writeNotNull(TiesDBType t, EBMLWriteFormat<O> f, O d) {
+        return null == d ? NOP_CONSUMER : write(t, s -> {
+            writeData(s, f, d);
+        });
+    }
+
     private static void writeTag(Conversation s, TiesDBType t, ConversationConsumer c) throws TiesDBProtocolException {
         s.accept(new Event(t, EventState.BEGIN));
         c.accept(s);
         s.accept(new Event(t, EventState.END));
     }
 
-    private static <O> void writeData(Conversation s, EBMLWriteFormat<O> format, O data) throws TiesDBProtocolException {
-        s.write(format, data);
+    private static <O> void writeData(Conversation s, EBMLWriteFormat<O> f, O d) throws TiesDBProtocolException {
+        s.write(f, d);
     }
 }

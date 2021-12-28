@@ -20,7 +20,7 @@ package com.tiesdb.protocol.v0r0.writer;
 
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ERROR_MESSAGE;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.RECOLLECTION_ERROR;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,7 @@ public class RecollectionErrorWriter implements Writer<RecollectionErrorWriter.R
         LOG.debug("RecollectionError {}", error);
 
         write(RECOLLECTION_ERROR, //
-                write(null != error.getError(), //
+                writeIf(null != error.getError(), //
                         write(ERROR_MESSAGE, UTF8StringFormat.INSTANCE, String.valueOf(error.getError().getMessage())) //
                 ) //
         ).accept(session);

@@ -21,7 +21,7 @@ package com.tiesdb.protocol.v0r0.writer;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_HASH;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ERROR_MESSAGE;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.HEALING_ERROR;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,7 @@ public class HealingResultErrorWriter implements Writer<HealingResultErrorWriter
 
         write(HEALING_ERROR, //
                 write(ENTRY_HASH, BytesFormat.INSTANCE, error.getEntryHeaderHash()), //
-                write(null != error.getError(), //
+                writeIf(null != error.getError(), //
                         write(ERROR_MESSAGE, UTF8StringFormat.INSTANCE, String.valueOf(error.getError().getMessage())) //
                 ) //
         ).accept(session);

@@ -59,7 +59,7 @@ public class EntryWriter implements Writer<EntryWriter.Entry> {
                 write(FIELD_LIST, //
                         write(fieldWriter, entry.getFields()) //
                 ), //
-                write(cheques.hasNext(), write(CHEQUE_LIST, //
+                writeIf(cheques.hasNext(), write(CHEQUE_LIST, //
                         write(chequeWriter, cheques)) //
                 ) //
         ).accept(session);

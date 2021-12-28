@@ -38,15 +38,20 @@ import one.utopic.sparse.ebml.format.BytesFormat;
 
 public class SignatureReader implements Reader<SignatureReader.Signature> {
 
+    @FunctionalInterface
+    private static interface Procedure {
+        void process() throws TiesDBProtocolException;
+    }
+
+    @FunctionalInterface
+    private static interface Processor<T, U> {
+        void accept(T t, U u) throws TiesDBProtocolException;
+    }
+
     public static class Signature {
 
         private byte[] signature;
         private byte[] signer;
-
-        @Override
-        public String toString() {
-            return "Signature [signer=" + FormatUtil.printPartialHex(signer) + ", signature=" + FormatUtil.printPartialHex(signature) + "]";
-        }
 
         public byte[] getSignature() {
             return null == signature ? null : Arrays.copyOf(signature, signature.length);
@@ -56,22 +61,39 @@ public class SignatureReader implements Reader<SignatureReader.Signature> {
             return null == signer ? null : Arrays.copyOf(signer, signer.length);
         }
 
+        @Override
+        public String toString() {
+            return "Signature [signer=" + FormatUtil.printPartialHex(signer) + ", signature=" + FormatUtil.printPartialHex(signature) + "]";
+        }
+
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(SignatureReader.class);
-    private final Supplier<Consumer<Byte>> hashListenerSupplier;
+    private final Processor<Conversation, Procedure> hashListenerWrapper;
+
+    public SignatureReader() {
+        this(null);
+    }
 
     public SignatureReader(Supplier<Consumer<Byte>> hashListenerSupplier) {
-        this.hashListenerSupplier = hashListenerSupplier;
+        if (null == hashListenerSupplier) {
+            this.hashListenerWrapper = (session, fun) -> fun.process();
+        } else {
+            this.hashListenerWrapper = (session, fun) -> {
+                Consumer<Byte> hashListener = hashListenerSupplier.get();
+                session.removeReaderListener(hashListener);
+                fun.process();
+                session.addReaderListener(hashListener);
+            };
+        }
     }
 
     public boolean acceptSignature(Conversation session, Event e, Signature signature) throws TiesDBProtocolException {
-        Consumer<Byte> hashListener = hashListenerSupplier.get();
         switch (e.getType()) {
         case SIGNATURE:
-            session.removeReaderListener(hashListener);
-            signature.signature = session.read(BytesFormat.INSTANCE);
-            session.addReaderListener(hashListener);
+            this.hashListenerWrapper.accept(session, () -> {
+                signature.signature = session.read(BytesFormat.INSTANCE);
+            });
             LOG.debug("SIGNATURE : {}", new Object() {
                 @Override
                 public String toString() {

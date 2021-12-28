@@ -125,7 +125,7 @@ public class RecollectionRequestWriter implements Writer<RecollectionRequestWrit
                 write(TABLE_NAME, UTF8StringFormat.INSTANCE, request.getTableName()), //
                 write(RETRIEVE_LIST, write(retrieveWriter, request.getRetrieves())), //
                 write(FILTER_LIST, write(filterWriter, request.getFilters())), // , //
-                write(!cheques.isEmpty(), write(CHEQUE_LIST, //
+                writeIf(!cheques.isEmpty(), write(CHEQUE_LIST, //
                         write(chequeWriter, cheques)) //
                 ) //
         ).accept(session);
@@ -178,7 +178,7 @@ public class RecollectionRequestWriter implements Writer<RecollectionRequestWrit
             LOG.debug("RecollectionRequest.Retrieve.Compute {}", retrieveCompute);
             String alias = retrieveCompute.getAlias();
             write(RET_COMPUTE, //
-                    write(alias != null, //
+                    writeIf(alias != null, //
                             write(RET_COMPUTE_ALIAS, UTF8StringFormat.INSTANCE, alias)), //
                     write(RET_COMPUTE_TYPE, ASCIIStringFormat.INSTANCE, retrieveCompute.getType()), //
                     writeFunction(retrieveCompute) //

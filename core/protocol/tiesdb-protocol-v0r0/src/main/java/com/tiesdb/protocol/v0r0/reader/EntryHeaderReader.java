@@ -104,8 +104,8 @@ public class EntryHeaderReader implements Reader<EntryHeaderReader.EntryHeader> 
 
     }
 
-    private final SignatureReader signatureReader = new SignatureReader(() -> getDC().getHashListener());
     private final ThreadLocal<DigestCalculator> digestCalculator = new ThreadLocal<>();
+    private final SignatureReader signatureReader = new SignatureReader(() -> getDC().getHashListener());
 
     public boolean acceptEntryHeader(Conversation session, Event e, EntryHeader header) throws TiesDBProtocolException {
         switch (e.getType()) {

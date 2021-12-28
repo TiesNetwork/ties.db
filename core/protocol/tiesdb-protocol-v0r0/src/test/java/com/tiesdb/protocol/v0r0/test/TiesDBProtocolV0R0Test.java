@@ -244,29 +244,20 @@ public class TiesDBProtocolV0R0Test {
                                     part(CHEQUE_LIST, //
                                             part(CHEQUE, //
                                                     part(CHEQUE_VERSION, BytesFormat.INSTANCE, stubData), //
-                                                    part(CHEQUE_NETWORK, BytesFormat.INSTANCE, stubData), //
-                                                    part(CHEQUE_RANGE, BytesFormat.INSTANCE, stubData), //
+                                                    part(CHEQUE_SESSION, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_NUMBER, BytesFormat.INSTANCE, stubData), //
-                                                    part(CHEQUE_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
-                                                    part(CHEQUE_AMOUNT, BytesFormat.INSTANCE, stubData), //
-                                                    part(ADDRESS_LIST, //
-                                                            part(ADDRESS, BytesFormat.INSTANCE, stubData), //
-                                                            part(ADDRESS, BytesFormat.INSTANCE, stubData), //
-                                                            part(ADDRESS, BytesFormat.INSTANCE, stubData) //
-                                                    ) //
+                                                    part(CHEQUE_CRP_AMOUNT, BytesFormat.INSTANCE, stubData), //
+                                                    part(SIGNATURE, BytesFormat.INSTANCE, stubData) //
                                             ), //
                                             part(CHEQUE, //
                                                     part(CHEQUE_VERSION, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_NETWORK, BytesFormat.INSTANCE, stubData), //
-                                                    part(CHEQUE_RANGE, BytesFormat.INSTANCE, stubData), //
+                                                    part(TABLESPACE_NAME, BytesFormat.INSTANCE, stubData), //
+                                                    part(TABLE_NAME, BytesFormat.INSTANCE, stubData), //
+                                                    part(CHEQUE_SESSION, BytesFormat.INSTANCE, stubData), //
                                                     part(CHEQUE_NUMBER, BytesFormat.INSTANCE, stubData), //
-                                                    part(CHEQUE_TIMESTAMP, BytesFormat.INSTANCE, stubData), //
-                                                    part(CHEQUE_AMOUNT, BytesFormat.INSTANCE, stubData), //
-                                                    part(ADDRESS_LIST, //
-                                                            part(ADDRESS, BytesFormat.INSTANCE, stubData), //
-                                                            part(ADDRESS, BytesFormat.INSTANCE, stubData), //
-                                                            part(ADDRESS, BytesFormat.INSTANCE, stubData) //
-                                                    ), //
+                                                    part(CHEQUE_CRP_AMOUNT, BytesFormat.INSTANCE, stubData), //
+                                                    part(SIGNER, BytesFormat.INSTANCE, stubData), //
                                                     part(SIGNATURE, BytesFormat.INSTANCE, stubData) //
                                             ) //
                                     ) //
@@ -288,13 +279,8 @@ public class TiesDBProtocolV0R0Test {
                                 assertArrayEquals(new EBMLType[] { ENTRY_NETWORK, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
-                            case ADDRESS:
-                                assertArrayEquals(
-                                        new EBMLType[] { ADDRESS, ADDRESS_LIST, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
-                                        stack.toArray());
-                                break;
-                            case CHEQUE_AMOUNT:
-                                assertArrayEquals(new EBMLType[] { CHEQUE_AMOUNT, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                            case CHEQUE_CRP_AMOUNT:
+                                assertArrayEquals(new EBMLType[] { CHEQUE_CRP_AMOUNT, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_VERSION:
@@ -302,19 +288,15 @@ public class TiesDBProtocolV0R0Test {
                                         stack.toArray());
                                 break;
                             case CHEQUE_NETWORK:
-                                assertArrayEquals(new EBMLType[] { CHEQUE_VERSION, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                                assertArrayEquals(new EBMLType[] { CHEQUE_NETWORK, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CHEQUE_NUMBER:
                                 assertArrayEquals(new EBMLType[] { CHEQUE_NUMBER, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
-                            case CHEQUE_RANGE:
-                                assertArrayEquals(new EBMLType[] { CHEQUE_RANGE, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
-                                        stack.toArray());
-                                break;
-                            case CHEQUE_TIMESTAMP:
-                                assertArrayEquals(new EBMLType[] { CHEQUE_TIMESTAMP, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                            case CHEQUE_SESSION:
+                                assertArrayEquals(new EBMLType[] { CHEQUE_SESSION, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
                                         stack.toArray());
                                 break;
                             case CONSISTENCY:
@@ -330,12 +312,24 @@ public class TiesDBProtocolV0R0Test {
                                         stack.toArray());
                                 break;
                             case TABLESPACE_NAME:
-                                assertArrayEquals(new EBMLType[] { TABLESPACE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
-                                        stack.toArray());
+                                if (!(//
+                                Arrays.equals(new EBMLType[] { TABLESPACE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray()) || //
+                                Arrays.equals(new EBMLType[] { TABLESPACE_NAME, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray())//
+                                )) {
+                                    fail(SIGNER + " element missplaced");
+                                }
                                 break;
                             case TABLE_NAME:
-                                assertArrayEquals(new EBMLType[] { TABLE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
-                                        stack.toArray());
+                                if (!(//
+                                Arrays.equals(new EBMLType[] { TABLE_NAME, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray()) || //
+                                Arrays.equals(new EBMLType[] { TABLE_NAME, CHEQUE, CHEQUE_LIST, ENTRY, MODIFICATION_REQUEST }, //
+                                        stack.toArray())//
+                                )) {
+                                    fail(SIGNER + " element missplaced");
+                                }
                                 break;
                             case ENTRY_TIMESTAMP:
                                 assertArrayEquals(new EBMLType[] { ENTRY_TIMESTAMP, ENTRY_HEADER, ENTRY, MODIFICATION_REQUEST }, //
@@ -388,7 +382,6 @@ public class TiesDBProtocolV0R0Test {
                                 break;
 
                             // STRUCTURAL
-                            case ADDRESS_LIST:
                             case CHEQUE:
                             case CHEQUE_LIST:
                             case ENTRY_HEADER:

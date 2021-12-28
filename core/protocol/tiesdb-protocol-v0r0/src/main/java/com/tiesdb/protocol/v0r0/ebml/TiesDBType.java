@@ -36,7 +36,7 @@ public enum TiesDBType implements TiesEBMLType {
     CONSISTENCY(0xEE, Context.VALUE, Context.COORDINATED_REQUEST), // Unsigned
 
     SIGNATURE(0xFE, Context.VALUE, Context.SIGNED), // Binary
-    SIGNER(0xFC, Context.VALUE, Context.SIGNED), // Binary
+    SIGNER(0xFC, Context.VALUE, Context.SIGNED), // Binary (Address)
 
     ERROR(0x7FFF, Context.ERROR, Context.ROOT), // Meta
     ERROR_MESSAGE(0xE0, Context.VALUE, Context.ERROR), // UTF-8
@@ -62,14 +62,11 @@ public enum TiesDBType implements TiesEBMLType {
 
     CHEQUE_LIST(0xC1, Context.CHEQUE_LIST, Context.CHEQUE_LIST_CONTAINER), // Meta
     CHEQUE(0xC1, Context.CHEQUE, Context.CHEQUE_LIST), // Meta
-    CHEQUE_VERSION(0x80, Context.VALUE, Context.CHEQUE), // Unsigned
-    CHEQUE_NETWORK(0x82, Context.VALUE, Context.CHEQUE), // Unsigned (BIP-0044/SLIP-0044)
-    CHEQUE_RANGE(0x84, Context.VALUE, Context.CHEQUE), // Binary (UUID)
-    CHEQUE_NUMBER(0x86, Context.VALUE, Context.CHEQUE), // Unsigned
-    CHEQUE_TIMESTAMP(0x88, Context.VALUE, Context.CHEQUE), // TimeStamp
-    CHEQUE_AMOUNT(0x8A, Context.VALUE, Context.CHEQUE), // Unsigned
-    ADDRESS_LIST(0xA1, Context.ADDRESS_LIST, Context.CHEQUE), // Meta
-    ADDRESS(0xA0, Context.VALUE, Context.ADDRESS_LIST), // Binary
+    CHEQUE_VERSION(0xC0, Context.VALUE, Context.CHEQUE), // Unsigned
+    CHEQUE_NETWORK(0xC2, Context.VALUE, Context.CHEQUE), // Unsigned (BIP-0044/SLIP-0044)
+    CHEQUE_SESSION(0xC4, Context.VALUE, Context.CHEQUE), // Session (UUID)
+    CHEQUE_NUMBER(0xC6, Context.VALUE, Context.CHEQUE), // Unsigned (NOnce per Session)
+    CHEQUE_CRP_AMOUNT(0xC8, Context.VALUE, Context.CHEQUE), // Unsigned
 
     MODIFICATION_REQUEST(0x1E544945, Context.MODIFICATION_REQUEST, Context.ROOT), // Meta
 
@@ -144,15 +141,14 @@ public enum TiesDBType implements TiesEBMLType {
 
         CHEQUE_LIST_CONTAINER, //
         CHEQUE_LIST, //
-        CHEQUE(SIGNED), //
-        ADDRESS_LIST, //
+        CHEQUE(SIGNED, TABLE_META), //
 
         ENTRY_REFERENCE,
 
         ENTRY_CONTAINER, //
-        SIGNED_ENTRY_CONTAINER(SIGNED, ENTRY_CONTAINER), //
+        //SIGNED_ENTRY_CONTAINER(SIGNED, ENTRY_CONTAINER), //
         ENTRY(CHEQUE_LIST_CONTAINER), //
-        ENTRY_HEADER(TABLE_META, SIGNED), //
+        ENTRY_HEADER(SIGNED, TABLE_META), //
         FIELD_LIST, //
         FIELD_META, //
         FIELD(FIELD_META), //
@@ -162,7 +158,7 @@ public enum TiesDBType implements TiesEBMLType {
         MODIFICATION_RESULT(SIGNED, ENTRY_REFERENCE), //
         MODIFICATION_ERROR(ERROR, ENTRY_REFERENCE), //
 
-        RECOLLECTION_REQUEST(COORDINATED_REQUEST, CHEQUE_LIST_CONTAINER, TABLE_META), //
+        RECOLLECTION_REQUEST(COORDINATED_REQUEST, TABLE_META), //
         RECOLLECTION_RESPONSE(RESPONSE), //
         RECOLLECTION_ERROR(ERROR, ENTRY_REFERENCE), //
 
@@ -175,14 +171,14 @@ public enum TiesDBType implements TiesEBMLType {
         FILTER_LIST, //
         FILTER(FUNCTION),
 
-        RECOLLECTION_RESULT(SIGNED_ENTRY_CONTAINER), //
+        RECOLLECTION_RESULT(SIGNED, ENTRY_CONTAINER), //
         RECOLLECTION_COMPUTE, //
 
         SCHEMA_REQUEST(COORDINATED_REQUEST, TABLE_META), //
         SCHEMA_FIELD(FIELD_META), //
         SCHEMA_RESPONSE(RESPONSE, TABLE_META), //
 
-        HEALING_REQUEST(REQUEST, SIGNED_ENTRY_CONTAINER), //
+        HEALING_REQUEST(REQUEST, SIGNED, ENTRY_CONTAINER), //
         HEALING_RESPONSE(RESPONSE), //
         HEALING_RESULT(SIGNED, ENTRY_REFERENCE), //
         HEALING_ERROR(ERROR, ENTRY_REFERENCE), //

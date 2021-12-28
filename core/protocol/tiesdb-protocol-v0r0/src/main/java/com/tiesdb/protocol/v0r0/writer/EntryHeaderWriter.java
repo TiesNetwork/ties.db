@@ -26,7 +26,7 @@ import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.TABLESPACE_NAME;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.TABLE_NAME;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_TIMESTAMP;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY_VERSION;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -78,7 +78,7 @@ public class EntryHeaderWriter implements Writer<EntryHeaderWriter.EntryHeader> 
                 write(ENTRY_TIMESTAMP, DateFormat.INSTANCE, header.getEntryTimestamp()), //
                 write(ENTRY_VERSION, BigIntegerFormat.INSTANCE, header.getEntryVersion()), //
                 write(ENTRY_FLD_HASH, BytesFormat.INSTANCE, header.getEntryFldHash()), //
-                write(null != entryOldHash && 0 != entryOldHash.length, //
+                writeIf(null != entryOldHash && 0 != entryOldHash.length, //
                         write(ENTRY_OLD_HASH, BytesFormat.INSTANCE, entryOldHash) //
                 ), //
                 write(ENTRY_NETWORK, IntegerFormat.INSTANCE, header.getEntryNetwork()), //

@@ -24,7 +24,7 @@ import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.FIELD_LIST;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.RECOLLECTION_COMPUTE;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.ENTRY;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.RECOLLECTION_RESULT;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +70,7 @@ public class RecollectionResultWriter implements Writer<RecollectionResultWriter
                         write(FIELD_LIST, //
                                 write(fieldWriter, result.getEntryFields()) //
                         )), //
-                write(null != computedFields && !computedFields.isEmpty(), //
+                writeIf(null != computedFields && !computedFields.isEmpty(), //
                         write(RECOLLECTION_COMPUTE, //
                                 write(computeFieldWriter, computedFields) //
                         )//

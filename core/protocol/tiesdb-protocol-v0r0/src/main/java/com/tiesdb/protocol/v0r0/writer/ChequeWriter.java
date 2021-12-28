@@ -19,7 +19,7 @@
 package com.tiesdb.protocol.v0r0.writer;
 
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -36,6 +36,7 @@ import com.tiesdb.protocol.v0r0.writer.SignatureWriter.Signature;
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
 import one.utopic.sparse.ebml.format.BytesFormat;
 import one.utopic.sparse.ebml.format.DateFormat;
+import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
 public class ChequeWriter implements Writer<ChequeWriter.Cheque> {
 
@@ -47,45 +48,31 @@ public class ChequeWriter implements Writer<ChequeWriter.Cheque> {
 
         BigInteger getChequeNetwork();
 
-        UUID getChequeRange();
+        String getTablespaceName();
+
+        String getTableName();
+
+        UUID getChequeSession();
 
         BigInteger getChequeNumber();
 
-        Date getChequeTimestamp();
-
-        BigInteger getChequeAmount();
-
-        byte[] getHash();
-
-        Iterable<Address> getChequeAddresses();
+        BigInteger getChequeCropAmount();
 
     }
 
-    public static interface Address {
-
-        byte[] getAddress();
-
-    }
-
-    private final SignatureWriter signatureWriter = new SignatureWriter();
-
-    public void addressWriter(Conversation session, Address address) throws TiesDBProtocolException {
-        write(ADDRESS, BytesFormat.INSTANCE, address.getAddress()).accept(session);
-    }
+    private final SignatureWriter signatureWriter = new SignatureWriter(false);
 
     @Override
     public void accept(Conversation session, Cheque cheque) throws TiesDBProtocolException {
         LOG.debug("Cheque {}", cheque);
         write(CHEQUE, //
                 write(CHEQUE_VERSION, BigIntegerFormat.INSTANCE, cheque.getChequeVersion()), //
-                write(CHEQUE_NETWORK, BigIntegerFormat.INSTANCE, cheque.getChequeNetwork()), //
-                write(CHEQUE_RANGE, UUIDFormat.INSTANCE, cheque.getChequeRange()), //
+                writeNotNull(CHEQUE_NETWORK, BigIntegerFormat.INSTANCE, cheque.getChequeNetwork()), //
+                write(CHEQUE_SESSION, UUIDFormat.INSTANCE, cheque.getChequeSession()), //
                 write(CHEQUE_NUMBER, BigIntegerFormat.INSTANCE, cheque.getChequeNumber()), //
-                write(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, cheque.getChequeTimestamp()), //
-                write(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, cheque.getChequeAmount()), //
-                write(ADDRESS_LIST, //
-                        write(this::addressWriter, cheque.getChequeAddresses()) //
-                ), //
+                write(CHEQUE_CRP_AMOUNT, BigIntegerFormat.INSTANCE, cheque.getChequeCropAmount()), //
+                writeNotNull(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, cheque.getTablespaceName()), //
+                writeNotNull(TABLE_NAME, UTF8StringFormat.INSTANCE, cheque.getTableName()), //
                 write(signatureWriter, cheque) //
         ).accept(session);
     }

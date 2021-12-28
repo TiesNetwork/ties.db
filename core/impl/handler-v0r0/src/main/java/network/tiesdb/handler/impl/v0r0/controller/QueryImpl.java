@@ -20,7 +20,6 @@ package network.tiesdb.handler.impl.v0r0.controller;
 
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collector;
@@ -97,25 +96,6 @@ class QueryImplHelper {
     static <R, A> R convertCheques(List<Cheque> from, Collector<TiesCheque, A, R> c) {
         return asStream(from).map(cheque -> new TiesCheque() {
 
-            private final List<Address> addresses = unmodifiableList(asStream(cheque.getChequeAddresses()).map(address -> new Address() {
-
-                @Override
-                public byte[] getAddress() {
-                    return address.getAddress();
-                }
-
-            }).collect(Collectors.toList()));
-
-            @Override
-            public byte[] getSigner() {
-                return cheque.getSigner();
-            }
-
-            @Override
-            public byte[] getSignature() {
-                return cheque.getSignature();
-            }
-
             @Override
             public BigInteger getChequeVersion() {
                 return cheque.getChequeVersion();
@@ -127,18 +107,8 @@ class QueryImplHelper {
             }
 
             @Override
-            public byte[] getHash() {
-                return cheque.getHash();
-            }
-
-            @Override
-            public Date getChequeTimestamp() {
-                return cheque.getChequeTimestamp();
-            }
-
-            @Override
-            public UUID getChequeRange() {
-                return cheque.getChequeRange();
+            public UUID getChequeSession() {
+                return cheque.getChequeSession();
             }
 
             @Override
@@ -147,13 +117,28 @@ class QueryImplHelper {
             }
 
             @Override
-            public BigInteger getChequeAmount() {
-                return cheque.getChequeAmount();
+            public BigInteger getChequeCropAmount() {
+                return cheque.getChequeCropAmount();
             }
 
             @Override
-            public List<Address> getChequeAddresses() {
-                return addresses;
+            public String getTablespaceName() {
+                return cheque.getTablespaceName();
+            }
+
+            @Override
+            public String getTableName() {
+                return cheque.getTableName();
+            }
+
+            @Override
+            public byte[] getSigner() {
+                return cheque.getSigner();
+            }
+
+            @Override
+            public byte[] getSignature() {
+                return cheque.getSignature();
             }
 
         }).collect(c);

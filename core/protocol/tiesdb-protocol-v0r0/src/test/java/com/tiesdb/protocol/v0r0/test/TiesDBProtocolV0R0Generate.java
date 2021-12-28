@@ -45,9 +45,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import com.tiesdb.lib.crypto.digest.DigestManager;
 import com.tiesdb.lib.crypto.digest.api.Digest;
 import com.tiesdb.lib.crypto.ecc.signature.ECKey;
+import com.tiesdb.lib.crypto.ecc.signature.ECKey.ECDSASignature;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBType;
+import com.tiesdb.protocol.v0r0.ebml.TiesEBMLWriter;
 import com.tiesdb.protocol.v0r0.ebml.TiesDBType.Context;
 import com.tiesdb.protocol.v0r0.ebml.format.UUIDFormat;
+import com.tiesdb.protocol.v0r0.test.util.TestUtil;
 
 import one.utopic.sparse.api.Event.CommonEventType;
 import one.utopic.sparse.ebml.EBMLEvent;
@@ -64,6 +67,9 @@ import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
 @EnabledIfSystemProperty(named = "test-generate", matches = "true")
 public class TiesDBProtocolV0R0Generate {
+
+    private final byte[] contractAddress = new BigInteger("01234567890abcdef01234567890abcdef012345", 16).toByteArray();
+    private final UUID chequeSession = UUID.fromString("01234567-890a-bcde-f012-34567890abcd");
 
     @Test
     public void generateSampleDate() {
@@ -91,7 +97,7 @@ public class TiesDBProtocolV0R0Generate {
     public void generateSampleBigNumber(String value) {
         BigInteger amount = new BigInteger(value);
         byte[] entryDate = encode(//
-                part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, amount) //
+                part(CHEQUE_CRP_AMOUNT, BigIntegerFormat.INSTANCE, amount) //
         );
         System.out.println("BigNumber  DEC " + value + "\nBigNumber EBML " + UPPERCASE_HEX.printHexBinary(entryDate));
     }
@@ -128,14 +134,16 @@ public class TiesDBProtocolV0R0Generate {
 
         System.out.println("EntryFieldsHash: " + UPPERCASE_HEX.printHexBinary(fldsHash));
 
+        String tsName = "filatov-dev.node.dev.tablespace";
+        String tName = "dev-test";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
@@ -146,22 +154,13 @@ public class TiesDBProtocolV0R0Generate {
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName) //
                                 ) //
                         ) //
                 ) //
@@ -186,6 +185,8 @@ public class TiesDBProtocolV0R0Generate {
 
         System.out.println("EntryFieldsHash: " + UPPERCASE_HEX.printHexBinary(fldsHash));
 
+        String tsName = "client-dev.test";
+        String tName = "all_types";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
@@ -193,8 +194,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // creating version 1
@@ -205,22 +206,13 @@ public class TiesDBProtocolV0R0Generate {
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName) //
                                 ) //
                         ) //
                 ) //
@@ -260,14 +252,16 @@ public class TiesDBProtocolV0R0Generate {
 
         System.out.println("EntryFieldsHash: " + UPPERCASE_HEX.printHexBinary(fldsHash));
 
+        String tsName = "filatov-dev.node.dev.tablespace";
+        String tName = "dev-test";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "filatov-dev.node.dev.tablespace"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "dev-test"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // from 1 to 2
@@ -280,22 +274,13 @@ public class TiesDBProtocolV0R0Generate {
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 2L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName) //
                                 ) //
                         ) //
                 ) //
@@ -416,6 +401,8 @@ public class TiesDBProtocolV0R0Generate {
         // System.out.println("EntryFieldsHash: " +
         // DatatypeConverter.printHexBinary(fldsHash));
 
+        String tsName = "client-dev.test";
+        String tName = "all_types";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
@@ -423,8 +410,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // INSERT
@@ -435,23 +422,13 @@ public class TiesDBProtocolV0R0Generate {
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
-                                ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName)) //
                         ) //
                 ) //
         );
@@ -583,6 +560,8 @@ public class TiesDBProtocolV0R0Generate {
         // System.out.println("EntryFieldsHash: " +
         // DatatypeConverter.printHexBinary(fldsHash));
 
+        String tsName = "client-dev.test";
+        String tName = "all_types";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
@@ -590,8 +569,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 // part(ENTRY_TYPE, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // UPDATE
@@ -605,22 +584,13 @@ public class TiesDBProtocolV0R0Generate {
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName) //
                                 ) //
                         ) //
                 ) //
@@ -668,6 +638,8 @@ public class TiesDBProtocolV0R0Generate {
         // System.out.println("EntryFieldsHash: " +
         // DatatypeConverter.printHexBinary(fldsHash));
 
+        String tsName = "client-dev.test";
+        String tName = "all_types";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
@@ -675,8 +647,8 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x01), // INSERT
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
@@ -686,28 +658,13 @@ public class TiesDBProtocolV0R0Generate {
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")), //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("821aEa9a577a9b44299B9c15c88cf3087F3b5544")), //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("4c1b469711709d1bf4BFe53B02198139a4283b74")), //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("7A8e4dC5f3b028ABf25056C85783c98cc266ddD0")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName) //
                                 ) //
                         ) //
                 ) //
@@ -755,6 +712,8 @@ public class TiesDBProtocolV0R0Generate {
         // System.out.println("EntryFieldsHash: " +
         // DatatypeConverter.printHexBinary(fldsHash));
 
+        String tsName = "client-dev.test";
+        String tName = "all_types";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
@@ -762,36 +721,27 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x02), // UPDATE
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
                                                 part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
                                                         UPPERCASE_HEX.parseHexBinary(
-                                                                "0dc95af0d9af0c80ef9c14346655c4b48e7400f6842bacdea348e72999b574da")), //
+                                                                "0DC95AF0D9AF0C80EF9C14346655C4B48E7400F6842BACDEA348E72999B574DA")), //
                                                 part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                 part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
                                         ) //
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName) //
                                 ) //
                         ) //
                 ) //
@@ -832,6 +782,8 @@ public class TiesDBProtocolV0R0Generate {
         // System.out.println("EntryFieldsHash: " +
         // DatatypeConverter.printHexBinary(fldsHash));
 
+        String tsName = "client-dev.test";
+        String tName = "all_types";
         byte[] encData = encodeTies(//
                 part(MODIFICATION_REQUEST, //
                         part(CONSISTENCY, IntegerFormat.INSTANCE, 0x64), // ALL
@@ -839,36 +791,27 @@ public class TiesDBProtocolV0R0Generate {
                         part(ENTRY, //
                                 part(ENTRY_HEADER, //
                                         tiesPartSign(key, SIGNATURE, //
-                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, "client-dev.test"), //
-                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, "all_types"), //
+                                                part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tsName), //
+                                                part(TABLE_NAME, UTF8StringFormat.INSTANCE, tName), //
                                                 part(ENTRY_TIMESTAMP, DateFormat.INSTANCE, date), //
                                                 part(ENTRY_VERSION, IntegerFormat.INSTANCE, 0x0), // DELETE
                                                 part(ENTRY_FLD_HASH, BytesFormat.INSTANCE, fldsHash), //
                                                 part(ENTRY_OLD_HASH, BytesFormat.INSTANCE,
                                                         UPPERCASE_HEX.parseHexBinary(
-                                                                "91d22f6c21b70840246d0523d8d4bde25538e66e0df50c33b280fe4bf11df742")), //
+                                                                "91D22F6C21B70840246D0523D8D4BDE25538E66E0DF50C33B280FE4BF11DF742")), //
                                                 part(ENTRY_NETWORK, IntegerFormat.INSTANCE, 60), //
                                                 part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
                                         ) //
                                 ), //
                                 part(FIELD_LIST, BytesFormat.INSTANCE, fieldsData), //
                                 part(CHEQUE_LIST, //
-                                        part(CHEQUE, //
-                                                tiesPartSign(key, SIGNATURE, //
-                                                        part(CHEQUE_VERSION, IntegerFormat.INSTANCE, 1), //
-                                                        part(CHEQUE_NETWORK, IntegerFormat.INSTANCE, 60), //
-                                                        part(CHEQUE_RANGE, UUIDFormat.INSTANCE,
-                                                                UUID.fromString("38007241-b550-4fa5-87d6-8ee7587d4073")), //
-                                                        part(CHEQUE_NUMBER, LongFormat.INSTANCE, 1L), //
-                                                        part(CHEQUE_TIMESTAMP, DateFormat.INSTANCE, date), //
-                                                        part(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE, BigInteger.ONE), //
-                                                        part(ADDRESS_LIST, //
-                                                                part(ADDRESS, BytesFormat.INSTANCE,
-                                                                        hs2ba("64ed31c6187765D40271EE4F9b4C29A5a125DE23")) //
-                                                        ), //
-                                                        part(SIGNER, BytesFormat.INSTANCE, key.getAddress()) //
-                                                ) //
-                                        ) //
+                                        tiesPartChequeV1(key, //
+                                                contractAddress, //
+                                                chequeSession, //
+                                                BigInteger.ONE, //
+                                                BigInteger.valueOf(110), //
+                                                tsName, //
+                                                tName) //
                                 ) //
                         ) //
                 ) //
@@ -956,7 +899,7 @@ public class TiesDBProtocolV0R0Generate {
         values.forEach(System.out::println);
     }
 
-    @Test
+    // @Test
     public void packetDecodeTest() {
         String[] dataStrings = new String[] {
                 "1E5449454316EE8164EC820309E1430CE140A4808F636C69656E742D6465762E746573748289616C6C5F747970657386857EBE0941C88881018CA09A2FC5F82D9A2ACE7A1F07BA0D3D243DCC67E8DFBFB3C4412E2178D15E59A6528E813CFC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC1958AEB999D5550B8AA47AE3348B482F2E92C18D17A957B79A8ECBECE8F70726C7443523A9E20B0E952F1D51FB721871B1F48FEF145D2940E59CF39339739EB5D26D141CCD19C8284757569648082496486907606FC028C1944EE99BEA24FC1449008D1D1828662696E61727980876642696E61727986BEE0DCB1C405014B072475985E971BDCE006C7F55E50ADF3EEF5174BBFC6415D10F03080BFCC4AF554961E249FE4B527802C9F5F2F5BA603D0FC6CB5D4A730D1968287626F6F6C65616E808866426F6F6C65616E868101D1AB8287646563696D616C808866446563696D616C8696E20464F9AF575D4083AD82A9523EFA464D0F4DE28A85D1AA8286646F75626C65808766446F75626C658697EA15B12CA0FDACF3E5DE7C0363C10F43E975B8FDB4F96BD19D82886475726174696F6E8089664475726174696F6E8686863E48FEFE8AD1A88285666C6F6174808666466C6F61748697EA14BC4602E04501DFF99F59B289440C90B12BDFACA449D1998287696E7465676572808866496E74656765728684E8CCFE15D19782846C6F6E678085664C6F6E678688BF08AB5B8EF9E48DD1D48286737472696E67808766537472696E6786C1636F6D2E7469657364622E70726F746F636F6C2E763072302E746573742E54696573444250726F746F636F6C5630523047656E6572617465403363343139363331D195828474696D6580856654696D65868600805A38C324C14093C14090809038007241B5504FA587D68EE7587D407382810184857EBE0941C8868101A196A09464ED31C6187765D40271EE4F9B4C29A5A125DE23FC94FAFE9C9E7845F446D091C12C74D44C61A0923C00FEC12C06F9333BE122E2F32D8D9D7A9216D27CEE6C4219F72AA56E04D21FA4A0DBC33AB1129244908432DC54A9AEED4E60396178CB27695886CB7D23CA539EBAB2A326",
@@ -1050,10 +993,9 @@ public class TiesDBProtocolV0R0Generate {
         formatMap.put(ENTRY_TIMESTAMP, DateFormat.INSTANCE);
         formatMap.put(CHEQUE_VERSION, BigIntegerFormat.INSTANCE);
         formatMap.put(CHEQUE_NETWORK, BigIntegerFormat.INSTANCE);
-        formatMap.put(CHEQUE_TIMESTAMP, DateFormat.INSTANCE);
-        formatMap.put(CHEQUE_RANGE, UUIDFormat.INSTANCE);
+        formatMap.put(CHEQUE_SESSION, UUIDFormat.INSTANCE);
         formatMap.put(CHEQUE_NUMBER, LongFormat.INSTANCE);
-        formatMap.put(CHEQUE_AMOUNT, BigIntegerFormat.INSTANCE);
+        formatMap.put(CHEQUE_CRP_AMOUNT, BigIntegerFormat.INSTANCE);
 
         formatMap.put(TABLESPACE_NAME, UTF8StringFormat.INSTANCE);
         formatMap.put(TABLE_NAME, UTF8StringFormat.INSTANCE);
@@ -1111,4 +1053,86 @@ public class TiesDBProtocolV0R0Generate {
         });
     }
 
+    public static <W extends TiesEBMLWriter> Consumer<W> tiesPartChequeV1(ECKey key, //
+            byte[] contractAddress, //
+            UUID session, //
+            BigInteger number, //
+            BigInteger cropAmount, //
+            String tablespaceName, //
+            String tableName) {
+        return tiesPartChequeV1(key, //
+                contractAddress, //
+                session, //
+                number, //
+                cropAmount, //
+                tablespaceName, //
+                tableName, //
+                false, //
+                false, //
+                false, //
+                null);
+    }
+
+    public static <W extends TiesEBMLWriter> Consumer<W> tiesPartChequeV1(ECKey key, //
+            byte[] contractAddress, //
+            UUID session, //
+            BigInteger number, //
+            BigInteger cropAmount, //
+            String tablespaceName, //
+            String tableName, //
+            boolean addTablespaceName, //
+            boolean addTableName, //
+            boolean addSigner, //
+            BigInteger network) {
+        return tiesPartCheque(key, //
+                contractAddress, //
+                BigInteger.ONE, //
+                session, //
+                number, //
+                cropAmount, //
+                tablespaceName, //
+                tableName, //
+                addTablespaceName, //
+                addTableName, //
+                addSigner, //
+                network);
+    }
+
+    public static <W extends TiesEBMLWriter> Consumer<W> tiesPartCheque(ECKey key, //
+            byte[] contractAddress, //
+            BigInteger version, //
+            UUID session, //
+            BigInteger number, //
+            BigInteger cropAmount, //
+            String tablespaceName, //
+            String tableName, //
+            boolean addTablespaceName, //
+            boolean addTableName, //
+            boolean addSigner, //
+            BigInteger network) {
+        byte[] messageHash = TestUtil.getMessageHash( //
+                TestUtil.getChequeHash( //
+                        contractAddress, //
+                        key.getAddress(), //
+                        session, //
+                        number, //
+                        cropAmount, //
+                        tablespaceName, //
+                        tableName));
+        ECDSASignature sig = key.sign(messageHash);
+        // Normalize vBase to 27 if 37 based
+        if (sig.v - 37 >= 0) {
+            sig.v -= 10;
+        }
+        return part(CHEQUE, //
+                part(CHEQUE_VERSION, BigIntegerFormat.INSTANCE, version), //
+                partNotNull(CHEQUE_NETWORK, BigIntegerFormat.INSTANCE, network), //
+                partIf(addTablespaceName, part(TABLESPACE_NAME, UTF8StringFormat.INSTANCE, tablespaceName)), //
+                partIf(addTableName, part(TABLE_NAME, UTF8StringFormat.INSTANCE, tableName)), //
+                part(CHEQUE_SESSION, UUIDFormat.INSTANCE, session), //
+                part(CHEQUE_NUMBER, BigIntegerFormat.INSTANCE, number), //
+                part(CHEQUE_CRP_AMOUNT, BigIntegerFormat.INSTANCE, cropAmount), //
+                partIf(addSigner, part(SIGNER, BytesFormat.INSTANCE, key.getAddress())), //
+                part(SIGNATURE, BytesFormat.INSTANCE, sig.toByteArray()));
+    }
 }

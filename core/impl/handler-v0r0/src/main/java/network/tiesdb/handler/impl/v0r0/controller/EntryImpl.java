@@ -153,25 +153,6 @@ class EntryImpl implements TiesEntryExtended {
         };
         cheques = modificationEntry.getCheques().parallelStream().map(cheque -> new TiesCheque() {
 
-            private final List<Address> addresses = cheque.getChequeAddresses().parallelStream().map(address -> new Address() {
-
-                @Override
-                public byte[] getAddress() {
-                    return address.getAddress();
-                }
-
-            }).collect(Collectors.toList());
-
-            @Override
-            public byte[] getSigner() {
-                return cheque.getSigner();
-            }
-
-            @Override
-            public byte[] getSignature() {
-                return cheque.getSignature();
-            }
-
             @Override
             public BigInteger getChequeVersion() {
                 return cheque.getChequeVersion();
@@ -183,18 +164,8 @@ class EntryImpl implements TiesEntryExtended {
             }
 
             @Override
-            public byte[] getHash() {
-                return cheque.getHash();
-            }
-
-            @Override
-            public Date getChequeTimestamp() {
-                return cheque.getChequeTimestamp();
-            }
-
-            @Override
-            public UUID getChequeRange() {
-                return cheque.getChequeRange();
+            public UUID getChequeSession() {
+                return cheque.getChequeSession();
             }
 
             @Override
@@ -203,13 +174,28 @@ class EntryImpl implements TiesEntryExtended {
             }
 
             @Override
-            public BigInteger getChequeAmount() {
-                return cheque.getChequeAmount();
+            public BigInteger getChequeCropAmount() {
+                return cheque.getChequeCropAmount();
             }
 
             @Override
-            public List<Address> getChequeAddresses() {
-                return addresses;
+            public String getTablespaceName() {
+                return cheque.getTablespaceName();
+            }
+
+            @Override
+            public String getTableName() {
+                return cheque.getTableName();
+            }
+
+            @Override
+            public byte[] getSigner() {
+                return cheque.getSigner();
+            }
+
+            @Override
+            public byte[] getSignature() {
+                return cheque.getSignature();
             }
 
         }).collect(Collectors.toList());

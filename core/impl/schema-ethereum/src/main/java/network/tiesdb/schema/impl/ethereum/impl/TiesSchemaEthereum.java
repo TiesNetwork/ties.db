@@ -21,8 +21,18 @@ package network.tiesdb.schema.impl.ethereum.impl;
 import static network.tiesdb.util.Safecheck.nullreplace;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.security.SignatureException;
+import java.util.Arrays;
+import java.util.UUID;
 
+import org.web3j.crypto.ECDSASignature;
+import org.web3j.crypto.Hash;
+import org.web3j.crypto.Keys;
+import org.web3j.crypto.Sign;
+import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGasPrice;
@@ -37,6 +47,7 @@ import com.tiesdb.schema.impl.contracts.TiesDB;
 
 import network.tiesdb.exception.TiesConfigurationException;
 import network.tiesdb.schema.api.TiesSchema;
+import network.tiesdb.service.scope.api.TiesCheque;
 
 public class TiesSchemaEthereum implements TiesSchema {
 
@@ -84,6 +95,83 @@ public class TiesSchemaEthereum implements TiesSchema {
     @Override
     public String getNodeAddress() {
         return this.nodeAddress;
+    }
+
+    @Override
+    public String getContractAddress() {
+        return this.contract.getContractAddress();
+    }
+
+    @Override
+    public boolean isChequeValid(TiesCheque cheque) throws SignatureException {
+        return validateChequeSignature( //
+                cheque.getTablespaceName(), //
+                cheque.getTableName(), //
+                cheque.getChequeSession(), //
+                cheque.getChequeNumber(), //
+                cheque.getChequeCropAmount(), //
+                cheque.getSigner(), //
+                cheque.getSignature());
+    }
+
+    protected boolean validateChequeSignature( //
+            String tablespaceName, //
+            String tableName, //
+            UUID session, //
+            BigInteger number, //
+            BigInteger cropAmount, //
+            byte[] signer, //
+            byte[] signature) throws SignatureException {
+
+        if (signer.length != 20) {
+            throw new SignatureException("Signer address length missmatch, expected 20 bytes and got " + signer.length);
+        }
+        SignatureData signatureData = getSignatureData(signature);
+        byte[] tKey = getTkey(tablespaceName, tableName);
+
+        ByteBuffer packedData = ByteBuffer.allocate(20 + 20 + 16 + 32 + 32 + 32);
+        packedData.put(Numeric.hexStringToByteArray(this.contract.getContractAddress())); // 20 bytes
+        packedData.put(signer); // 20 bytes
+        packedData.putLong(session.getMostSignificantBits()); // 8 of 16 bytes
+        packedData.putLong(session.getLeastSignificantBits()); // next 8 of 16 bytes
+        packedData.put(tKey); // 32 bytes
+        packedData.put(Numeric.toBytesPadded(cropAmount, 32)); // 32 bytes
+        packedData.put(Numeric.toBytesPadded(number, 32)); // 32 bytes
+        byte[] hash = Hash.sha3(packedData.array());
+
+        int header = signatureData.getV() & 0xFF;
+        if (header < 27 || header > 34) {
+            throw new SignatureException("Header byte out of range: " + header);
+        }
+        int recId = header - 27;
+        ECDSASignature sig = new ECDSASignature(new BigInteger(1, signatureData.getR()), new BigInteger(1, signatureData.getS()));
+
+        BigInteger publicKey = Sign.recoverFromSignature(recId, sig, hashMessage(hash));
+        byte[] address = Keys.getAddress(Numeric.toBytesPadded(publicKey, 64));
+        return Arrays.equals(signer, address);
+    }
+
+    private static byte[] hashMessage(byte[] data) {
+        byte[] preamble = ("\u0019Ethereum Signed Message:\n" + Integer.toString(data.length)).getBytes();
+        ByteBuffer buf = ByteBuffer.allocate(preamble.length + data.length);
+        buf.put(preamble);
+        buf.put(data);
+        return Hash.sha3(buf.array());
+    }
+
+    private static SignatureData getSignatureData(byte[] signatureEncoded) throws SignatureException {
+        if (signatureEncoded.length < 65)
+            throw new SignatureException("Signature truncated, expected 65 bytes and got " + signatureEncoded.length);
+        return new SignatureData(signatureEncoded[64], Arrays.copyOfRange(signatureEncoded, 0, 32),
+                Arrays.copyOfRange(signatureEncoded, 32, 64));
+    }
+
+    private static byte[] getTkey(String tablespaceName, String tableName) throws SignatureException {
+        try {
+            return Hash.sha3((tablespaceName + '#' + tableName).getBytes("utf-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new SignatureException("Failed to get Table Key", e);
+        }
     }
 
 }

@@ -25,7 +25,10 @@ import static com.tiesdb.protocol.v0r0.util.BinaryHelper.writeLong32;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -61,6 +64,75 @@ public final class TestUtil {
     public static final String DEFAULT_DIGEST_NAME = DigestManager.KECCAK_256;
     public static final FixedSupplierFormat<byte[]> DELEGATE_HASH_FORMAT = new FixedSupplierFormat<>(BytesFormat.INSTANCE, 32);
     public static final FixedSupplierFormat<byte[]> DELEGATE_SIGN_FORMAT = new FixedSupplierFormat<>(BytesFormat.INSTANCE, 32 + 32 + 1);
+
+    public static byte[] toBytesPadded(BigInteger value, int length) {
+        byte[] result = new byte[length];
+        byte[] bytes = value.toByteArray();
+
+        int bytesLength;
+        int srcOffset;
+        if (bytes[0] == 0) {
+            bytesLength = bytes.length - 1;
+            srcOffset = 1;
+        } else {
+            bytesLength = bytes.length;
+            srcOffset = 0;
+        }
+
+        if (bytesLength > length) {
+            throw new RuntimeException("Input is too large to put in byte array of size " + length);
+        }
+
+        int destOffset = length - bytesLength;
+        System.arraycopy(bytes, srcOffset, result, destOffset, bytesLength);
+        return result;
+    }
+
+    public static byte[] getChequeHash(byte[] contractAddress, //
+            byte[] signerAddress, //
+            UUID session, //
+            BigInteger number, //
+            BigInteger cropAmount, //
+            String tablespaceName, //
+            String tableName) {
+
+        Digest digest = DigestManager.getDigest(DEFAULT_DIGEST_NAME);
+        byte[] hashBuffer = new byte[digest.getDigestSize()];
+
+        try {
+            digest.reset();
+            digest.update((tablespaceName + '#' + tableName).getBytes("utf-8"));
+            digest.doFinal(hashBuffer);
+        } catch (Throwable th) {
+            throw new IllegalStateException("Failed to compute Table Key", th);
+        }
+
+        ByteBuffer packedData = ByteBuffer.allocate(20 + 20 + 16 + 32 + 32 + 32);
+        packedData.put(contractAddress); // 20
+        packedData.put(signerAddress); // 20
+        packedData.putLong(session.getMostSignificantBits()); // 8 of 16
+        packedData.putLong(session.getLeastSignificantBits()); // 8 of 16
+        packedData.put(hashBuffer); // 32
+        packedData.put(toBytesPadded(cropAmount, 32)); // 32
+        packedData.put(toBytesPadded(number, 32)); // 32
+
+        digest.reset();
+        digest.update(packedData.array());
+        digest.doFinal(hashBuffer);
+        return hashBuffer;
+    }
+
+    public static byte[] getMessageHash(byte[] data) {
+        Digest digest = DigestManager.getDigest(DEFAULT_DIGEST_NAME);
+        byte[] hashBuffer = new byte[digest.getDigestSize()];
+
+        digest.reset();
+        digest.update("\u0019Ethereum Signed Message:\n".getBytes());
+        digest.update(Integer.toString(data.length).getBytes());
+        digest.update(data);
+        digest.doFinal(hashBuffer);
+        return hashBuffer;
+    }
 
     public static byte[] getPacketHeader(Version v) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -106,6 +178,29 @@ public final class TestUtil {
             w.accept(new EBMLEvent(type, EBMLEvent.CommonEventType.BEGIN));
             write(format, data).accept(w);
             w.accept(new EBMLEvent(type, EBMLEvent.CommonEventType.END));
+        };
+    }
+
+    public static <W extends EBMLWriter, O> Consumer<W> nopConsumer() {
+        return w -> {
+            // NOP
+        };
+    }
+
+    public static <W extends EBMLWriter, O> Consumer<W> partNotNull(TiesDBType type, EBMLWriteFormat<O> format, O data) {
+        return null == data ? nopConsumer() : w -> {
+            w.accept(new EBMLEvent(type, EBMLEvent.CommonEventType.BEGIN));
+            write(format, data).accept(w);
+            w.accept(new EBMLEvent(type, EBMLEvent.CommonEventType.END));
+        };
+    }
+
+    @SafeVarargs
+    public static <W extends EBMLWriter> Consumer<W> partIf(boolean condition, Consumer<? super W>... consumers) {
+        return !condition ? nopConsumer() : w -> {
+            for (Consumer<? super W> consumer : consumers) {
+                consumer.accept(w);
+            }
         };
     }
 

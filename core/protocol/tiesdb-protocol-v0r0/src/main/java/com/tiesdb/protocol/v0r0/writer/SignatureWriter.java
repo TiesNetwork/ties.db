@@ -20,7 +20,7 @@ package com.tiesdb.protocol.v0r0.writer;
 
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.SIGNATURE;
 import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.SIGNER;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +42,24 @@ public class SignatureWriter implements Writer<SignatureWriter.Signature> {
 
     }
 
+    private final boolean isSignerRequired;
+
+    public SignatureWriter() {
+        this(true);
+    }
+
+    public SignatureWriter(boolean isSignerRequired) {
+        super();
+        this.isSignerRequired = isSignerRequired;
+    }
+
     @Override
     public void accept(Conversation session, Signature signature) throws TiesDBProtocolException {
         LOG.debug("Signature {}", signature);
         write(//
-                write(SIGNER, BytesFormat.INSTANCE, signature.getSigner()), //
+                isSignerRequired //
+                        ? write(SIGNER, BytesFormat.INSTANCE, signature.getSigner())
+                        : writeNotNull(SIGNER, BytesFormat.INSTANCE, signature.getSigner()), //
                 write(SIGNATURE, BytesFormat.INSTANCE, signature.getSignature()) //
         ).accept(session);
     }

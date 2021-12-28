@@ -19,30 +19,22 @@
 package network.tiesdb.service.scope.api;
 
 import java.math.BigInteger;
-import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 public interface TiesCheque extends TiesSigned {
-
-    interface Address {
-        byte[] getAddress();
-    }
 
     BigInteger getChequeVersion();
 
     BigInteger getChequeNetwork();
 
-    UUID getChequeRange();
+    UUID getChequeSession();
 
     BigInteger getChequeNumber();
 
-    Date getChequeTimestamp();
+    BigInteger getChequeCropAmount();
 
-    BigInteger getChequeAmount();
+    String getTableName();
 
-    List<Address> getChequeAddresses();
-
-    byte[] getHash();
+    String getTablespaceName();
 
 }

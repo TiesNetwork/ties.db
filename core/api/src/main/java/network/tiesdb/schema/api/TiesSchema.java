@@ -18,8 +18,11 @@
  */
 package network.tiesdb.schema.api;
 
+import java.security.SignatureException;
 import java.util.List;
 import java.util.Set;
+
+import network.tiesdb.service.scope.api.TiesCheque;
 
 public interface TiesSchema {
 
@@ -85,6 +88,10 @@ public interface TiesSchema {
 
     String getNodeAddress();
 
+    String getContractAddress();
+
     Tablespace getTablespace(String name);
+    
+    boolean isChequeValid(TiesCheque cheque) throws SignatureException;
 
 }

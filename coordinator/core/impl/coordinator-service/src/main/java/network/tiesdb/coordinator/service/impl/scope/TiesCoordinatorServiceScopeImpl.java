@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -352,7 +353,27 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 LOG.error("Node request failed", e);
             }
         }
-        HashSet<String> segregatedErrors = new HashSet<>();
+        HashSet<String> segregatedErrors = new HashSet<String>() {
+
+            private static final long serialVersionUID = 3987824221222046320L;
+
+            @Override
+            public String toString() {
+                Iterator<?> it = iterator();
+                if (! it.hasNext())
+                    return "";
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(':').append(' ');
+                for (;;) {
+                    Object e = it.next();
+                    sb.append(e == this ? "..." : e);
+                    if (! it.hasNext())
+                        return sb.toString();
+                    sb.append(',').append(' ');
+                }
+            }
+        };
         Map<ModificationResultType, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, futureResult -> {
             try {
                 CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = futureResult.get();
@@ -402,7 +423,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 }
             });
         } else if (results.contains(ModificationResultType.ERROR)) {
-            Throwable error = new Throwable("Write was impossible " + segregatedErrors);
+            Throwable error = new Throwable("Write was impossible" + segregatedErrors);
             action.setResult(new TiesServiceScopeModification.Result.Error() {
                 @Override
                 public byte[] getHeaderHash() {

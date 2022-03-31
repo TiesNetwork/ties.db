@@ -27,7 +27,7 @@
 	<parent>
 		<groupId>com.tiesdb</groupId>
 		<artifactId>core-impl</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.2.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>context-yaml</artifactId>

@@ -22,6 +22,7 @@ import java.math.BigInteger;
 
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
+import com.tiesdb.protocol.v0r0.writer.BillingResponseWriter.BillingResponse;
 import com.tiesdb.protocol.v0r0.writer.HealingRequestWriter.HealingRequest;
 import com.tiesdb.protocol.v0r0.writer.HealingResponseWriter.HealingResponse;
 import com.tiesdb.protocol.v0r0.writer.ModificationRequestWriter.ModificationRequest;
@@ -65,6 +66,8 @@ public interface Writer<T> {
             T on(SchemaResponse schemaResponse) throws TiesDBProtocolException;
 
             T on(HealingResponse healingResponse) throws TiesDBProtocolException;
+
+            T on(BillingResponse billingResponse) throws TiesDBProtocolException;
 
         }
 

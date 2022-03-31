@@ -20,7 +20,7 @@ package network.tiesdb.service.scope.api;
 
 import java.util.List;
 
-public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, TiesServiceScopeAction.Distributed {
+public interface TiesServiceScopeRecollectionAction extends TiesServiceScopeAction, TiesServiceScopeAction.Distributed {
 
     interface Query {
 
@@ -145,7 +145,7 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
 
     Query getQuery() throws TiesServiceScopeException;
 
-    public interface Result extends TiesServiceScopeResult.Result {
+    public interface Result extends TiesServiceScopeResultAction.Result {
 
         interface Visitor<T> {
 
@@ -244,7 +244,7 @@ public interface TiesServiceScopeRecollection extends TiesServiceScopeAction, Ti
         <T> T accept(Visitor<T> v) throws TiesServiceScopeException;
 
         @Override
-        default <T> T accept(TiesServiceScopeResult.Result.Visitor<T> v) throws TiesServiceScopeException {
+        default <T> T accept(TiesServiceScopeResultAction.Result.Visitor<T> v) throws TiesServiceScopeException {
             return v.on(this);
         }
 

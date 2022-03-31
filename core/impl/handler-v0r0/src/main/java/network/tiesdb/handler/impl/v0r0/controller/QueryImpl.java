@@ -39,7 +39,7 @@ import com.tiesdb.protocol.v0r0.reader.ChequeReader.Cheque;
 
 import network.tiesdb.service.scope.api.TiesCheque;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query;
 
 import static network.tiesdb.handler.impl.v0r0.controller.QueryImplHelper.*;
 import static java.util.Collections.*;

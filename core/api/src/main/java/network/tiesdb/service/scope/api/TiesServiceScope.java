@@ -26,18 +26,20 @@ public interface TiesServiceScope extends Closeable {
 
     TiesVersion getServiceVersion();
 
-    void insert(TiesServiceScopeModification action) throws TiesServiceScopeException;
+    void insert(TiesServiceScopeModificationAction action) throws TiesServiceScopeException;
 
-    void update(TiesServiceScopeModification action) throws TiesServiceScopeException;
+    void update(TiesServiceScopeModificationAction action) throws TiesServiceScopeException;
 
-    void delete(TiesServiceScopeModification action) throws TiesServiceScopeException;
+    void delete(TiesServiceScopeModificationAction action) throws TiesServiceScopeException;
 
-    void select(TiesServiceScopeRecollection action) throws TiesServiceScopeException;
+    void select(TiesServiceScopeRecollectionAction action) throws TiesServiceScopeException;
 
-    void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException;
+    void heal(TiesServiceScopeHealingAction action) throws TiesServiceScopeException;
 
-    void schema(TiesServiceScopeSchema action) throws TiesServiceScopeException;
+    void schema(TiesServiceScopeSchemaAction action) throws TiesServiceScopeException;
 
-    void result(TiesServiceScopeResult action) throws TiesServiceScopeException;
+    void billing(TiesServiceScopeBillingAction action) throws TiesServiceScopeException;
+
+    void result(TiesServiceScopeResultAction action) throws TiesServiceScopeException;
 
 }

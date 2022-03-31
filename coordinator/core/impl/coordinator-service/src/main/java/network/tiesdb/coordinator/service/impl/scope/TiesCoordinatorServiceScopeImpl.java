@@ -73,26 +73,27 @@ import network.tiesdb.service.scope.api.TiesEntryHeader;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeConsumer;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
-import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Result.Error;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification.Result.Success;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealingAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeModificationAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeModificationAction.Result.Error;
+import network.tiesdb.service.scope.api.TiesServiceScopeModificationAction.Result.Success;
 import network.tiesdb.service.scope.api.TiesEntryExtended;
 import network.tiesdb.service.scope.api.TiesEntryExtended.TypedHashField;
 import network.tiesdb.service.scope.api.TiesEntryExtended.TypedValueField;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Partial;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FieldSelector;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FunctionSelector;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Entry;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field.HashField;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field.RawField;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Result.Field.ValueField;
-import network.tiesdb.service.scope.api.TiesServiceScopeResult;
-import network.tiesdb.service.scope.api.TiesServiceScopeSchema;
-import network.tiesdb.service.scope.api.TiesServiceScopeSchema.FieldSchema;
+import network.tiesdb.service.scope.api.TiesServiceScopeBillingAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Partial;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Selector.FieldSelector;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Selector.FunctionSelector;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Result.Entry;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Result.Field.HashField;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Result.Field.RawField;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Result.Field.ValueField;
+import network.tiesdb.service.scope.api.TiesServiceScopeResultAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeSchemaAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeSchemaAction.FieldSchema;
 import network.tiesdb.transport.api.TiesTransportClient;
 
 public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
@@ -197,17 +198,17 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
     }
 
     @Override
-    public void insert(TiesServiceScopeModification action) throws TiesServiceScopeException {
+    public void insert(TiesServiceScopeModificationAction action) throws TiesServiceScopeException {
         modification(action, (s, o) -> s.insert(o));
     }
 
     @Override
-    public void update(TiesServiceScopeModification action) throws TiesServiceScopeException {
+    public void update(TiesServiceScopeModificationAction action) throws TiesServiceScopeException {
         modification(action, (s, o) -> s.update(o));
     }
 
     @Override
-    public void delete(TiesServiceScopeModification action) throws TiesServiceScopeException {
+    public void delete(TiesServiceScopeModificationAction action) throws TiesServiceScopeException {
         modification(action, (s, o) -> s.delete(o));
     }
 
@@ -225,19 +226,19 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
     @FunctionalInterface
     interface TiesServiceOperation
-            extends CheckedBiFunction<TiesServiceScope, TiesServiceScopeModification, Void, TiesServiceScopeException> {
+            extends CheckedBiFunction<TiesServiceScope, TiesServiceScopeModificationAction, Void, TiesServiceScopeException> {
 
         @Override
-        default Void apply(TiesServiceScope t, TiesServiceScopeModification u) throws TiesServiceScopeException {
+        default Void apply(TiesServiceScope t, TiesServiceScopeModificationAction u) throws TiesServiceScopeException {
             applyVoid(t, u);
             return null;
         }
 
-        void applyVoid(TiesServiceScope t, TiesServiceScopeModification u) throws TiesServiceScopeException;
+        void applyVoid(TiesServiceScope t, TiesServiceScopeModificationAction u) throws TiesServiceScopeException;
 
     }
 
-    protected void modification(TiesServiceScopeModification action, TiesServiceOperation operation) throws TiesServiceScopeException {
+    protected void modification(TiesServiceScopeModificationAction action, TiesServiceOperation operation) throws TiesServiceScopeException {
 
         TiesEntryExtended entry = checkEntryIsValid(action.getEntry());
         TiesEntryHeader header = entry.getHeader();
@@ -278,21 +279,21 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
 
-        Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters;
-        CompletionService<CoordinatedResult<TiesServiceScopeResult.Result>> completionService = new ExecutorCompletionService<>(
+        Map<Node, Future<CoordinatedResult<TiesServiceScopeResultAction.Result>>> resultWaiters;
+        CompletionService<CoordinatedResult<TiesServiceScopeResultAction.Result>> completionService = new ExecutorCompletionService<>(
                 ForkJoinPool.commonPool()); // TODO FIXME Change executor!!!
         {
             resultWaiters = new HashMap<>();
             TiesRouter router = service.getRouterService();
             for (Node node : nodes) {
                 resultWaiters.put(node, completionService.submit(() -> {
-                    CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
+                    CoordinatedResult<TiesServiceScopeResultAction.Result> coordinatedResult = service.getRequestPool().register();
                     try {
                         TiesTransportClient c = router.getClient(node);
                         c.request(new TiesServiceScopeConsumer() {
                             @Override
                             public void accept(TiesServiceScope s) throws TiesServiceScopeException {
-                                operation.apply(s, new TiesServiceScopeModification() {
+                                operation.apply(s, new TiesServiceScopeModificationAction() {
 
                                     @Override
                                     public ActionConsistency getConsistency() {
@@ -311,17 +312,17 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
                                     @Override
                                     public void setResult(Result result) throws TiesServiceScopeException {
-                                        result.accept(new TiesServiceScopeModification.Result.Visitor<Void>() {
+                                        result.accept(new TiesServiceScopeModificationAction.Result.Visitor<Void>() {
 
                                             @Override
-                                            public Void on(TiesServiceScopeModification.Result.Success success)
+                                            public Void on(TiesServiceScopeModificationAction.Result.Success success)
                                                     throws TiesServiceScopeException {
                                                 LOG.trace("Node request sent successfully for: {} messageId {}", node);
                                                 return null;
                                             }
 
                                             @Override
-                                            public Void on(TiesServiceScopeModification.Result.Error error)
+                                            public Void on(TiesServiceScopeModificationAction.Result.Error error)
                                                     throws TiesServiceScopeException {
                                                 LOG.trace("Node request sent failed for: {} messageId {}", node, error.getError());
                                                 coordinatedResult.fail(error.getError());
@@ -346,7 +347,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         }
         ConsistencyArbiter arbiter = new ConsistencyArbiter(action.getConsistency(), sch.getReplicationFactor(tsn, tbn));
 
-        for (Future<CoordinatedResult<TiesServiceScopeResult.Result>> result : resultWaiters.values()) {
+        for (Future<CoordinatedResult<TiesServiceScopeResultAction.Result>> result : resultWaiters.values()) {
             try {
                 result.get().get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
             } catch (Throwable e) {
@@ -376,15 +377,15 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
         };
         Map<ModificationResultType, Set<Node>> segregatedResults = ConsistencyArbiter.segregate(resultWaiters, futureResult -> {
             try {
-                CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = futureResult.get();
-                TiesServiceScopeResult.Result result = coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
-                return result.accept(new TiesServiceScopeResult.Result.Visitor<ModificationResultType>() {
+                CoordinatedResult<TiesServiceScopeResultAction.Result> coordinatedResult = futureResult.get();
+                TiesServiceScopeResultAction.Result result = coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
+                return result.accept(new TiesServiceScopeResultAction.Result.Visitor<ModificationResultType>() {
 
                     @Override
-                    public ModificationResultType on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                    public ModificationResultType on(TiesServiceScopeModificationAction.Result result) throws TiesServiceScopeException {
                         return !Arrays.equals(result.getHeaderHash(), header.getHash()) //
                                 ? ModificationResultType.MISS
-                                : result.accept(new TiesServiceScopeModification.Result.Visitor<ModificationResultType>() {
+                                : result.accept(new TiesServiceScopeModificationAction.Result.Visitor<ModificationResultType>() {
                                     @Override
                                     public ModificationResultType on(Success success) throws TiesServiceScopeException {
                                         return ModificationResultType.SUCCESS;
@@ -399,12 +400,12 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     }
 
                     @Override
-                    public ModificationResultType on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
+                    public ModificationResultType on(TiesServiceScopeRecollectionAction.Result result) throws TiesServiceScopeException {
                         return ModificationResultType.FAILURE;
                     }
 
                     @Override
-                    public ModificationResultType on(TiesServiceScopeHealing.Result result) throws TiesServiceScopeException {
+                    public ModificationResultType on(TiesServiceScopeHealingAction.Result result) throws TiesServiceScopeException {
                         return ModificationResultType.FAILURE;
                     }
                 });
@@ -416,7 +417,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
         Set<ModificationResultType> results = arbiter.results(segregatedResults).collect(Collectors.toSet());
         if (results.contains(ModificationResultType.SUCCESS)) {
-            action.setResult(new TiesServiceScopeModification.Result.Success() {
+            action.setResult(new TiesServiceScopeModificationAction.Result.Success() {
                 @Override
                 public byte[] getHeaderHash() {
                     return header.getHash();
@@ -424,7 +425,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             });
         } else if (results.contains(ModificationResultType.ERROR)) {
             Throwable error = new Throwable("Write was impossible" + segregatedErrors);
-            action.setResult(new TiesServiceScopeModification.Result.Error() {
+            action.setResult(new TiesServiceScopeModificationAction.Result.Error() {
                 @Override
                 public byte[] getHeaderHash() {
                     return header.getHash();
@@ -437,7 +438,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             });
         } else if (results.contains(ModificationResultType.MISS)) {
             Set<Node> missedNodes = segregatedResults.get(ModificationResultType.FAILURE);
-            action.setResult(new TiesServiceScopeModification.Result.Error() {
+            action.setResult(new TiesServiceScopeModificationAction.Result.Error() {
                 @Override
                 public byte[] getHeaderHash() {
                     return header.getHash();
@@ -450,7 +451,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             });
         } else if (results.contains(ModificationResultType.FAILURE)) {
             Set<Node> failedNodes = segregatedResults.get(ModificationResultType.FAILURE);
-            action.setResult(new TiesServiceScopeModification.Result.Error() {
+            action.setResult(new TiesServiceScopeModificationAction.Result.Error() {
                 @Override
                 public byte[] getHeaderHash() {
                     return header.getHash();
@@ -462,7 +463,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 }
             });
         } else {
-            action.setResult(new TiesServiceScopeModification.Result.Error() {
+            action.setResult(new TiesServiceScopeModificationAction.Result.Error() {
                 @Override
                 public byte[] getHeaderHash() {
                     return header.getHash();
@@ -488,7 +489,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
     }
 
     @Override
-    public void select(TiesServiceScopeRecollection recollectionRequest) throws TiesServiceScopeException {
+    public void select(TiesServiceScopeRecollectionAction recollectionRequest) throws TiesServiceScopeException {
 
         Query query = recollectionRequest.getQuery();
 
@@ -501,7 +502,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             Set<String> tableFields = fields.stream().map(f -> f.getName()).collect(Collectors.toSet());
             Stream<String> queryFieldNameStream = query.getSelectors().stream().map(s -> {
                 try {
-                    return s.accept(new network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.Visitor<String>() {
+                    return s.accept(new network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Selector.Visitor<String>() {
 
                         @Override
                         public String on(FunctionSelector s) throws TiesServiceScopeException {
@@ -530,22 +531,22 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             throw new TiesServiceScopeException("No target nodes found for request");
         }
 
-        Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters;
-        CompletionService<CoordinatedResult<TiesServiceScopeResult.Result>> completionService = new ExecutorCompletionService<>(
+        Map<Node, Future<CoordinatedResult<TiesServiceScopeResultAction.Result>>> resultWaiters;
+        CompletionService<CoordinatedResult<TiesServiceScopeResultAction.Result>> completionService = new ExecutorCompletionService<>(
                 ForkJoinPool.commonPool()); // TODO FIXME Change executor!!!
         {
             resultWaiters = new HashMap<>();
             TiesRouter router = service.getRouterService();
             for (Node node : nodes) {
                 resultWaiters.put(node, completionService.submit(() -> {
-                    CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
+                    CoordinatedResult<TiesServiceScopeResultAction.Result> coordinatedResult = service.getRequestPool().register();
                     try {
                         TiesTransportClient c = router.getClient(node);
                         c.request(new TiesServiceScopeConsumer() {
 
                             @Override
                             public void accept(TiesServiceScope s) throws TiesServiceScopeException {
-                                s.select(new TiesServiceScopeRecollection() {
+                                s.select(new TiesServiceScopeRecollectionAction() {
 
                                     @Override
                                     public ActionConsistency getConsistency() {
@@ -579,7 +580,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     return coordinatedResult;
                 }));
             }
-            for (Future<CoordinatedResult<TiesServiceScopeResult.Result>> result : resultWaiters.values()) {
+            for (Future<CoordinatedResult<TiesServiceScopeResultAction.Result>> result : resultWaiters.values()) {
                 try {
                     result.get().get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
                 } catch (Throwable e) {
@@ -595,43 +596,43 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                 e -> UPPERCASE_HEX.printHexBinary(e.getEntryHeader().getHash()), result -> {
                     try {
                         return result.get().get()
-                                .accept(new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
+                                .accept(new TiesServiceScopeResultAction.Result.Visitor<Stream<TiesServiceScopeRecollectionAction.Result.Entry>>() {
 
                                     @Override
-                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(TiesServiceScopeModification.Result result)
+                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(TiesServiceScopeModificationAction.Result result)
                                             throws TiesServiceScopeException {
                                         LOG.error("Illegal result for recollection response: {}", result);
                                         return Stream.empty();
                                     }
 
                                     @Override
-                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(TiesServiceScopeHealing.Result result)
+                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(TiesServiceScopeHealingAction.Result result)
                                             throws TiesServiceScopeException {
                                         LOG.error("Illegal result for recollection response: {}", result);
                                         return Stream.empty();
                                     }
 
                                     @Override
-                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(TiesServiceScopeRecollection.Result result)
+                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(TiesServiceScopeRecollectionAction.Result result)
                                             throws TiesServiceScopeException {
                                         return result.accept(
-                                                new TiesServiceScopeRecollection.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
+                                                new TiesServiceScopeRecollectionAction.Result.Visitor<Stream<TiesServiceScopeRecollectionAction.Result.Entry>>() {
                                                     @Override
-                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                            TiesServiceScopeRecollection.Success result) throws TiesServiceScopeException {
+                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(
+                                                            TiesServiceScopeRecollectionAction.Success result) throws TiesServiceScopeException {
                                                         return result.getEntries().parallelStream();
                                                     }
 
                                                     @Override
-                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                            TiesServiceScopeRecollection.Error result) throws TiesServiceScopeException {
+                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(
+                                                            TiesServiceScopeRecollectionAction.Error result) throws TiesServiceScopeException {
                                                         LOG.error("Error result for recollection response: {}", result);
                                                         resultErrors.addAll(result.getErrors());
                                                         return Stream.empty();
                                                     }
 
                                                     @Override
-                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(Partial result)
+                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(Partial result)
                                                             throws TiesServiceScopeException {
                                                         LOG.error("Partial result for recollection response: {}", result);
                                                         resultErrors.addAll(result.getErrors());
@@ -658,43 +659,43 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             if (arbiterEntryHashes.isEmpty() && null != failedNodes && !failedNodes.isEmpty()) {
                 resultErrors.add(new TiesServiceScopeException("Read failed for nodes " + failedNodes));
                 recollectionRequest.setResult(//
-                        new TiesServiceScopeRecollection.Error() {
+                        new TiesServiceScopeRecollectionAction.Error() {
                             @Override
                             public List<Throwable> getErrors() {
                                 return resultErrors;
                             }
                         });
             } else {
-                List<TiesServiceScopeRecollection.Result.Entry> arbiterEntries = arbiterEntryHashes.isEmpty() //
+                List<TiesServiceScopeRecollectionAction.Result.Entry> arbiterEntries = arbiterEntryHashes.isEmpty() //
                         ? Collections.emptyList()
                         : resultWaiters.values().parallelStream() //
                                 .flatMap(result -> {
                                     try {
                                         return result.get().get().accept(
-                                                new TiesServiceScopeResult.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
+                                                new TiesServiceScopeResultAction.Result.Visitor<Stream<TiesServiceScopeRecollectionAction.Result.Entry>>() {
 
                                                     @Override
-                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                            TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(
+                                                            TiesServiceScopeModificationAction.Result result) throws TiesServiceScopeException {
                                                         LOG.error("Illegal result for recollection: {}", result);
                                                         return Stream.empty();
                                                     }
 
                                                     @Override
-                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                            TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
+                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(
+                                                            TiesServiceScopeRecollectionAction.Result result) throws TiesServiceScopeException {
                                                         return result.accept(
-                                                                new TiesServiceScopeRecollection.Result.Visitor<Stream<TiesServiceScopeRecollection.Result.Entry>>() {
+                                                                new TiesServiceScopeRecollectionAction.Result.Visitor<Stream<TiesServiceScopeRecollectionAction.Result.Entry>>() {
                                                                     @Override
-                                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                                            TiesServiceScopeRecollection.Success result)
+                                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(
+                                                                            TiesServiceScopeRecollectionAction.Success result)
                                                                             throws TiesServiceScopeException {
                                                                         return result.getEntries().parallelStream();
                                                                     }
 
                                                                     @Override
-                                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                                            TiesServiceScopeRecollection.Error result)
+                                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(
+                                                                            TiesServiceScopeRecollectionAction.Error result)
                                                                             throws TiesServiceScopeException {
                                                                         LOG.error("Error result for recollection response: {}", result);
                                                                         return Stream.empty();
@@ -710,8 +711,8 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                                     }
 
                                                     @Override
-                                                    public Stream<TiesServiceScopeRecollection.Result.Entry> on(
-                                                            TiesServiceScopeHealing.Result result) throws TiesServiceScopeException {
+                                                    public Stream<TiesServiceScopeRecollectionAction.Result.Entry> on(
+                                                            TiesServiceScopeHealingAction.Result result) throws TiesServiceScopeException {
                                                         LOG.error("Illegal result for recollection: {}", result);
                                                         return Stream.empty();
                                                     }
@@ -726,13 +727,13 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                 .collect(Collectors.toList());
 
                 recollectionRequest.setResult(resultErrors.isEmpty()//
-                        ? new TiesServiceScopeRecollection.Success() {
+                        ? new TiesServiceScopeRecollectionAction.Success() {
                             @Override
                             public List<Entry> getEntries() {
                                 return arbiterEntries;
                             }
                         }
-                        : new TiesServiceScopeRecollection.Partial() {
+                        : new TiesServiceScopeRecollectionAction.Partial() {
                             @Override
                             public List<Throwable> getErrors() {
                                 return resultErrors;
@@ -776,16 +777,16 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
     }
 
     private void healingDetection(Set<String> primaryKeyFieldNames, Function<byte[], Set<? extends Node>> nodesMapper,
-            Map<Node, Future<CoordinatedResult<TiesServiceScopeResult.Result>>> resultWaiters, String tablespaceName, String tableName,
+            Map<Node, Future<CoordinatedResult<TiesServiceScopeResultAction.Result>>> resultWaiters, String tablespaceName, String tableName,
             Set<FieldDescription> fields) throws TiesServiceScopeException {
 
         Map<String, Map<String, Map<Node, TiesEntry>>> healingExpectantMap = resultWaiters.entrySet().parallelStream().flatMap(e -> {
             try {
-                TiesServiceScopeResult.Result result = e.getValue().get().get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
-                return result.accept(new TiesServiceScopeResult.Result.Visitor<Stream<HealingMappingEntry<Node, TiesEntry>>>() {
+                TiesServiceScopeResultAction.Result result = e.getValue().get().get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT);
+                return result.accept(new TiesServiceScopeResultAction.Result.Visitor<Stream<HealingMappingEntry<Node, TiesEntry>>>() {
 
                     @Override
-                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeModification.Result result)
+                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeModificationAction.Result result)
                             throws TiesServiceScopeException {
                         // TODO Auto-generated method stub
                         RuntimeException err = new RuntimeException("not yet implemented");
@@ -795,13 +796,13 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     }
 
                     @Override
-                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeRecollection.Result recollectionResult)
+                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeRecollectionAction.Result recollectionResult)
                             throws TiesServiceScopeException {
                         return recollectionResult
-                                .accept(new TiesServiceScopeRecollection.Result.Visitor<Stream<HealingMappingEntry<Node, TiesEntry>>>() {
+                                .accept(new TiesServiceScopeRecollectionAction.Result.Visitor<Stream<HealingMappingEntry<Node, TiesEntry>>>() {
 
                                     @Override
-                                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeRecollection.Success success)
+                                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeRecollectionAction.Success success)
                                             throws TiesServiceScopeException {
                                         return success.getEntries().parallelStream().map(entry -> {
                                             try {
@@ -811,7 +812,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                                         .collect(Collectors.toMap(f -> f.getName(), f -> {
                                                             try {
                                                                 return f.accept(
-                                                                        new TiesServiceScopeRecollection.Result.Field.Visitor<byte[]>() {
+                                                                        new TiesServiceScopeRecollectionAction.Result.Field.Visitor<byte[]>() {
 
                                                                             @Override
                                                                             public byte[] on(HashField field)
@@ -861,7 +862,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                     }
 
                                     @Override
-                                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeRecollection.Error error)
+                                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeRecollectionAction.Error error)
                                             throws TiesServiceScopeException {
                                         LOG.trace("Recollection error should not be healed: {}", error);
                                         return Stream.<HealingMappingEntry<Node, TiesEntry>>empty();
@@ -871,14 +872,14 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                     public Stream<HealingMappingEntry<Node, TiesEntry>> on(Partial partial)
                                             throws TiesServiceScopeException {
                                         LOG.warn("Recollection partial result");
-                                        return on((TiesServiceScopeRecollection.Success) partial);
+                                        return on((TiesServiceScopeRecollectionAction.Success) partial);
                                     }
 
                                 });
                     }
 
                     @Override
-                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeHealing.Result result)
+                    public Stream<HealingMappingEntry<Node, TiesEntry>> on(TiesServiceScopeHealingAction.Result result)
                             throws TiesServiceScopeException {
                         throw new TiesServiceScopeException("Double healing prohibited");
                     }
@@ -937,7 +938,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     LOG.debug("Entry {} should be healed\n\t   to nodes: {}\n\t from nodes: {}", //
                             enHashStr, nodesForHealing, nodesEntryMap.keySet());
                     TiesEntry entry = nodesEntryMap.values().iterator().next();
-                    CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
+                    CoordinatedResult<TiesServiceScopeResultAction.Result> coordinatedResult = service.getRequestPool().register();
                     Node donorNode = getRandom(nodesEntryMap.keySet());
                     try {
                         Set<String> keyFieldNames = Collections.unmodifiableSet(
@@ -945,7 +946,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                         router.getClient(donorNode).request(new TiesServiceScopeConsumer() {
                             @Override
                             public void accept(TiesServiceScope serviceScope) throws TiesServiceScopeException {
-                                serviceScope.select(new TiesServiceScopeRecollection() {
+                                serviceScope.select(new TiesServiceScopeRecollectionAction() {
 
                                     private final Query query = new Query() {
 
@@ -1039,7 +1040,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                     }
 
                                     @Override
-                                    public void setResult(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
+                                    public void setResult(TiesServiceScopeRecollectionAction.Result result) throws TiesServiceScopeException {
                                         throw new TiesServiceScopeException("Coordinator should not handle ClientScope results");
                                     }
 
@@ -1059,23 +1060,23 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                     }
                     try {
                         coordinatedResult.get(NODE_REQUEST_TIMEOUT, NODE_REQUEST_TIMEOUT_UNIT) //
-                                .accept(new TiesServiceScopeResult.Result.Visitor<Void>() {
+                                .accept(new TiesServiceScopeResultAction.Result.Visitor<Void>() {
 
                                     @Override
-                                    public Void on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException {
+                                    public Void on(TiesServiceScopeModificationAction.Result result) throws TiesServiceScopeException {
                                         throw new TiesServiceScopeException("Illegal resutl for recollection request: " + result);
                                     }
 
                                     @Override
-                                    public Void on(TiesServiceScopeHealing.Result result) throws TiesServiceScopeException {
+                                    public Void on(TiesServiceScopeHealingAction.Result result) throws TiesServiceScopeException {
                                         throw new TiesServiceScopeException("Illegal resutl for recollection request: " + result);
                                     }
 
                                     @Override
-                                    public Void on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException {
-                                        return result.accept(new TiesServiceScopeRecollection.Result.Visitor<Void>() {
+                                    public Void on(TiesServiceScopeRecollectionAction.Result result) throws TiesServiceScopeException {
+                                        return result.accept(new TiesServiceScopeRecollectionAction.Result.Visitor<Void>() {
 
-                                            private final <T extends TiesServiceScopeRecollection.Success> void propagate(T result) {
+                                            private final <T extends TiesServiceScopeRecollectionAction.Success> void propagate(T result) {
                                                 result.getEntries().forEach(resultEntry -> {
                                                     healingPropagation(router, nodesForHealing, mergeEntries(entry, resultEntry),
                                                             tablespaceName, tableName, typeMap);
@@ -1083,7 +1084,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                             }
 
                                             @Override
-                                            public Void on(TiesServiceScopeRecollection.Success success) throws TiesServiceScopeException {
+                                            public Void on(TiesServiceScopeRecollectionAction.Success success) throws TiesServiceScopeException {
                                                 LOG.trace("Recollection success propagate");
                                                 propagate(success);
                                                 LOG.trace("Recollection success result propagated");
@@ -1099,7 +1100,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
                                             }
 
                                             @Override
-                                            public Void on(TiesServiceScopeRecollection.Error error) throws TiesServiceScopeException {
+                                            public Void on(TiesServiceScopeRecollectionAction.Error error) throws TiesServiceScopeException {
                                                 LOG.trace("Recollection error should not propagate");
                                                 return null;
                                             }
@@ -1154,7 +1155,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
             Map<String, String> typeMap) {
 
         nodes.forEach(node -> {
-            CoordinatedResult<TiesServiceScopeResult.Result> coordinatedResult = service.getRequestPool().register();
+            CoordinatedResult<TiesServiceScopeResultAction.Result> coordinatedResult = service.getRequestPool().register();
             try {
                 TiesTransportClient c = router.getClient(node);
                 c.request(new TiesServiceScopeConsumer() {
@@ -1271,7 +1272,7 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
 
                     @Override
                     public void accept(TiesServiceScope s) throws TiesServiceScopeException {
-                        s.heal(new TiesServiceScopeHealing() {
+                        s.heal(new TiesServiceScopeHealingAction() {
 
                             @Override
                             public BigInteger getMessageId() {
@@ -1301,13 +1302,13 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
     }
 
     @Override
-    public void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException {
+    public void heal(TiesServiceScopeHealingAction action) throws TiesServiceScopeException {
         // TODO Auto-generated method stub
         throw new TiesServiceScopeException("Healing delegation not implemented yet");
     }
 
     @Override
-    public void schema(TiesServiceScopeSchema schemaRequest) throws TiesServiceScopeException {
+    public void schema(TiesServiceScopeSchemaAction schemaRequest) throws TiesServiceScopeException {
         String tsn = schemaRequest.getTablespaceName();
         String tbn = schemaRequest.getTableName();
 
@@ -1353,10 +1354,15 @@ public class TiesCoordinatorServiceScopeImpl implements TiesServiceScope {
     }
 
     @Override
-    public void result(TiesServiceScopeResult result) throws TiesServiceScopeException {
+    public void result(TiesServiceScopeResultAction result) throws TiesServiceScopeException {
         if (!service.getRequestPool().complete(result.getMessageId(), result.getResult())) {
             throw new TiesServiceScopeException("Request completion failed for messageId: " + result.getMessageId());
         }
+    }
+
+    @Override
+    public void billing(TiesServiceScopeBillingAction billingRequest) throws TiesServiceScopeException {
+        throw new TiesServiceScopeException("Ties Coordinator should not handle billing request");
     }
 
 }

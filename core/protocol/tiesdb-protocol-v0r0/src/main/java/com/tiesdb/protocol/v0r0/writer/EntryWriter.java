@@ -47,7 +47,7 @@ public class EntryWriter implements Writer<EntryWriter.Entry> {
     }
 
     private final EntryHeaderWriter entryHeaderWriter = new EntryHeaderWriter();
-    private final ChequeWriter chequeWriter = new ChequeWriter();
+    private final ChequeWriter chequeWriter = new ChequeWriter(false);
     private final FieldWriter fieldWriter = new FieldWriter(FIELD);
 
     @Override

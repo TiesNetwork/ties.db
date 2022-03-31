@@ -18,9 +18,9 @@
  */
 package network.tiesdb.service.scope.api;
 
-public interface TiesServiceScopeHealing extends TiesServiceScopeAction {
+public interface TiesServiceScopeModificationAction extends TiesServiceScopeAction, TiesServiceScopeAction.Distributed {
 
-    interface Result extends TiesServiceScopeResult.Result {
+    interface Result extends TiesServiceScopeResultAction.Result {
 
         interface Visitor<T> {
 
@@ -50,7 +50,7 @@ public interface TiesServiceScopeHealing extends TiesServiceScopeAction {
 
         }
 
-        default <T> T accept(TiesServiceScopeResult.Result.Visitor<T> v) throws TiesServiceScopeException {
+        default <T> T accept(TiesServiceScopeResultAction.Result.Visitor<T> v) throws TiesServiceScopeException {
             return v.on(this);
         }
 

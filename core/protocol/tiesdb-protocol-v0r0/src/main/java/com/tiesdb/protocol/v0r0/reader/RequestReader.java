@@ -21,6 +21,7 @@ package com.tiesdb.protocol.v0r0.reader;
 import com.tiesdb.protocol.exception.TiesDBProtocolException;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation;
 import com.tiesdb.protocol.v0r0.TiesDBProtocolV0R0.Conversation.Event;
+import com.tiesdb.protocol.v0r0.reader.BillingRequestReader.BillingRequest;
 import com.tiesdb.protocol.v0r0.reader.HealingRequestReader.HealingRequest;
 import com.tiesdb.protocol.v0r0.reader.ModificationRequestReader.ModificationRequest;
 import com.tiesdb.protocol.v0r0.reader.RecollectionRequestReader.RecollectionRequest;
@@ -33,6 +34,7 @@ public class RequestReader implements Reader<CheckedConsumer<Reader.Request, Tie
     private final RecollectionRequestReader recollectionRequestReader = new RecollectionRequestReader();
     private final HealingRequestReader healingRequestReader = new HealingRequestReader();
     private final SchemaRequestReader schemaRequestReader = new SchemaRequestReader();
+    private final BillingRequestReader billingRequestReader = new BillingRequestReader();
 
     @Override
     public boolean accept(Conversation session, Event e, CheckedConsumer<Reader.Request, TiesDBProtocolException> requestHandler)
@@ -65,6 +67,14 @@ public class RequestReader implements Reader<CheckedConsumer<Reader.Request, Tie
         case SCHEMA_REQUEST: {
             SchemaRequest request = new SchemaRequest();
             if (schemaRequestReader.accept(session, e, request)) {
+                requestHandler.accept(request);
+                return true;
+            }
+            break;
+        }
+        case BILLING_REQUEST: {
+            BillingRequest request = new BillingRequest();
+            if (billingRequestReader.accept(session, e, request)) {
                 requestHandler.accept(request);
                 return true;
             }

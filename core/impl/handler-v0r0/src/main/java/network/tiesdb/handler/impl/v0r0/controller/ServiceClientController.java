@@ -58,18 +58,19 @@ import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.Actio
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.CountConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.PercentConsistency;
 import network.tiesdb.service.scope.api.TiesServiceScopeAction.Distributed.ActionConsistency.QuorumConsistency;
+import network.tiesdb.service.scope.api.TiesServiceScopeBillingAction;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
-import network.tiesdb.service.scope.api.TiesServiceScopeHealing;
-import network.tiesdb.service.scope.api.TiesServiceScopeModification;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Function.Argument.FieldArgument;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Function.Argument.FunctionArgument;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Function.Argument.ValueArgument;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FieldSelector;
-import network.tiesdb.service.scope.api.TiesServiceScopeRecollection.Query.Selector.FunctionSelector;
-import network.tiesdb.service.scope.api.TiesServiceScopeResult;
-import network.tiesdb.service.scope.api.TiesServiceScopeSchema;
+import network.tiesdb.service.scope.api.TiesServiceScopeHealingAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeModificationAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Function.Argument.FieldArgument;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Function.Argument.FunctionArgument;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Function.Argument.ValueArgument;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Selector.FieldSelector;
+import network.tiesdb.service.scope.api.TiesServiceScopeRecollectionAction.Query.Selector.FunctionSelector;
+import network.tiesdb.service.scope.api.TiesServiceScopeResultAction;
+import network.tiesdb.service.scope.api.TiesServiceScopeSchemaAction;
 import one.utopic.sparse.ebml.EBMLFormat;
 import one.utopic.sparse.ebml.format.BytesFormat;
 
@@ -112,21 +113,21 @@ public class ServiceClientController implements TiesServiceScope {
     }
 
     @Override
-    public void insert(TiesServiceScopeModification action) throws TiesServiceScopeException {
+    public void insert(TiesServiceScopeModificationAction action) throws TiesServiceScopeException {
         modify(action);
     }
 
     @Override
-    public void update(TiesServiceScopeModification action) throws TiesServiceScopeException {
+    public void update(TiesServiceScopeModificationAction action) throws TiesServiceScopeException {
         modify(action);
     }
 
     @Override
-    public void delete(TiesServiceScopeModification action) throws TiesServiceScopeException {
+    public void delete(TiesServiceScopeModificationAction action) throws TiesServiceScopeException {
         modify(action);
     }
 
-    private void modify(TiesServiceScopeModification action) throws TiesServiceScopeException {
+    private void modify(TiesServiceScopeModificationAction action) throws TiesServiceScopeException {
         try {
             TiesEntryExtended entry = action.getEntry();
             if (null == entry) {
@@ -154,7 +155,7 @@ public class ServiceClientController implements TiesServiceScope {
                 }
 
             });
-            action.setResult(new TiesServiceScopeModification.Result.Success() {
+            action.setResult(new TiesServiceScopeModificationAction.Result.Success() {
                 @Override
                 public byte[] getHeaderHash() {
                     return entryHeader.getHash();
@@ -166,7 +167,7 @@ public class ServiceClientController implements TiesServiceScope {
     }
 
     @Override
-    public void select(TiesServiceScopeRecollection action) throws TiesServiceScopeException {
+    public void select(TiesServiceScopeRecollectionAction action) throws TiesServiceScopeException {
         Query query = action.getQuery();
         if (null == query) {
             throw new TiesServiceScopeException("No query found in recollection request");
@@ -355,8 +356,8 @@ public class ServiceClientController implements TiesServiceScope {
     }
 
     @Override
-    public void schema(TiesServiceScopeSchema query) throws TiesServiceScopeException {
-        throw new TiesServiceScopeException("Client should not handle schema request");
+    public void schema(TiesServiceScopeSchemaAction query) throws TiesServiceScopeException {
+        throw new TiesServiceScopeException("Ties Client should not handle schema request");
     }
 
     @Override
@@ -365,8 +366,8 @@ public class ServiceClientController implements TiesServiceScope {
     }
 
     @Override
-    public void result(TiesServiceScopeResult result) throws TiesServiceScopeException {
-        throw new TiesServiceScopeException("Client should not handle any result");
+    public void result(TiesServiceScopeResultAction result) throws TiesServiceScopeException {
+        throw new TiesServiceScopeException("Ties Client should not handle any result");
     }
 
     private Entry convertForWriting(TiesEntryExtended entry) {
@@ -596,7 +597,7 @@ public class ServiceClientController implements TiesServiceScope {
     }
 
     @Override
-    public void heal(TiesServiceScopeHealing action) throws TiesServiceScopeException {
+    public void heal(TiesServiceScopeHealingAction action) throws TiesServiceScopeException {
         try {
             TiesEntryExtended entry = action.getEntry();
             if (null == entry) {
@@ -622,6 +623,11 @@ public class ServiceClientController implements TiesServiceScope {
         } catch (TiesDBProtocolException e) {
             throw new TiesServiceScopeException("Node modification request failed", e);
         }
+    }
+
+    @Override
+    public void billing(TiesServiceScopeBillingAction action) throws TiesServiceScopeException {
+        throw new TiesServiceScopeException("Ties Client should not handle billing request");
     }
 
 }

@@ -44,7 +44,7 @@ import network.tiesdb.schema.api.TiesSchemaFactory;
 import network.tiesdb.service.api.TiesService;
 import network.tiesdb.service.scope.api.TiesServiceScope;
 import network.tiesdb.service.scope.api.TiesServiceScopeException;
-import network.tiesdb.service.scope.api.TiesServiceScopeResult;
+import network.tiesdb.service.scope.api.TiesServiceScopeResultAction;
 import network.tiesdb.transport.api.TiesTransportServer;
 
 public class TiesCoordinatorServiceImpl implements TiesService {
@@ -59,7 +59,7 @@ public class TiesCoordinatorServiceImpl implements TiesService {
     private final AtomicReference<TiesRouter> routerServiceRef = new AtomicReference<>();
 
     private final TiesCoordinatorServiceConfigImpl config;
-    private final TiesCoordinatedRequestPool<TiesServiceScopeResult.Result> requestPool;
+    private final TiesCoordinatedRequestPool<TiesServiceScopeResultAction.Result> requestPool;
 
     public TiesCoordinatorServiceImpl(TiesCoordinatorServiceConfigImpl config) throws TiesConfigurationException {
         if (null == config) {
@@ -242,7 +242,7 @@ public class TiesCoordinatorServiceImpl implements TiesService {
         }
     }
 
-    public TiesCoordinatedRequestPool<TiesServiceScopeResult.Result> getRequestPool() {
+    public TiesCoordinatedRequestPool<TiesServiceScopeResultAction.Result> getRequestPool() {
         return requestPool;
     }
 

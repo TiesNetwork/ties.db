@@ -20,7 +20,7 @@ package network.tiesdb.service.scope.api;
 
 import java.util.List;
 
-public interface TiesServiceScopeSchema extends TiesServiceScopeAction {
+public interface TiesServiceScopeSchemaAction extends TiesServiceScopeAction {
 
     interface FieldSchema {
 

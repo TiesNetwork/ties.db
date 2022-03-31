@@ -18,11 +18,18 @@
  */
 package com.tiesdb.protocol.v0r0.writer;
 
-import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.*;
-import static com.tiesdb.protocol.v0r0.writer.WriterUtil.*;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.CHEQUE;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.CHEQUE_CRP_AMOUNT;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.CHEQUE_NETWORK;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.CHEQUE_NUMBER;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.CHEQUE_SESSION;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.CHEQUE_VERSION;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.TABLESPACE_NAME;
+import static com.tiesdb.protocol.v0r0.ebml.TiesDBType.TABLE_NAME;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.write;
+import static com.tiesdb.protocol.v0r0.writer.WriterUtil.writeNotNull;
 
 import java.math.BigInteger;
-import java.util.Date;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -34,8 +41,6 @@ import com.tiesdb.protocol.v0r0.ebml.format.UUIDFormat;
 import com.tiesdb.protocol.v0r0.writer.SignatureWriter.Signature;
 
 import one.utopic.sparse.ebml.format.BigIntegerFormat;
-import one.utopic.sparse.ebml.format.BytesFormat;
-import one.utopic.sparse.ebml.format.DateFormat;
 import one.utopic.sparse.ebml.format.UTF8StringFormat;
 
 public class ChequeWriter implements Writer<ChequeWriter.Cheque> {
@@ -60,7 +65,18 @@ public class ChequeWriter implements Writer<ChequeWriter.Cheque> {
 
     }
 
-    private final SignatureWriter signatureWriter = new SignatureWriter(false);
+    private final boolean isSignerRequired;
+    private final SignatureWriter signatureWriter;
+
+    public ChequeWriter() {
+        this(true);
+    }
+
+    public ChequeWriter(boolean isSignerRequired) {
+        super();
+        this.isSignerRequired = isSignerRequired;
+        this.signatureWriter = new SignatureWriter(this.isSignerRequired);
+    }
 
     @Override
     public void accept(Conversation session, Cheque cheque) throws TiesDBProtocolException {

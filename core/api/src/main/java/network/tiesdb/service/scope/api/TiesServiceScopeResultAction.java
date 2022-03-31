@@ -18,17 +18,17 @@
  */
 package network.tiesdb.service.scope.api;
 
-public interface TiesServiceScopeResult extends TiesServiceScopeAction {
+public interface TiesServiceScopeResultAction extends TiesServiceScopeAction {
 
     interface Result {
 
         interface Visitor<T> {
 
-            T on(TiesServiceScopeModification.Result result) throws TiesServiceScopeException;
+            T on(TiesServiceScopeModificationAction.Result result) throws TiesServiceScopeException;
 
-            T on(TiesServiceScopeRecollection.Result result) throws TiesServiceScopeException;
+            T on(TiesServiceScopeRecollectionAction.Result result) throws TiesServiceScopeException;
 
-            T on(TiesServiceScopeHealing.Result result) throws TiesServiceScopeException;
+            T on(TiesServiceScopeHealingAction.Result result) throws TiesServiceScopeException;
 
         }
 
